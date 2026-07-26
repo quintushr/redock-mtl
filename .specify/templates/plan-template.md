@@ -13,34 +13,53 @@
 ## Technical Context
 
 <!--
-  ACTION REQUIRED: Replace the content in this section with the technical details
-  for the project. The structure here is presented in advisory capacity to guide
-  the iteration process.
+  Project-wide defaults are pre-filled below from the constitution and
+  package.json. Override a line only when this feature genuinely differs, and say
+  why. Do not introduce a value that violates the Constitution Check gates.
 -->
 
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]
+**Language/Version**: TypeScript 5, React 19, Next.js 16.2.12 (App Router). Versions
+are authoritative in `package.json`; read `node_modules/next/dist/docs/` before using
+an unfamiliar Next.js API.
 
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]
+**Primary Dependencies**: next, react, react-dom, tailwindcss. Any addition must be
+justified here.
 
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
+**Storage**: Browser-local only (no server, no database). N/A if the feature stores nothing.
 
-**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]
+**Testing**: Unit tests over pure domain modules, run against frozen JSON fixtures
+committed to the repo. No network in tests.
 
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
+**Target Platform**: Modern browsers. Static hosting only, no runtime server.
 
-**Project Type**: [e.g., library/cli/web-service/mobile-app/compiler/desktop-app or NEEDS CLARIFICATION]
+**Project Type**: Client-side web application (static export).
 
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]
+**Performance Goals**: [feature-specific, e.g., plan computed in <500ms on a mid-range
+phone for the Montreal network]
 
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]
+**Constraints**: Zero operating cost, zero mandatory API keys, GBFS `ttl` honored,
+computation in-browser. [add feature-specific constraints]
 
-**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
+**Scale/Scope**: [feature-specific, e.g., ~900 Montreal stations, single network at a time]
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+Answer each gate for this feature. Any "no" must either change the design or be
+recorded in Complexity Tracking below with the simpler alternative that was rejected.
+
+| Gate | Principle | Pass? | Notes |
+|------|-----------|-------|-------|
+| No backend, database, serverless function, or paid/metered service is introduced | I. Zero Operating Cost | [ ] | |
+| All computation runs in the browser; build still produces a static export | I. Zero Operating Cost | [ ] | |
+| Feature works with zero API keys and zero accounts; any keyed integration is optional and degrades cleanly | II. No Mandatory API Keys | [ ] | |
+| Calculation logic lands in pure modules (no network, no DOM, no global state) with unit tests over frozen JSON fixtures | III. Pure, Tested Domain Core | [ ] | |
+| Durations shown as estimates, never to-the-minute arrivals; influencing parameters are user-visible and adjustable with conservative defaults | IV. Honest Estimates | [ ] | |
+| GBFS `ttl` honored, responses cached client-side, attribution and license displayed, only public documented endpoints called, feed failure degrades cleanly | V. Respect for Data Sources | [ ] | |
+| New runtime dependencies are justified, or none were added | Technology Constraints | [ ] | |
+
+*Re-check status after Phase 1 design:* [pending / passed / violations recorded below]
 
 ## Project Structure
 
@@ -58,50 +77,30 @@ specs/[###-feature]/
 
 ### Source Code (repository root)
 <!--
-  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
-  for this feature. Delete unused options and expand the chosen structure with
-  real paths (e.g., apps/admin, packages/something). The delivered plan must
-  not include Option labels.
+  The layout below is the project default: a single static Next.js app with the
+  calculation logic isolated in pure modules. Expand it with the real paths this
+  feature touches. There is no backend directory and none may be added
+  (Principle I).
 -->
 
 ```text
-# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
-src/
-├── models/
-├── services/
-├── cli/
-└── lib/
+app/                     # Next.js App Router: routes, layouts, UI components (thin layer)
+
+lib/
+├── core/                # Pure domain modules: geometry, graph, planning.
+│                        # No network, no DOM, no global state (Principle III).
+├── gbfs/                # Feed fetching, parsing, ttl-aware caching (Principle V).
+└── ui/                  # Browser-only helpers that are not domain logic
 
 tests/
-├── contract/
-├── integration/
-└── unit/
+├── unit/                # Unit tests for lib/core, over frozen fixtures
+└── fixtures/            # Committed JSON fixtures. Never fetched at test time.
 
-# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
-backend/
-├── src/
-│   ├── models/
-│   ├── services/
-│   └── api/
-└── tests/
-
-frontend/
-├── src/
-│   ├── components/
-│   ├── pages/
-│   └── services/
-└── tests/
-
-# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
-api/
-└── [same as backend above]
-
-ios/ or android/
-└── [platform-specific structure: feature modules, UI flows, platform tests]
+public/                  # Static assets
 ```
 
-**Structure Decision**: [Document the selected structure and reference the real
-directories captured above]
+**Structure Decision**: [Name the directories this feature adds or changes, and state
+which calculation lives in `lib/core/` and which fixtures cover it]
 
 ## Complexity Tracking
 

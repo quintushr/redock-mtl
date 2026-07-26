@@ -117,6 +117,23 @@
 - **SC-003**: [User satisfaction metric, e.g., "90% of users successfully complete primary task on first attempt"]
 - **SC-004**: [Business metric, e.g., "Reduce support tickets related to [X] by 50%"]
 
+## Constitution Alignment *(mandatory)*
+
+<!--
+  ACTION REQUIRED: Answer at the requirements level, not the implementation level.
+  The full engineering gates live in plan.md; this section catches violations early,
+  while the feature is still being described. See .specify/memory/constitution.md.
+-->
+
+- **Cost & keys**: Does anything here need a server, a database, a paid service, or an
+  account/API key to work? [No / Yes - explain why, and how it degrades without one]
+- **Estimate honesty**: Which durations or arrival times does this feature show, and how
+  are they worded as estimates rather than promises? Which parameters become
+  user-visible and adjustable? [describe, or N/A]
+- **Data sources**: Which GBFS feeds or external data does this rely on? How is
+  attribution shown, and what does the user see when a feed is stale or unavailable?
+  [describe, or N/A]
+
 ## Assumptions
 
 <!--

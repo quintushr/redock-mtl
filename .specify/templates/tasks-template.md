@@ -9,7 +9,7 @@ description: "Task list template for feature implementation"
 
 **Prerequisites**: plan.md (required), spec.md (required for user stories), research.md, data-model.md, contracts/
 
-**Tests**: The examples below include test tasks. Tests are OPTIONAL - only include them if explicitly requested in the feature specification.
+**Tests**: Unit tests for pure domain modules under `lib/core/` are REQUIRED by Constitution Principle III and MUST ship in the same change as the module. They run against frozen JSON fixtures in `tests/fixtures/` and MUST NOT hit the network. Tests for UI-only tasks are optional - include them if the specification asks for them.
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 
@@ -21,10 +21,12 @@ description: "Task list template for feature implementation"
 
 ## Path Conventions
 
-- **Single project**: `src/`, `tests/` at repository root
-- **Web app**: `backend/src/`, `frontend/src/`
-- **Mobile**: `api/src/`, `ios/src/` or `android/src/`
-- Paths shown below assume single project - adjust based on plan.md structure
+- **UI / routes**: `app/`
+- **Pure domain modules**: `lib/core/` (no network, no DOM, no global state)
+- **Feed fetching, parsing, ttl-aware caching**: `lib/gbfs/`
+- **Tests and fixtures**: `tests/unit/`, `tests/fixtures/`
+- There is no backend directory and none may be added (Constitution Principle I)
+- Adjust to the concrete structure recorded in plan.md
 
 <!--
   ============================================================================
@@ -63,12 +65,16 @@ description: "Task list template for feature implementation"
 
 Examples of foundational tasks (adjust based on your project):
 
-- [ ] T004 Setup database schema and migrations framework
-- [ ] T005 [P] Implement authentication/authorization framework
-- [ ] T006 [P] Setup API routing and middleware structure
-- [ ] T007 Create base models/entities that all stories depend on
-- [ ] T008 Configure error handling and logging infrastructure
-- [ ] T009 Setup environment configuration management
+- [ ] T004 Define core domain types shared by all stories in lib/core/types.ts
+- [ ] T005 [P] Implement GBFS feed discovery and parsing in lib/gbfs/
+- [ ] T006 [P] Implement ttl-aware client-side feed cache in lib/gbfs/cache.ts
+- [ ] T007 [P] Commit frozen GBFS fixtures in tests/fixtures/ and wire the test runner
+- [ ] T008 Configure error handling so a failed or malformed feed degrades cleanly
+- [ ] T009 Surface operator attribution and feed license in the app shell
+
+Do NOT add: database schema, migrations, auth framework, server-side API routes, or
+environment-variable configuration required for the app to run. All four are
+forbidden by Constitution Principles I and II.
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -80,19 +86,19 @@ Examples of foundational tasks (adjust based on your project):
 
 **Independent Test**: [How to verify this story works on its own]
 
-### Tests for User Story 1 (OPTIONAL - only if tests requested) ⚠️
+### Tests for User Story 1 (REQUIRED for lib/core changes) ⚠️
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T010 [P] [US1] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T011 [P] [US1] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T010 [P] [US1] Unit test for [pure function] in tests/unit/[name].test.ts
+- [ ] T011 [P] [US1] Fixture-backed test for [user journey] in tests/unit/[name].test.ts
 
 ### Implementation for User Story 1
 
-- [ ] T012 [P] [US1] Create [Entity1] model in src/models/[entity1].py
-- [ ] T013 [P] [US1] Create [Entity2] model in src/models/[entity2].py
-- [ ] T014 [US1] Implement [Service] in src/services/[service].py (depends on T012, T013)
-- [ ] T015 [US1] Implement [endpoint/feature] in src/[location]/[file].py
+- [ ] T012 [P] [US1] Create [Entity1] model in lib/core/[entity1].ts
+- [ ] T013 [P] [US1] Create [Entity2] model in lib/core/[entity2].ts
+- [ ] T014 [US1] Implement [Service] in lib/core/[service].ts (depends on T012, T013)
+- [ ] T015 [US1] Implement [endpoint/feature] in app/[location]/[file].tsx
 - [ ] T016 [US1] Add validation and error handling
 - [ ] T017 [US1] Add logging for user story 1 operations
 
@@ -106,16 +112,16 @@ Examples of foundational tasks (adjust based on your project):
 
 **Independent Test**: [How to verify this story works on its own]
 
-### Tests for User Story 2 (OPTIONAL - only if tests requested) ⚠️
+### Tests for User Story 2 (REQUIRED for lib/core changes) ⚠️
 
-- [ ] T018 [P] [US2] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T019 [P] [US2] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T018 [P] [US2] Unit test for [pure function] in tests/unit/[name].test.ts
+- [ ] T019 [P] [US2] Fixture-backed test for [user journey] in tests/unit/[name].test.ts
 
 ### Implementation for User Story 2
 
-- [ ] T020 [P] [US2] Create [Entity] model in src/models/[entity].py
-- [ ] T021 [US2] Implement [Service] in src/services/[service].py
-- [ ] T022 [US2] Implement [endpoint/feature] in src/[location]/[file].py
+- [ ] T020 [P] [US2] Create [Entity] model in lib/core/[entity].ts
+- [ ] T021 [US2] Implement [Service] in lib/core/[service].ts
+- [ ] T022 [US2] Implement [endpoint/feature] in app/[location]/[file].tsx
 - [ ] T023 [US2] Integrate with User Story 1 components (if needed)
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently
@@ -128,16 +134,16 @@ Examples of foundational tasks (adjust based on your project):
 
 **Independent Test**: [How to verify this story works on its own]
 
-### Tests for User Story 3 (OPTIONAL - only if tests requested) ⚠️
+### Tests for User Story 3 (REQUIRED for lib/core changes) ⚠️
 
-- [ ] T024 [P] [US3] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T025 [P] [US3] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T024 [P] [US3] Unit test for [pure function] in tests/unit/[name].test.ts
+- [ ] T025 [P] [US3] Fixture-backed test for [user journey] in tests/unit/[name].test.ts
 
 ### Implementation for User Story 3
 
-- [ ] T026 [P] [US3] Create [Entity] model in src/models/[entity].py
-- [ ] T027 [US3] Implement [Service] in src/services/[service].py
-- [ ] T028 [US3] Implement [endpoint/feature] in src/[location]/[file].py
+- [ ] T026 [P] [US3] Create [Entity] model in lib/core/[entity].ts
+- [ ] T027 [US3] Implement [Service] in lib/core/[service].ts
+- [ ] T028 [US3] Implement [endpoint/feature] in app/[location]/[file].tsx
 
 **Checkpoint**: All user stories should now be independently functional
 
@@ -153,9 +159,11 @@ Examples of foundational tasks (adjust based on your project):
 
 - [ ] TXXX [P] Documentation updates in docs/
 - [ ] TXXX Code cleanup and refactoring
-- [ ] TXXX Performance optimization across all stories
-- [ ] TXXX [P] Additional unit tests (if requested) in tests/unit/
-- [ ] TXXX Security hardening
+- [ ] TXXX Performance optimization across all stories (in-browser compute budget)
+- [ ] TXXX [P] Additional unit tests in tests/unit/
+- [ ] TXXX Verify `next build` still produces a working static export
+- [ ] TXXX Verify the app runs after a clean clone with zero env vars and zero accounts
+- [ ] TXXX Verify estimate wording: no to-the-minute arrivals, parameters user-adjustable
 - [ ] TXXX Run quickstart.md validation
 
 ---
@@ -200,12 +208,12 @@ Examples of foundational tasks (adjust based on your project):
 
 ```bash
 # Launch all tests for User Story 1 together (if tests requested):
-Task: "Contract test for [endpoint] in tests/contract/test_[name].py"
-Task: "Integration test for [user journey] in tests/integration/test_[name].py"
+Task: "Unit test for [pure function] in tests/unit/[name].test.ts"
+Task: "Fixture-backed test for [user journey] in tests/unit/[name].test.ts"
 
 # Launch all models for User Story 1 together:
-Task: "Create [Entity1] model in src/models/[entity1].py"
-Task: "Create [Entity2] model in src/models/[entity2].py"
+Task: "Create [Entity1] model in lib/core/[entity1].ts"
+Task: "Create [Entity2] model in lib/core/[entity2].ts"
 ```
 
 ---
