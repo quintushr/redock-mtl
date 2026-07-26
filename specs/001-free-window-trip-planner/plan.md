@@ -106,7 +106,9 @@ app/                     # Next.js App Router
 
 components/              # React UI, thin layer over lib/
 ├── PlannerShell.tsx     # 'use client'; owns origin, destination, params, feed status
-├── MapView.tsx          # MapLibre instance created in useEffect, kept in a ref
+├── MapView.tsx          # MapLibre instance created in useEffect, kept in a ref;
+│                        # draggable start and destination pins
+
 ├── ItineraryList.tsx    # exhaustive switch over ItineraryStep['kind']
 ├── SegmentBudget.tsx    # bar, colour band, and text label, all from lib/budget.ts
 ├── ParameterPanel.tsx   # debounced controls
@@ -120,6 +122,7 @@ lib/                     # pure core: no React, no DOM, no global state
 ├── planner.ts           # graph construction and Dijkstra; single entry point planTrip
 ├── params.ts            # conservative defaults and validation
 ├── budget.ts            # free-window share and status thresholds
+├── geocode.ts           # geocoder result labelling, manual coordinate entry
 ├── endpoints.ts         # every external base URL, isolated for one-file provider swaps
 └── feed-client.ts       # fetch and ttl-aware cache; impure by design, logic-free
 

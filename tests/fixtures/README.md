@@ -1,6 +1,9 @@
 # Test fixtures
 
-Frozen GBFS output. Tests read these and never touch the network.
+Frozen provider output. Tests read these and never touch the network.
+
+Everything below describes the GBFS set unless stated otherwise; the one
+non-GBFS file is `photon-housenumber.json`, documented at the end.
 
 **Captured**: 2026-07-26
 **System**: BIXI Montréal (`Bixi_MTL`), GBFS 2.2
@@ -91,3 +94,27 @@ The current selection is every healthy station within 700 m of a straight line
 across the island: 93 corridor stations with a 376 m median gap over 11.3 km.
 Dense enough that each hop fits one free window, long enough that a single window
 cannot cover the trip.
+
+## `photon-housenumber.json` (geocoding, not GBFS)
+
+**Captured**: 2026-07-26
+**Endpoint**: <https://photon.komoot.io/api/>
+**Query**: `q=1000 rue de la Gauchetière Montreal`, `limit=5`, biased to
+(45.5088, -73.5878)
+**License**: OpenStreetMap data, ODbL. Photon requires no key and its operator
+states availability is not guaranteed, which is why geocoding is optional by
+construction in the app.
+
+Kept because of what the five features contain:
+
+1. **Two features carry `housenumber` and `street` but no `name` at all.** This
+   is the ordinary street address, and it is the case a label built from
+   `name`, `street` and `city` gets wrong: the number is dropped, and both rows
+   render as the same string. `lib/geocode.ts` exists to handle this.
+2. **The same number on two branches of one street** (`Ouest` and `Est`), so
+   the label has to be specific enough to tell them apart.
+3. **Named places whose `street` is not the street in their `name`** (feature
+   one is named "1000 de la Gauchetière" but sits on Rue Saint-Antoine Ouest),
+   so name and street cannot be concatenated blindly.
+4. **`city` and `state` spelled inconsistently across features** ("Montréal"
+   and "Montreal", "Québec", "Quebec" and "QC"), straight from OpenStreetMap.

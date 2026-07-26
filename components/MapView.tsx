@@ -4,7 +4,9 @@ import { useEffect, useRef } from "react";
 // maplibre-gl 6 has no default export; it publishes named classes. `Map`
 // would shadow the global, so the package provides the MapLibreMap alias.
 import {
+  LngLatBounds,
   MapLibreMap,
+  Marker,
   NavigationControl,
   setWorkerUrl,
   type GeoJSONSource,
@@ -36,6 +38,32 @@ const STOPS_SOURCE = "stops";
 
 const MONTREAL: LatLon = { lat: 45.5088, lon: -73.5878 };
 
+/** Which end of the trip the next map click sets, if any. */
+export type PickTarget = "origin" | "destination";
+
+/**
+ * A one-shot request to look at something, sent by the panel when the user
+ * picks an address. `id` makes each request distinct, so asking twice for the
+ * same point moves the camera twice.
+ *
+ * This is the only thing that may move the camera. Nothing here reacts to a
+ * parameter change, which is what FR-026 forbids.
+ */
+export interface FocusRequest {
+  points: LatLon[];
+  id: number;
+}
+
+const ENDPOINT_COLOUR: Record<PickTarget, string> = {
+  origin: "#059669",
+  destination: "#dc2626",
+};
+
+const ENDPOINT_LABEL: Record<PickTarget, string> = {
+  origin: "Start, drag to move",
+  destination: "Destination, drag to move",
+};
+
 /**
  * MapLibre must be told where its worker is.
  *
@@ -57,25 +85,40 @@ export default function MapView({
   itinerary,
   origin,
   destination,
+  picking,
+  focus,
   onMapClick,
+  onEndpointMove,
+  onCancelPicking,
 }: {
   stations: Station[];
   itinerary: Itinerary | null;
   origin: LatLon | null;
   destination: LatLon | null;
+  picking: PickTarget | null;
+  focus: FocusRequest | null;
   onMapClick: (point: LatLon) => void;
+  onEndpointMove: (target: PickTarget, point: LatLon) => void;
+  onCancelPicking: () => void;
 }) {
   const container = useRef<HTMLDivElement | null>(null);
   const map = useRef<MapLibreMap | null>(null);
   const ready = useRef(false);
+  const markers = useRef<Record<PickTarget, Marker | null>>({
+    origin: null,
+    destination: null,
+  });
 
-  // The map instance is created once and outlives every render, so its click
-  // listener must reach the current callback rather than the one captured when
-  // the map was built. The ref is updated in an effect, not during render.
+  // The map instance and the markers are created once and outlive every render,
+  // so their listeners must reach the current callbacks rather than the ones
+  // captured when they were built. The refs are updated in an effect, not
+  // during render.
   const clickHandler = useRef(onMapClick);
+  const moveHandler = useRef(onEndpointMove);
   useEffect(() => {
     clickHandler.current = onMapClick;
-  }, [onMapClick]);
+    moveHandler.current = onEndpointMove;
+  }, [onMapClick, onEndpointMove]);
 
   // Create once. Never in render: at build time there is no browser.
   useEffect(() => {
@@ -158,8 +201,83 @@ export default function MapView({
       instance.remove();
       map.current = null;
       ready.current = false;
+      markers.current = { origin: null, destination: null };
     };
   }, []);
+
+  // Start and destination pins, draggable so a point set roughly can be nudged
+  // without retyping an address. Markers are DOM overlays, not layers, so they
+  // need no style and no source and survive a failing tile server.
+  useEffect(() => {
+    const instance = map.current;
+    if (instance === null) return;
+
+    const sync = (target: PickTarget, point: LatLon | null): void => {
+      const existing = markers.current[target];
+
+      if (point === null) {
+        existing?.remove();
+        markers.current[target] = null;
+        return;
+      }
+
+      if (existing !== null) {
+        existing.setLngLat([point.lon, point.lat]);
+        return;
+      }
+
+      const marker = new Marker({
+        color: ENDPOINT_COLOUR[target],
+        draggable: true,
+      });
+      const element = marker.getElement();
+      element.setAttribute("aria-label", ENDPOINT_LABEL[target]);
+      element.title = ENDPOINT_LABEL[target];
+      // A pointer landing on a pin must not also count as a click on the map,
+      // or grabbing a pin would drop a second point underneath it.
+      element.addEventListener("click", (event) => event.stopPropagation());
+      marker.on("dragend", () => {
+        const { lat, lng } = marker.getLngLat();
+        moveHandler.current(target, { lat, lon: lng });
+      });
+
+      marker.setLngLat([point.lon, point.lat]).addTo(instance);
+      markers.current[target] = marker;
+    };
+
+    sync("origin", origin);
+    sync("destination", destination);
+  }, [origin, destination]);
+
+  // Arming a point turns the whole map into a target, so say so with the
+  // cursor as well as with the banner below.
+  useEffect(() => {
+    const instance = map.current;
+    if (instance === null) return;
+    instance.getCanvas().style.cursor = picking === null ? "" : "crosshair";
+  }, [picking]);
+
+  // The one place the camera is allowed to move on its own: the user asked for
+  // a place by name, so showing them where it is answers the question they
+  // asked. Never fired by a parameter change (FR-026).
+  useEffect(() => {
+    const instance = map.current;
+    if (instance === null || focus === null || focus.points.length === 0) return;
+
+    if (focus.points.length === 1) {
+      const [point] = focus.points;
+      instance.easeTo({
+        center: [point.lon, point.lat],
+        zoom: Math.max(instance.getZoom(), 14),
+        duration: 600,
+      });
+      return;
+    }
+
+    const bounds = new LngLatBounds();
+    for (const point of focus.points) bounds.extend([point.lon, point.lat]);
+    instance.fitBounds(bounds, { padding: 72, maxZoom: 15, duration: 600 });
+  }, [focus]);
 
   // Stations, shown before any input (FR-027).
   useEffect(() => {
@@ -264,15 +382,56 @@ export default function MapView({
 
   return (
     <div
-      ref={container}
-      className="h-full w-full"
-      // The map is decorative to a screen reader; the step list carries the
-      // itinerary in text.
-      role="presentation"
+      className="relative h-full w-full"
       data-origin={origin === null ? undefined : `${origin.lat},${origin.lon}`}
       data-destination={
         destination === null ? undefined : `${destination.lat},${destination.lon}`
       }
-    />
+    >
+      <div
+        ref={container}
+        className="h-full w-full"
+        // The map is decorative to a screen reader; the step list carries the
+        // itinerary in text.
+        role="presentation"
+      />
+
+      {picking !== null && (
+        <div className="pointer-events-none absolute inset-x-0 top-0 flex justify-center p-3">
+          <div className="pointer-events-auto flex items-center gap-3 rounded-full bg-blue-600 px-4 py-2 text-sm text-white shadow-lg">
+            <span>
+              Click the map to set your{" "}
+              {picking === "origin" ? "start" : "destination"}
+            </span>
+            <button
+              type="button"
+              className="rounded-full bg-blue-500 px-2 py-0.5 text-xs hover:bg-blue-400"
+              onClick={onCancelPicking}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* The dot colours are meaningless without this, and a rider choosing a
+          starting point needs to know which stations can actually lend a
+          mechanical bike (FR-011). */}
+      <ul className="absolute bottom-8 left-2 space-y-1 rounded bg-white/90 p-2 text-[11px] shadow dark:bg-zinc-900/90">
+        {[
+          ["#059669", "Mechanical bike available"],
+          ["#d97706", "E-bike only"],
+          ["#9ca3af", "No bike"],
+        ].map(([colour, text]) => (
+          <li key={text} className="flex items-center gap-1.5">
+            <span
+              className="inline-block h-2 w-2 rounded-full"
+              style={{ backgroundColor: colour }}
+            />
+            {text}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

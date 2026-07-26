@@ -6,7 +6,9 @@ import FeedNotice from "@/components/FeedNotice";
 import ItineraryList from "@/components/ItineraryList";
 import ParameterPanel from "@/components/ParameterPanel";
 import SearchField from "@/components/SearchField";
+import type { FocusRequest, PickTarget } from "@/components/MapView";
 import { loadStationSnapshot } from "@/lib/feed-client";
+import { formatCoordinates } from "@/lib/geocode";
 import { DEFAULT_PARAMETERS, validateParameters } from "@/lib/params";
 import { planTrip } from "@/lib/planner";
 import type {
@@ -56,7 +58,23 @@ export default function PlannerShell() {
     useState<PlanningParameters>(DEFAULT_PARAMETERS);
   const [origin, setOrigin] = useState<LatLon | null>(null);
   const [destination, setDestination] = useState<LatLon | null>(null);
-  const [picking, setPicking] = useState<"origin" | "destination">("origin");
+  // What the two fields show. A point can arrive from an address, a map click,
+  // a dragged pin or the browser's geolocation, and the field must say which,
+  // so the text is held here rather than inside the field.
+  const [originText, setOriginText] = useState("");
+  const [destinationText, setDestinationText] = useState("");
+  /**
+   * Which end the next map click sets, or null for none.
+   *
+   * Null is a real state, not an oversight: once both ends are set, an
+   * unarmed map is a map the user can pan and inspect without a stray click
+   * silently moving their destination. Re-arming is one button on the field
+   * that would change.
+   */
+  const [picking, setPicking] = useState<PickTarget | null>("origin");
+  const [focus, setFocus] = useState<FocusRequest | null>(null);
+  const focusCount = useRef(0);
+  const mapPanel = useRef<HTMLDivElement | null>(null);
   const [geolocationDenied, setGeolocationDenied] = useState(false);
 
   // Debounce recomputation so dragging a slider does not queue redundant work
@@ -86,6 +104,58 @@ export default function PlannerShell() {
     };
   }, []);
 
+  /**
+   * Which ends are already chosen, as a ref.
+   *
+   * Read from callbacks that outlive the render they were made in: the
+   * geolocation fix and the map click both need to know the state at the moment
+   * they fire, not the state captured when they were created.
+   */
+  const chosen = useRef<Record<PickTarget, boolean>>({
+    origin: false,
+    destination: false,
+  });
+
+  /**
+   * The single funnel for every way a point can be set: an address, a map
+   * click, a dragged pin, geolocation. Point and label move together, so the
+   * field can never show an address that is not where the pin is.
+   */
+  const setEndpoint = useCallback(
+    (target: PickTarget, point: LatLon | null, label: string) => {
+      chosen.current[target] = point !== null;
+      if (target === "origin") {
+        setOrigin(point);
+        setOriginText(label);
+      } else {
+        setDestination(point);
+        setDestinationText(label);
+      }
+    },
+    [],
+  );
+
+  /**
+   * Where the next map click goes once this end is set.
+   *
+   * Setting the start hands the map to the destination, which is the only
+   * sequence anyone wants. Setting the last missing end disarms the map
+   * entirely, so the click that follows cannot silently move what was just
+   * placed. Arming for the *other* end is a deliberate choice and stands.
+   */
+  const advance = useCallback((target: PickTarget) => {
+    setPicking((current) => {
+      if (current !== target) return current;
+      const other: PickTarget = target === "origin" ? "destination" : "origin";
+      return chosen.current[other] ? null : other;
+    });
+  }, []);
+
+  const focusOn = useCallback((points: LatLon[]) => {
+    focusCount.current += 1;
+    setFocus({ points, id: focusCount.current });
+  }, []);
+
   // Geolocation is read only after mount, and nothing ever blocks on it
   // (FR-003). Denial is a normal path, not an error.
   useEffect(() => {
@@ -101,16 +171,23 @@ export default function PlannerShell() {
 
     geolocation.getCurrentPosition(
       (position) => {
-        setOrigin({
+        // A slow fix must never overwrite a start the user chose in the
+        // meantime; eight seconds is long enough for that race to be real.
+        if (chosen.current.origin) return;
+        const here = {
           lat: position.coords.latitude,
           lon: position.coords.longitude,
-        });
-        setPicking("destination");
+        };
+        setEndpoint("origin", here, "Your location");
+        advance("origin");
+        // The user granted the permission; showing them where they are is the
+        // whole point of having asked.
+        focusOn([here]);
       },
       () => setGeolocationDenied(true),
       { timeout: 8000 },
     );
-  }, []);
+  }, [setEndpoint, advance, focusOn]);
 
   const snapshot =
     feed.state === "ready" || feed.state === "stale" ? feed.snapshot : null;
@@ -125,15 +202,63 @@ export default function PlannerShell() {
 
   const handleMapClick = useCallback(
     (point: LatLon) => {
-      if (picking === "origin") {
-        setOrigin(point);
-        setPicking("destination");
-      } else {
-        setDestination(point);
-      }
+      // An unarmed map is inert. This is the fix for the click that used to
+      // land on whichever end had been armed last, which in practice meant
+      // every click after the first one moved the destination.
+      if (picking === null) return;
+      setEndpoint(picking, point, formatCoordinates(point));
+      advance(picking);
     },
-    [picking],
+    [picking, setEndpoint, advance],
   );
+
+  // A dragged pin never re-arms and never moves the camera: the point is
+  // already under the finger.
+  const handleEndpointMove = useCallback(
+    (target: PickTarget, point: LatLon) => {
+      setEndpoint(target, point, formatCoordinates(point));
+    },
+    [setEndpoint],
+  );
+
+  const pickFromSearch = (
+    target: PickTarget,
+    position: LatLon,
+    label: string,
+  ): void => {
+    setEndpoint(target, position, label);
+    advance(target);
+    // An address the user cannot see on the map is an address they cannot
+    // check. Showing both ends once both exist is the useful framing.
+    const other = target === "origin" ? destination : origin;
+    focusOn(other === null ? [position] : [position, other]);
+  };
+
+  const arm = (target: PickTarget): void => {
+    const next = picking === target ? null : target;
+    setPicking(next);
+    // On a phone the map sits above the panel and is usually scrolled off.
+    // Arming a map the user cannot see is arming nothing.
+    if (next !== null) {
+      mapPanel.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  };
+
+  const clearEndpoint = (target: PickTarget): void => {
+    setEndpoint(target, null, "");
+    setPicking(target);
+  };
+
+  const swapEndpoints = (): void => {
+    chosen.current = {
+      origin: chosen.current.destination,
+      destination: chosen.current.origin,
+    };
+    setOrigin(destination);
+    setDestination(origin);
+    setOriginText(destinationText);
+    setDestinationText(originText);
+  };
 
   const applySuggestion = (kind: string, value: number): void => {
     if (kind === "increase-walk-distance") {
@@ -161,31 +286,51 @@ export default function PlannerShell() {
         <div className="mt-4 space-y-3">
           <SearchField
             label="Start"
-            placeholder="Address, or click the map"
+            placeholder="123 Rue Sainte-Catherine Ouest"
+            value={originText}
+            point={origin}
             bias={MONTREAL}
-            onPick={(position) => setOrigin(position)}
+            armed={picking === "origin"}
+            onValueChange={setOriginText}
+            onPick={(position, label) =>
+              pickFromSearch("origin", position, label)
+            }
+            onClear={() => clearEndpoint("origin")}
+            onArm={() => arm("origin")}
           />
-          <SearchField
-            label="Destination"
-            placeholder="Address, or click the map"
-            bias={MONTREAL}
-            onPick={(position) => setDestination(position)}
-          />
-          <p className="text-xs text-zinc-500">
-            {geolocationDenied
-              ? "Location is unavailable, so pick both points by search or by clicking the map."
-              : "You can also click the map."}{" "}
-            Next click sets your{" "}
+
+          <div className="flex justify-end">
             <button
               type="button"
-              className="underline"
-              onClick={() =>
-                setPicking((p) => (p === "origin" ? "destination" : "origin"))
-              }
+              className="rounded border border-zinc-300 px-2 py-0.5 text-xs hover:bg-zinc-100 disabled:opacity-40 dark:border-zinc-700 dark:hover:bg-zinc-800"
+              disabled={origin === null && destination === null}
+              onClick={swapEndpoints}
             >
-              {picking === "origin" ? "start" : "destination"}
+              Swap start and destination
             </button>
-            .
+          </div>
+
+          <SearchField
+            label="Destination"
+            placeholder="123 Rue Sainte-Catherine Ouest"
+            value={destinationText}
+            point={destination}
+            bias={MONTREAL}
+            armed={picking === "destination"}
+            onValueChange={setDestinationText}
+            onPick={(position, label) =>
+              pickFromSearch("destination", position, label)
+            }
+            onClear={() => clearEndpoint("destination")}
+            onArm={() => arm("destination")}
+          />
+
+          <p className="text-xs text-zinc-500">
+            {picking !== null
+              ? `Click the map to set your ${picking === "origin" ? "start" : "destination"}, or type an address above.`
+              : geolocationDenied
+                ? "Location is unavailable. Type an address, drag a pin, or use “Pick on map”."
+                : "Drag a pin to adjust it, or use “Pick on map” to place one again."}
           </p>
         </div>
 
@@ -237,13 +382,20 @@ export default function PlannerShell() {
         </div>
       </div>
 
-      <div className="order-1 h-[45dvh] w-full lg:order-2 lg:h-auto lg:flex-1">
+      <div
+        ref={mapPanel}
+        className="order-1 h-[45dvh] w-full lg:order-2 lg:h-auto lg:flex-1"
+      >
         <MapView
           stations={snapshot?.stations ?? []}
           itinerary={plan?.ok ? plan.itinerary : null}
           origin={origin}
           destination={destination}
+          picking={picking}
+          focus={focus}
           onMapClick={handleMapClick}
+          onEndpointMove={handleEndpointMove}
+          onCancelPicking={() => setPicking(null)}
         />
       </div>
     </main>
