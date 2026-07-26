@@ -34,6 +34,18 @@
 - Q: What response time must a plan computation meet? → A: Under one second on a mid-range phone,
   with debounced controls and no progress indicator (option A).
 
+### Session 2026-07-26
+
+- Q: Principle IV requires speeds, transfer penalties and availability buffers to be adjustable,
+  but FR-021 exposed only four parameters and an assumption fixed walking speed. → A: Extend
+  FR-021 to every influencing parameter, with an advanced section in the UI. No amendment; the
+  spec conforms to the constitution.
+- Q: The published feed carries two cities 130 km apart, so a single footprint declares the
+  countryside between them covered. → A: One footprint per connected cluster of stations
+  (FR-029c).
+- Q: The model charged only riding time, so it proposed 65 m rides taking 16 seconds. → A: Add a
+  per-segment overhead that consumes the free window (FR-021b).
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Reach a destination without paying overage (Priority: P1)
@@ -260,8 +272,18 @@ displayed.
 
 **Parameters**
 
-- **FR-021**: Users MUST be able to adjust the free limit, the safety margin, their cycling
-  speed, and their maximum walking distance.
+- **FR-021**: Users MUST be able to adjust every parameter that influences the result: the free
+  limit, the safety margin, cycling speed, walking speed, maximum walking distance, the docking
+  cooldown, the per-segment overhead, and the bike and dock safety reserves. Constitution
+  principle IV names speeds, transfer penalties, and availability buffers explicitly, so none of
+  them may be fixed constants.
+- **FR-021a**: The interface MAY group the less commonly changed parameters into an advanced
+  section, but MUST NOT hide any of them from a user who goes looking.
+- **FR-021b**: Each bike segment MUST be charged a per-segment overhead covering the time to
+  unlock a bike and dock it. That overhead consumes the free window, because the operator's meter
+  runs from unlock to dock rather than from the first pedal stroke. Without it the planner
+  proposes rides of a few dozen metres, which is an optimistic estimate and forbidden by
+  principle IV.
 - **FR-022**: Changing any parameter MUST recompute and update the itinerary.
 - **FR-022a**: Continuous controls MUST be debounced so that dragging one does not queue redundant
   computations, and the interface MUST remain responsive to input while a plan is being computed.
@@ -287,6 +309,11 @@ displayed.
   out-of-coverage condition, distinct from a routing failure.
 - **FR-029a**: The service area MUST be derived from the footprint enclosed by the network's
   active stations, extended by a buffer whose default is the trip's maximum walking distance.
+- **FR-029c**: The footprint MUST be computed per connected cluster of stations, not as a single
+  region covering the whole feed. A point is inside the service area when it falls within any
+  cluster's footprint. A published feed may carry several geographically separate networks, and
+  treating them as one region would declare the territory between them covered, which is exactly
+  the confusion FR-029b exists to prevent.
 - **FR-029b**: A point inside the service area that has no eligible station within walking range
   MUST be reported as a routing failure under FR-028, not as an out-of-coverage condition.
 - **FR-030**: An unavailable or out-of-season data feed MUST produce an explicit message, never a
@@ -299,14 +326,15 @@ displayed.
 ### Key Entities
 
 - **Network**: a bike-share system with a set of stations, a seasonal operating state, and a
-  service area derived from the footprint of its active stations plus a buffer. One network at a
-  time; Montreal is the first target.
+  service area made of one footprint per connected cluster of active stations, each plus a buffer.
+  One network at a time; Montreal is the first target. A single published feed may nonetheless
+  contain several geographically separate clusters.
 - **Station**: a docking location with a position, a count of available mechanical bikes, a count
   of available e-bikes, a count of free docks, and operational flags (installed, renting,
   returning, in service). Carries the timestamp of the snapshot it came from.
-- **Planning Parameters**: free limit, safety margin, cycling speed, maximum walking distance,
-  bike and dock safety reserves, and the inter-segment cooldown (default one minute). User-visible,
-  with conservative defaults.
+- **Planning Parameters**: free limit, safety margin, cycling speed, walking speed, maximum walking
+  distance, docking cooldown (default one minute), per-segment overhead, detour factor, and bike
+  and dock safety reserves. All user-visible and adjustable (FR-021), with conservative defaults.
 - **Bike Segment**: a ride from one station to another, with an estimated duration, the share of
   the free window it consumes, and a comfort status relative to the limit.
 - **Walk Leg**: a walk between a point and a station, or between two points, with an estimated
@@ -386,8 +414,8 @@ displayed.
 - Bike segment durations are estimated from distance and the user's configured cycling speed,
   with a correction for real street routing rather than straight-line distance. The estimate is
   presented as an estimate; turn-by-turn street accuracy is not promised.
-- Walking speed is a fixed conservative value; the user controls maximum walking distance rather
-  than walking speed.
+- Walking speed has a conservative default and is user-adjustable like every other parameter that
+  influences the result (FR-021).
 - Station availability is read at plan time from the network's published snapshot. The app does
   not predict future availability.
 - The map is the primary surface, with the itinerary detail alongside it rather than on a separate

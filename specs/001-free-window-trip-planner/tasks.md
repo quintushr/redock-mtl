@@ -39,14 +39,14 @@ independently.
 
 **Purpose**: Switch the existing scaffold to static export and stand up the test toolchain
 
-- [ ] T001 Add `output: 'export'` to `next.config.ts`
-- [ ] T002 In `package.json`, remove the `start` script (meaningless under static export), add `test` and `test:watch` running Vitest
-- [ ] T003 Install the runtime dependency `maplibre-gl@6.0.0` and pin it exactly in `package.json`
-- [ ] T004 Install dev dependencies `vitest@4.1.10`, `@vitejs/plugin-react@6.0.4`, `jsdom@29.1.1`, `@testing-library/react@16.3.2`, `@testing-library/dom@10.4.1`, `vite-tsconfig-paths@6.1.1`, pinned exactly
-- [ ] T005 Create `vitest.config.mts` with `plugins: [tsconfigPaths(), react()]` and `test.environment: 'jsdom'`, per `node_modules/next/dist/docs/01-app/02-guides/testing/vitest.md`
-- [ ] T006 [P] Add an ESLint rule to `eslint.config.mjs` forbidding imports of `react`, `react-dom`, and `@/components/*` from anywhere under `lib/`
-- [ ] T007 [P] Replace the create-next-app placeholder in `app/page.tsx` and strip unused boilerplate from `app/globals.css`
-- [ ] T008 Verify the toolchain end to end: `npm run build` emits `out/`, `npm test` runs, `npm run lint` passes. Resolve any TypeScript 5 incompatibility with Vitest 4 here and record the resolution in `specs/001-free-window-trip-planner/research.md`
+- [X] T001 Add `output: 'export'` to `next.config.ts`
+- [X] T002 In `package.json`, remove the `start` script (meaningless under static export), add `test` and `test:watch` running Vitest
+- [X] T003 Install the runtime dependency `maplibre-gl@6.0.0` and pin it exactly in `package.json`
+- [X] T004 Install dev dependencies `vitest@4.1.10`, `@vitejs/plugin-react@6.0.4`, `jsdom@29.1.1`, `@testing-library/react@16.3.2`, `@testing-library/dom@10.4.1`, `vite-tsconfig-paths@6.1.1`, pinned exactly
+- [X] T005 Create `vitest.config.mts` with `plugins: [tsconfigPaths(), react()]` and `test.environment: 'jsdom'`, per `node_modules/next/dist/docs/01-app/02-guides/testing/vitest.md`
+- [X] T006 [P] Add an ESLint rule to `eslint.config.mjs` forbidding imports of `react`, `react-dom`, and `@/components/*` from anywhere under `lib/`
+- [X] T007 [P] Replace the create-next-app placeholder in `app/page.tsx` and strip unused boilerplate from `app/globals.css`
+- [X] T008 Verify the toolchain end to end: `npm run build` emits `out/`, `npm test` runs, `npm run lint` passes. Resolve any TypeScript 5 incompatibility with Vitest 4 here and record the resolution in `specs/001-free-window-trip-planner/research.md`
 
 **Checkpoint**: static export builds, tests run, lint enforces the pure/impure boundary
 
@@ -60,43 +60,43 @@ independently.
 
 ### Types and constants
 
-- [ ] T009 [P] Define every type from `specs/001-free-window-trip-planner/data-model.md` in `lib/types.ts`: `LatLon`, `Metres`, `Seconds`, `Station`, `StationSnapshot`, `FeedAttribution`, `ServiceArea`, `PlanningParameters`, `WalkLeg`, `BikeSegment`, `BudgetStatus`, `DockingStop`, `ItineraryStep`, `Itinerary`, `PlanningFailure`, `PlanningFailureReason`, `Suggestion`, `PlanResult`, `FeedStatus`
-- [ ] T010 Verify against provider documentation, then pin in `lib/endpoints.ts`: the GBFS discovery URL, the Photon instance host and its usage policy, and the OpenFreeMap style URL. Do not write any host from memory (research R7, R8, and `contracts/external-services.md`)
+- [X] T009 [P] Define every type from `specs/001-free-window-trip-planner/data-model.md` in `lib/types.ts`: `LatLon`, `Metres`, `Seconds`, `Station`, `StationSnapshot`, `FeedAttribution`, `ServiceArea`, `PlanningParameters`, `WalkLeg`, `BikeSegment`, `BudgetStatus`, `DockingStop`, `ItineraryStep`, `Itinerary`, `PlanningFailure`, `PlanningFailureReason`, `Suggestion`, `PlanResult`, `FeedStatus`
+- [X] T010 Verify against provider documentation, then pin in `lib/endpoints.ts`: the GBFS discovery URL, the Photon instance host and its usage policy, and the OpenFreeMap style URL. Do not write any host from memory (research R7, R8, and `contracts/external-services.md`)
 
 ### Fixtures
 
-- [ ] T011 Capture the provider's GBFS feeds into `tests/fixtures/`, trimmed to cover a station with docks but no bikes, a non-operational station, an e-bike-only station, and enough spread to force a multi-segment trip. Record capture date, feed URLs, and license in `tests/fixtures/README.md`
-- [ ] T012 While capturing, confirm and record in `specs/001-free-window-trip-planner/research.md`: the vehicle-type field shapes, the value identifying a mechanical bike, whether `ttl` is per-feed or global, and the license text
+- [X] T011 Capture the provider's GBFS feeds into `tests/fixtures/`, trimmed to cover a station with docks but no bikes, a non-operational station, an e-bike-only station, and enough spread to force a multi-segment trip. Record capture date, feed URLs, and license in `tests/fixtures/README.md`
+- [X] T012 While capturing, confirm and record in `specs/001-free-window-trip-planner/research.md`: the vehicle-type field shapes, the value identifying a mechanical bike, whether `ttl` is per-feed or global, and the license text
 
 ### Parameters
 
-- [ ] T013 [P] Implement `DEFAULT_PARAMETERS`, `validateParameters`, and `segmentBudget` in `lib/params.ts`, each default carrying a comment stating where the value came from
-- [ ] T014 [P] Write `tests/unit/params.test.ts` covering conservative defaults, rejection when `safetyMargin >= freeWindow`, and that `validateParameters` returns a corrected set rather than throwing
+- [X] T013 [P] Implement `DEFAULT_PARAMETERS`, `validateParameters`, and `segmentBudget` in `lib/params.ts`, each default carrying a comment stating where the value came from
+- [X] T014 [P] Write `tests/unit/params.test.ts` covering conservative defaults, rejection when `safetyMargin >= freeWindow`, and that `validateParameters` returns a corrected set rather than throwing
 
 ### Geometry
 
-- [ ] T015 [P] Implement `haversineMetres`, `cyclingDuration`, and `walkingDuration` in `lib/geo.ts`
-- [ ] T016 [P] Write `tests/unit/geo-distance.test.ts` asserting symmetry, zero for identical points, and that `cyclingDuration` never returns less than straight-line distance over speed
-- [ ] T017 Implement `convexHull` and `isInsideBufferedHull` in `lib/geo.ts`
-- [ ] T018 Write `tests/unit/geo-hull.test.ts` covering zero, one, two, and all-collinear inputs without throwing, plus a point inside the hull and one outside the buffer
-- [ ] T019 Implement `withinEllipse` in `lib/geo.ts`
-- [ ] T020 Write `tests/unit/geo-ellipse.test.ts` asserting conservativeness: a false negative is a correctness bug, so the test must prove no admissible point is ever excluded
+- [X] T015 [P] Implement `haversineMetres`, `cyclingDuration`, and `walkingDuration` in `lib/geo.ts`
+- [X] T016 [P] Write `tests/unit/geo-distance.test.ts` asserting symmetry, zero for identical points, and that `cyclingDuration` never returns less than straight-line distance over speed
+- [X] T017 Implement `convexHull` and `isInsideBufferedHull` in `lib/geo.ts`
+- [X] T018 Write `tests/unit/geo-hull.test.ts` covering zero, one, two, and all-collinear inputs without throwing, plus a point inside the hull and one outside the buffer
+- [X] T019 Implement `withinEllipse` in `lib/geo.ts`
+- [X] T020 Write `tests/unit/geo-ellipse.test.ts` asserting conservativeness: a false negative is a correctness bug, so the test must prove no admissible point is ever excluded
 
 ### Feed ingestion
 
-- [ ] T021 Implement `parseStationSnapshot` in `lib/gbfs.ts`, taking `unknown`, validating totally, ignoring unknown fields, dropping stations present in only one feed, and returning a typed failure instead of throwing
-- [ ] T022 Write `tests/unit/gbfs-parse.test.ts` covering malformed JSON, an empty feed, missing optional fields, and an out-of-season system, all against fixtures
-- [ ] T023 Implement `isOperational`, `canStartSegment`, and `canEndSegment` in `lib/gbfs.ts`
-- [ ] T024 Write `tests/unit/gbfs-eligibility.test.ts`, including the case that decides the whole design: a station with free docks but no mechanical bike is usable as an intermediate stop yet not as the first pickup (FR-011, FR-011a)
-- [ ] T025 [P] Implement `buildServiceArea` in `lib/gbfs.ts` from operational stations only, so an out-of-season network yields an empty hull
-- [ ] T026 Implement `lib/feed-client.ts`: fetch the feeds, merge them through `parseStationSnapshot`, and cache client-side honouring the feed's `ttl`. This is the one impure module in `lib/` and must contain no domain logic
+- [X] T021 Implement `parseStationSnapshot` in `lib/gbfs.ts`, taking `unknown`, validating totally, ignoring unknown fields, dropping stations present in only one feed, and returning a typed failure instead of throwing
+- [X] T022 Write `tests/unit/gbfs-parse.test.ts` covering malformed JSON, an empty feed, missing optional fields, and an out-of-season system, all against fixtures
+- [X] T023 Implement `isOperational`, `canStartSegment`, and `canEndSegment` in `lib/gbfs.ts`
+- [X] T024 Write `tests/unit/gbfs-eligibility.test.ts`, including the case that decides the whole design: a station with free docks but no mechanical bike is usable as an intermediate stop yet not as the first pickup (FR-011, FR-011a)
+- [X] T025 [P] Implement `buildServiceArea` in `lib/gbfs.ts` from operational stations only, so an out-of-season network yields an empty hull
+- [X] T026 Implement `lib/feed-client.ts`: fetch the feeds, merge them through `parseStationSnapshot`, and cache client-side honouring the feed's `ttl`. This is the one impure module in `lib/` and must contain no domain logic
 
 ### App shell
 
-- [ ] T027 Update `app/layout.tsx` for the single-route shell and Tailwind entry
-- [ ] T028 Create `components/PlannerShell.tsx` as a Client Component owning origin, destination, parameters, plan, and feed status via `useState` and context
-- [ ] T029 Create `components/MapView.tsx` instantiating MapLibre inside `useEffect` and holding the instance in a ref so re-renders cannot reset the view. Render OpenStreetMap and OpenFreeMap attribution
-- [ ] T030 [P] Create `components/FeedNotice.tsx` rendering the `loading`, `stale`, and `unavailable` states with distinct messages for network, malformed, and out-of-season, and displaying operator attribution, feed license, and snapshot timestamp
+- [X] T027 Update `app/layout.tsx` for the single-route shell and Tailwind entry
+- [X] T028 Create `components/PlannerShell.tsx` as a Client Component owning origin, destination, parameters, plan, and feed status via `useState` and context
+- [X] T029 Create `components/MapView.tsx` instantiating MapLibre inside `useEffect` and holding the instance in a ref so re-renders cannot reset the view. Render OpenStreetMap and OpenFreeMap attribution
+- [X] T030 [P] Create `components/FeedNotice.tsx` rendering the `loading`, `stale`, and `unavailable` states with distinct messages for network, malformed, and out-of-season, and displaying operator attribution, feed license, and snapshot timestamp
 
 **Checkpoint**: station data loads, parses, and displays with attribution; geometry is tested; user story implementation can begin
 
@@ -112,24 +112,24 @@ independently.
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T031 [P] [US1] Write `tests/unit/planner-graph.test.ts` asserting that bike edges exist only when segment duration fits the budget, that only the first pickup requires an available bike, and that every segment end has free docks
-- [ ] T032 [P] [US1] Write `tests/unit/planner-path.test.ts` asserting the returned itinerary minimizes total duration including walk legs and cooldowns, contains one segment when one suffices, and returns exactly one itinerary
-- [ ] T033 [P] [US1] Write `tests/unit/planner-failures.test.ts` making every `PlanningFailureReason` reachable and distinguishable, in particular out-of-coverage versus no-station-in-range, and asserting `suggestions` is never empty
-- [ ] T034 [P] [US1] Write `tests/unit/planner-invariants.test.ts` asserting `planTrip` never throws on any fixture, including malformed and empty snapshots
+- [X] T031 [P] [US1] Write `tests/unit/planner-graph.test.ts` asserting that bike edges exist only when segment duration fits the budget, that only the first pickup requires an available bike, and that every segment end has free docks
+- [X] T032 [P] [US1] Write `tests/unit/planner-path.test.ts` asserting the returned itinerary minimizes total duration including walk legs and cooldowns, contains one segment when one suffices, and returns exactly one itinerary
+- [X] T033 [P] [US1] Write `tests/unit/planner-failures.test.ts` making every `PlanningFailureReason` reachable and distinguishable, in particular out-of-coverage versus no-station-in-range, and asserting `suggestions` is never empty
+- [X] T034 [P] [US1] Write `tests/unit/planner-invariants.test.ts` asserting `planTrip` never throws on any fixture, including malformed and empty snapshots
 
 ### Implementation for User Story 1
 
-- [ ] T035 [US1] Implement candidate pruning and graph construction in `lib/planner.ts`: partition into can-start and can-end, add virtual source and sink walk edges, and a direct source-to-sink walk edge so FR-032 falls out of the same computation
-- [ ] T036 [US1] Implement edge costing in `lib/planner.ts`: duration for bike edges, plus the docking cooldown when the edge ends at an intermediate stop rather than the sink
-- [ ] T037 [US1] Implement Dijkstra and path reconstruction into `ItineraryStep[]` in `lib/planner.ts`
-- [ ] T038 [US1] Implement failure detection and `Suggestion` generation in `lib/planner.ts`, distinguishing out-of-coverage from no-station-in-range per FR-029a and FR-029b
-- [ ] T039 [US1] Expose the single entry point `planTrip` in `lib/planner.ts` and confirm the whole module is pure, with no clock and no network
-- [ ] T040 [P] [US1] Implement `components/SearchField.tsx`: debounced Photon queries biased to the service area, superseded requests cancelled, result count capped, explicit message on failure
-- [ ] T041 [P] [US1] Implement origin selection in `components/PlannerShell.tsx`: current location read only after mount, manual entry, and map click, with manual and map click fully usable when geolocation is denied
-- [ ] T042 [US1] Implement `components/ItineraryList.tsx` as an exhaustive switch over `ItineraryStep['kind']`, rendering walk, bike, and dock steps in order
-- [ ] T043 [US1] Render the itinerary on the map in `components/MapView.tsx`: the route line and a marker per docking stop, without resetting the view
-- [ ] T044 [US1] Wire `components/PlannerShell.tsx` to call `planTrip` and render either the itinerary or the failure with its suggestions
-- [ ] T045 [US1] Display the stop count and total estimated duration in `components/ItineraryList.tsx`, worded as estimates with no to-the-minute arrival time
+- [X] T035 [US1] Implement candidate pruning and graph construction in `lib/planner.ts`: partition into can-start and can-end, add virtual source and sink walk edges, and a direct source-to-sink walk edge so FR-032 falls out of the same computation
+- [X] T036 [US1] Implement edge costing in `lib/planner.ts`: duration for bike edges, plus the docking cooldown when the edge ends at an intermediate stop rather than the sink
+- [X] T037 [US1] Implement Dijkstra and path reconstruction into `ItineraryStep[]` in `lib/planner.ts`
+- [X] T038 [US1] Implement failure detection and `Suggestion` generation in `lib/planner.ts`, distinguishing out-of-coverage from no-station-in-range per FR-029a and FR-029b
+- [X] T039 [US1] Expose the single entry point `planTrip` in `lib/planner.ts` and confirm the whole module is pure, with no clock and no network
+- [X] T040 [P] [US1] Implement `components/SearchField.tsx`: debounced Photon queries biased to the service area, superseded requests cancelled, result count capped, explicit message on failure
+- [X] T041 [P] [US1] Implement origin selection in `components/PlannerShell.tsx`: current location read only after mount, manual entry, and map click, with manual and map click fully usable when geolocation is denied
+- [X] T042 [US1] Implement `components/ItineraryList.tsx` as an exhaustive switch over `ItineraryStep['kind']`, rendering walk, bike, and dock steps in order
+- [X] T043 [US1] Render the itinerary on the map in `components/MapView.tsx`: the route line and a marker per docking stop, without resetting the view
+- [X] T044 [US1] Wire `components/PlannerShell.tsx` to call `planTrip` and render either the itinerary or the failure with its suggestions
+- [X] T045 [US1] Display the stop count and total estimated duration in `components/ItineraryList.tsx`, worded as estimates with no to-the-minute arrival time
 
 **Checkpoint**: User Story 1 is fully functional and independently testable. This is the MVP.
 
@@ -143,15 +143,15 @@ independently.
 
 ### Tests for User Story 2 (REQUIRED for lib/ changes) ⚠️
 
-- [ ] T046 [P] [US2] Write `tests/unit/budget.test.ts` asserting `budgetShare` is clamped to `[0, 1]` and that `budgetStatus` thresholds are stable and derived from the same source as the share
+- [X] T046 [P] [US2] Write `tests/unit/budget.test.ts` asserting `budgetShare` is clamped to `[0, 1]` and that `budgetStatus` thresholds are stable and derived from the same source as the share
 
 ### Implementation for User Story 2
 
-- [ ] T047 [US2] Implement `budgetShare` and `budgetStatus` in `lib/budget.ts` as the single source of the thresholds
-- [ ] T048 [US2] Implement `components/SegmentBudget.tsx` with three redundant encodings driven by `lib/budget.ts`: proportional fill length, colour band, and a short non-numeric text label
-- [ ] T049 [US2] Expose the text label to assistive technology in `components/SegmentBudget.tsx` so budget status is never colour-only (FR-018b)
-- [ ] T050 [US2] Present walk legs separately in `components/ItineraryList.tsx`, labelled as not consuming the free window
-- [ ] T051 [P] [US2] Write `tests/unit/segment-budget.test.tsx` asserting the accessible text label is present for every segment and that bar length and label cannot disagree
+- [X] T047 [US2] Implement `budgetShare` and `budgetStatus` in `lib/budget.ts` as the single source of the thresholds
+- [X] T048 [US2] Implement `components/SegmentBudget.tsx` with three redundant encodings driven by `lib/budget.ts`: proportional fill length, colour band, and a short non-numeric text label
+- [X] T049 [US2] Expose the text label to assistive technology in `components/SegmentBudget.tsx` so budget status is never colour-only (FR-018b)
+- [X] T050 [US2] Present walk legs separately in `components/ItineraryList.tsx`, labelled as not consuming the free window
+- [X] T051 [P] [US2] Write `tests/unit/segment-budget.test.tsx` asserting the accessible text label is present for every segment and that bar length and label cannot disagree
 
 **Checkpoint**: budget consumption is legible numerically, proportionally, and without colour
 
@@ -165,11 +165,11 @@ independently.
 
 ### Implementation for User Story 3
 
-- [ ] T052 [US3] Implement `components/ParameterPanel.tsx` exposing the free limit, safety margin, cycling speed, and maximum walking distance, with the conservative defaults from `lib/params.ts`
-- [ ] T053 [US3] Debounce continuous controls in `components/ParameterPanel.tsx` so dragging queues no redundant computations and the interface stays responsive (FR-022a)
-- [ ] T054 [US3] Recompute on parameter change in `components/PlannerShell.tsx` and confirm `components/MapView.tsx` keeps centre and zoom because the map owns its view state in a ref (FR-026)
-- [ ] T055 [US3] Surface rejected or corrected parameter sets from `validateParameters` in `components/ParameterPanel.tsx` with an explanation rather than a silent failure (FR-024)
-- [ ] T056 [P] [US3] Write `tests/unit/params-recompute.test.ts` asserting that raising the safety margin never yields a segment longer than the new budget
+- [X] T052 [US3] Implement `components/ParameterPanel.tsx` exposing the free limit, safety margin, cycling speed, and maximum walking distance, with the conservative defaults from `lib/params.ts`
+- [X] T053 [US3] Debounce continuous controls in `components/ParameterPanel.tsx` so dragging queues no redundant computations and the interface stays responsive (FR-022a)
+- [X] T054 [US3] Recompute on parameter change in `components/PlannerShell.tsx` and confirm `components/MapView.tsx` keeps centre and zoom because the map owns its view state in a ref (FR-026)
+- [X] T055 [US3] Surface rejected or corrected parameter sets from `validateParameters` in `components/ParameterPanel.tsx` with an explanation rather than a silent failure (FR-024)
+- [X] T056 [P] [US3] Write `tests/unit/params-recompute.test.ts` asserting that raising the safety margin never yields a segment longer than the new budget
 
 **Checkpoint**: the plan responds to the user's own assumptions without losing context
 
@@ -183,9 +183,9 @@ independently.
 
 ### Implementation for User Story 4
 
-- [ ] T057 [US4] Render station markers for the current map view in `components/MapView.tsx` as soon as the snapshot is ready, before any user input (FR-027)
-- [ ] T058 [US4] Set a default network-wide view in `components/PlannerShell.tsx` when geolocation is denied or unavailable, keeping manual entry available (FR-003)
-- [ ] T059 [P] [US4] Show availability with its snapshot timestamp on station markers, presented as a snapshot rather than a guarantee (FR-014)
+- [X] T057 [US4] Render station markers for the current map view in `components/MapView.tsx` as soon as the snapshot is ready, before any user input (FR-027)
+- [X] T058 [US4] Set a default network-wide view in `components/PlannerShell.tsx` when geolocation is denied or unavailable, keeping manual entry available (FR-003)
+- [X] T059 [P] [US4] Show availability with its snapshot timestamp on station markers, presented as a snapshot rather than a guarantee (FR-014)
 
 **Checkpoint**: the app is informative before it is asked anything
 
@@ -193,16 +193,16 @@ independently.
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T060 [P] Calibrate the detour factor by comparing straight-line against real cycling distance for a sample of Montreal pairs, round upward, and record the sample in a comment beside the constant in `lib/params.ts`
-- [ ] T061 Write `tests/unit/planner-benchmark.test.ts` over a full-size fixture asserting SC-012's one-second budget. If it fails, escalate in the order recorded in research R11 and justify the step taken in `specs/001-free-window-trip-planner/plan.md` Complexity Tracking
-- [ ] T062 [P] Audit every user-facing duration for FR-020: estimates only, no to-the-minute arrival time anywhere
-- [ ] T063 [P] Verify operator attribution, feed license, and OpenStreetMap attribution are visible in the running app
-- [ ] T064 Verify `npm run build` produces `out/` and that nothing expects a server at runtime
-- [ ] T065 Verify a clean clone with zero environment variables and zero accounts reaches a working plan
-- [ ] T066 Verify `npm test` passes with the network disabled
-- [ ] T067 [P] Rewrite `README.md`, which is still create-next-app boilerplate recommending Vercel. State the zero-cost, no-key setup and the static hosting target. This clears the one ⚠ item left in the constitution's Sync Impact Report
+- [X] T060 [P] Calibrate the detour factor by comparing straight-line against real cycling distance for a sample of Montreal pairs, round upward, and record the sample in a comment beside the constant in `lib/params.ts`
+- [X] T061 Write `tests/unit/planner-benchmark.test.ts` over a full-size fixture asserting SC-012's one-second budget. If it fails, escalate in the order recorded in research R11 and justify the step taken in `specs/001-free-window-trip-planner/plan.md` Complexity Tracking
+- [X] T062 [P] Audit every user-facing duration for FR-020: estimates only, no to-the-minute arrival time anywhere
+- [X] T063 [P] Verify operator attribution, feed license, and OpenStreetMap attribution are visible in the running app
+- [X] T064 Verify `npm run build` produces `out/` and that nothing expects a server at runtime
+- [X] T065 Verify a clean clone with zero environment variables and zero accounts reaches a working plan
+- [X] T066 Verify `npm test` passes with the network disabled
+- [X] T067 [P] Rewrite `README.md`, which is still create-next-app boilerplate recommending Vercel. State the zero-cost, no-key setup and the static hosting target. This clears the one ⚠ item left in the constitution's Sync Impact Report
 - [ ] T068 Configure Cloudflare Pages: build command `npm run build`, output directory `out`, no environment variables, no functions, no bindings
-- [ ] T069 [P] Run `npm run lint` and confirm the rule forbidding React imports inside `lib/` still holds after all feature work
+- [X] T069 [P] Run `npm run lint` and confirm the rule forbidding React imports inside `lib/` still holds after all feature work
 
 ---
 

@@ -156,12 +156,65 @@ availability against the system's vehicle type catalogue, selecting the human-po
 **Rationale**: no backend is permitted, so the browser is the only fetcher. The provider allows
 cross-origin requests, which makes this viable without a proxy.
 
-**Open items to verify against the live feed when capturing fixtures, not from memory**:
-- The exact field names and shapes for per-station vehicle type availability and for the vehicle
-  type catalogue in this provider's 2.2 feed.
-- Which propulsion or form-factor value identifies a mechanical bike in this provider's data.
-- Whether `ttl` is published per feed or globally, and its value.
-- The published license and attribution text.
+**Verified against the live feed on 2026-07-26** (previously open items, now closed):
+
+- **Discovery URL**: `https://gbfs.velobixi.com/gbfs/2-2/gbfs.json`, from the MobilityData GBFS
+  systems catalogue, system id `Bixi_MTL`. Serves `Access-Control-Allow-Origin: *`, so the
+  browser-direct fetch assumed by this plan works and no proxy is needed.
+- **Vehicle types**: `vehicle_types.json` carries `vehicle_type_id`, `form_factor`,
+  `propulsion_type`. Mechanical bike is `propulsion_type: "human"` **and**
+  `form_factor: "bicycle"`, which is type id `9`. Type `14` is `cargo_bicycle` + `human` and is
+  deliberately excluded: a cargo bike is a different product, and silently substituting one would
+  put a rider on a vehicle they did not plan for.
+- **Per-station availability**: `station_status.json` carries
+  `vehicle_types_available: [{ vehicle_type_id, count }]`. Critically, `num_bikes_available`
+  **includes e-bikes** and cannot be used to count mechanical bikes. Station `1` at capture time
+  reported `num_bikes_available: 1` with one e-bike and zero mechanical bikes.
+- **`ttl`**: published per feed, value `10` seconds on all four. That permits six polls a minute.
+  Principle V forbids polling faster than the ttl but does not oblige us to poll that fast, so
+  `MIN_REFRESH_INTERVAL_SECONDS` in `lib/endpoints.ts` holds a slower floor of 60 seconds.
+- **License and attribution**: **not published.** `system_information` returns an empty
+  `license_url` and an empty `operator`. The feed therefore carries no attribution of its own, so
+  the strings shown in the UI are held in `lib/endpoints.ts` and must be revisited if the provider
+  starts publishing them. This is a gap against principle V's display obligation, closed by
+  hard-coding rather than by parsing.
+
+**OPEN ISSUE: the one-hull service area is wrong for this feed.**
+
+The `Bixi_MTL` feed carries **two cities**: 1077 stations on and around Montreal island, and 29 in
+**Sherbrooke**, roughly 130 km east. A single convex hull over the raw feed spans 160 km and
+declares the entire rural corridor between the two cities to be inside the service area.
+
+This breaks FR-029a and FR-029b as written. A user standing in a field halfway to Sherbrooke would
+be told they are in coverage and then handed a routing failure, when the honest answer is that the
+network does not serve them at all. The distinction those two requirements exist to draw is exactly
+the one that collapses.
+
+`buildServiceArea` currently implements the spec as written and is therefore wrong on this feed. It
+needs either per-cluster hulls, or an explicit city scope, and that is a spec decision rather than
+an implementation detail. Until it is resolved, the captured fixture is restricted to Montreal so
+the tests exercise the intended single-city case.
+
+**OPEN ISSUE: bike segments carry no pickup or dropoff overhead.**
+
+The model charges only riding time for a bike segment. Two stations in the captured feed sit 47 m
+apart, and the planner will happily propose a 65 m ride taking 16 seconds, because unlocking a
+bike, adjusting the seat, and docking it all cost nothing in the current model. That is an
+optimistic estimate, which principle IV forbids.
+
+The fix is a per-segment overhead parameter, conservative by default. It is not applied here
+because adding a parameter that influences the result also engages the FR-021 and FR-023
+adjustability question that is still open. `tests/unit/planner-path.test.ts` pins the current
+behaviour with a test explicitly labelled as documenting the gap rather than endorsing it.
+
+**Two data-quality findings that change the parser contract**:
+
+- **Twelve of 1106 stations sit at (0, 0).** All had `is_installed: 0` at capture time, but the
+  parser must reject invalid coordinates on their own merits rather than relying on that
+  coincidence. An unfiltered null-island station stretches the convex hull across the Atlantic,
+  which would break both the service area (FR-029a) and the ellipse pruning.
+- **`is_installed`, `is_renting`, and `is_returning` are integers**, `1` and `0`, not booleans. A
+  strict `=== true` comparison would mark every station non-operational.
 
 **Design safeguards**:
 - The feed base URL is a single exported constant in `lib/endpoints.ts`.

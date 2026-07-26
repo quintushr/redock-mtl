@@ -1,0 +1,12 @@
+{
+ "last_updated": 1785042102,
+ "ttl": 10,
+ "version": "2.2",
+ "data": {
+  "stations": [
+   {
+    "station_id": "1"
+   }
+  ]
+ }
+}
