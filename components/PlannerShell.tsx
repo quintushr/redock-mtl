@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import FeedNotice from "@/components/FeedNotice";
+import { FeedFailure, FeedFreshness } from "@/components/FeedNotice";
 import ItineraryTrail from "@/components/ItineraryTrail";
 import MapAttribution from "@/components/MapAttribution";
 import AssumptionsLine from "@/components/AssumptionsLine";
@@ -301,7 +301,9 @@ export default function PlannerShell() {
         />
       </div>
 
-      <PlannerPanel footer={<MapAttribution />}>
+      <PlannerPanel
+        footer={<MapAttribution stations={snapshot?.attribution ?? null} />}
+      >
         {/*
           Endpoint entry first. It is an input, but it is the one input the
           result cannot exist without, and the prohibition in FR-101 is on
@@ -353,23 +355,29 @@ export default function PlannerShell() {
             onArm={() => arm("destination")}
           />
 
-          <p className="text-xs text-muted">
-            {picking !== null
-              ? t.map.hintPicking(picking)
-              : geolocationDenied
-                ? t.map.hintGeolocationDenied
-                : t.map.hintPlaced}
-          </p>
-        </div>
-
-        <div className="mt-3">
-          <FeedNotice status={feed} />
+          {/*
+            One line, and only when it has something to say. It used to be
+            printed unconditionally, and stacked with the feed notice and the
+            empty state into three grey paragraphs of equal weight where
+            nothing told the reader what to do first.
+          */}
+          {(picking !== null || geolocationDenied) && (
+            <p className="text-xs text-muted">
+              {picking !== null
+                ? t.map.hintPicking(picking)
+                : t.map.hintGeolocationDenied}
+            </p>
+          )}
         </div>
 
         {/* The result region. Nothing that sets a planning parameter may appear
             above this point (FR-101). */}
         <div className="mt-4 border-t border-line pt-4">
-          {plan === null ? (
+          {feed.state === "unavailable" ? (
+            // Without stations there is no plan, so the feed failure *is* the
+            // result. It belongs where the reader is already looking.
+            <FeedFailure status={feed} />
+          ) : plan === null ? (
             <p className="text-sm text-muted">{t.plan.empty}</p>
           ) : plan.ok ? (
             <>
@@ -421,13 +429,24 @@ export default function PlannerShell() {
           )}
         </div>
 
-        {/* The assumptions, last, and one line until opened (FR-101, FR-103). */}
+        {/* The settings, last, and one line until opened (FR-101, FR-103). */}
         <div className="mt-4 border-t border-line pt-4">
           <AssumptionsLine
             parameters={parameters}
             onChange={setParameters}
             correction={correction}
           />
+        </div>
+
+        {/*
+          How fresh the figures are, after the result rather than before it.
+          It qualifies an answer the reader has already read; between the
+          fields and the itinerary it pushed that answer down the panel on
+          every single consultation, and the guidelines' imposed order has no
+          fifth block above the result.
+        */}
+        <div className="mt-4">
+          <FeedFreshness status={feed} />
         </div>
       </PlannerPanel>
     </main>

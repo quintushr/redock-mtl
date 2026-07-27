@@ -191,8 +191,8 @@ export const t = {
     loading: "Chargement des stations",
     stale: (minutes: number): string =>
       `Ces données datent de ${minutes} min et peuvent ne plus correspondre aux stations.`,
-    snapshot: (operator: string, time: string): string =>
-      `Stations selon ${operator}, relevé de ${time}. La disponibilité peut changer avant ton arrivée.`,
+    freshness: (time: string): string =>
+      `Stations relevées à ${time}. La disponibilité peut changer avant ton arrivée.`,
     unavailable: {
       network: {
         title: "Les données de stations sont injoignables",
@@ -240,7 +240,8 @@ export const t = {
 
   attribution: {
     label: "Attributions",
-    prefix: "Fond de carte",
+    map: "Fond de carte",
+    stations: "Stations",
   },
 } as const;
 
