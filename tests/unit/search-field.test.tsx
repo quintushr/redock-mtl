@@ -26,6 +26,7 @@ function setup(overrides: Partial<Parameters<typeof SearchField>[0]> = {}) {
 
   const props = {
     label: "Start",
+    kind: "origin" as const,
     placeholder: "Adresse",
     value: "",
     point: null,
@@ -92,12 +93,23 @@ describe("arming the map", () => {
     expect(button.getAttribute("aria-pressed")).toBe("true");
   });
 
-  it("offers clearing only once a point is set", () => {
+  /**
+   * There is no clear button any more: `type="search"` gives the field its
+   * own, and that one only empties the text. Emptying the text therefore has
+   * to clear the point too, or the pin stays on the map and the plan stays
+   * computed under a field that reads as empty.
+   */
+  it("clears the point when the field is emptied, not just the text", () => {
     const { rerender, onClear } = setup();
-    expect(screen.queryByRole("button", { name: /effacer/i })).toBeNull();
-
     rerender({ point: MONTREAL, value: "45.5088, -73.5878" });
-    fireEvent.click(screen.getByRole("button", { name: /effacer/i }));
+
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "" } });
     expect(onClear).toHaveBeenCalled();
+  });
+
+  it("does not clear a point that was never set", () => {
+    const { onClear } = setup();
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "" } });
+    expect(onClear).not.toHaveBeenCalled();
   });
 });

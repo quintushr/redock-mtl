@@ -13,7 +13,7 @@ import {
   parseGeocoderResults,
   type GeocodeSuggestion,
 } from "@/lib/geocode";
-import { Cross } from "@/components/icons";
+import { Crosshair } from "@/components/icons";
 import { useStrings } from "@/components/LocaleProvider";
 import type { Strings } from "@/lib/strings";
 import type { LatLon } from "@/lib/types";
@@ -75,6 +75,7 @@ function toRows(
 
 export default function SearchField({
   label,
+  kind,
   placeholder,
   value,
   point,
@@ -86,6 +87,8 @@ export default function SearchField({
   onArm,
 }: {
   label: string;
+  /** Which end of the trip, for the marker that opens the row. */
+  kind: "origin" | "destination";
   placeholder: string;
   /** The text shown in the input. Owned by the parent (see the note above). */
   value: string;
@@ -207,53 +210,39 @@ export default function SearchField({
 
   return (
     <div>
-      {/*
-        Two controls of unequal weight, which is the point.
-        "Choisir sur la carte" is the one a reader needs before the field holds
-        anything, so it keeps its words. Clearing is a correction, it only
-        exists once there is something to correct, and it is the mark rather
-        than the sentence. Both were bordered text buttons of the same size,
-        which read as two equally important choices.
-      */}
-      <div className="flex items-center justify-between gap-2">
-        <label htmlFor={id} className="text-sm font-medium">
-          {label}
-        </label>
-        <div className="flex items-center gap-1">
-          {point !== null && (
-            <button
-              type="button"
-              // Icon only, so the name has to carry the whole meaning.
-              aria-label={t.fields.clear}
-              title={t.fields.clear}
-              className="flex h-11 w-11 items-center justify-center rounded-control text-muted hover:bg-paper hover:text-ink"
-              onClick={() => {
-                dismiss();
-                onClear();
-              }}
-            >
-              <Cross />
-            </button>
-          )}
-          <button
-            type="button"
-            aria-pressed={armed}
-            className={[
-              "min-h-11 rounded-control border px-3 text-xs",
-              // The third and last use docs/ui-guidelines.md allows the
-              // accent: the active state of a control.
-              armed
-                ? "border-brand bg-brand-soft font-medium text-brand-deep"
-                : "border-edge hover:bg-paper",
-            ].join(" ")}
-            onClick={onArm}
-          >
-            {armed ? t.fields.picking : t.fields.pickOnMap}
-          </button>
-        </div>
-      </div>
+      <label htmlFor={id} className="text-sm font-medium">
+        {label}
+      </label>
 
-      <div className="relative mt-1">
+      {/*
+        One row: what this end is, where it is, and the way to place it on the
+        map. The marker is the trail's own grammar, hollow to start from and
+        filled to arrive at, so a reader learns it once and reads it everywhere.
+
+        There is no "clear" button. `type="search"` gives the field its own,
+        and emptying the text now clears the point as well, so the two cannot
+        disagree.
+      */}
+      <div
+        className={[
+          "relative mt-1 flex items-center gap-2 rounded-control border bg-panel pr-1 pl-3",
+          // The input's own outline is suppressed because its border now lives
+          // on this wrapper; the focus ring has to move here with it, or the
+          // field becomes the one control with no visible focus.
+          "focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-brand",
+          armed ? "border-brand" : "border-edge",
+        ].join(" ")}
+      >
+        <span
+          aria-hidden="true"
+          className={[
+            "shrink-0 rounded-full",
+            kind === "destination"
+              ? "h-[9px] w-[9px] bg-ink"
+              : "h-[9px] w-[9px] border-[1.5px] border-muted bg-panel",
+          ].join(" ")}
+        />
+
         <input
           id={id}
           type="search"
@@ -262,15 +251,18 @@ export default function SearchField({
           aria-expanded={rows.length > 0}
           aria-controls={`${id}-list`}
           aria-activedescendant={active >= 0 ? `${id}-row-${active}` : undefined}
-          className={`min-h-11 w-full rounded-control border bg-panel px-3 text-sm ${
-            armed ? "border-brand" : "border-edge"
-          }`}
+          className="min-h-11 min-w-0 flex-1 bg-transparent py-0 text-sm outline-none"
           placeholder={placeholder}
           value={value}
           onChange={(event) => {
-            onValueChange(event.target.value);
-            setDraft(event.target.value);
+            const next = event.target.value;
+            onValueChange(next);
+            setDraft(next);
             setActive(-1);
+            // The field's own clear control only empties the text. Without
+            // this the pin would stay on the map and the plan would stay
+            // computed under a field that reads as empty.
+            if (next.trim() === "" && point !== null) onClear();
           }}
           onKeyDown={onKeyDown}
           onBlur={() => {
@@ -279,11 +271,32 @@ export default function SearchField({
           }}
         />
 
+        <button
+          type="button"
+          aria-pressed={armed}
+          // Icon only, so the name carries the whole meaning. This is the
+          // guaranteed input path when the geocoder is down, which its
+          // operator does not promise it will not be, so it stays reachable.
+          aria-label={armed ? t.fields.picking : t.fields.pickOnMap}
+          title={armed ? t.fields.picking : t.fields.pickOnMap}
+          className={[
+            "flex h-9 w-9 shrink-0 items-center justify-center rounded-control",
+            // The third and last use docs/ui-guidelines.md allows the accent:
+            // the active state of a control.
+            armed
+              ? "bg-brand-soft text-brand-deep"
+              : "text-muted hover:bg-paper hover:text-ink",
+          ].join(" ")}
+          onClick={onArm}
+        >
+          <Crosshair />
+        </button>
+
         {rows.length > 0 && (
           <ul
             id={`${id}-list`}
             role="listbox"
-            className="absolute z-10 mt-1 w-full overflow-hidden rounded-control border border-edge bg-panel"
+            className="absolute top-full right-0 left-0 z-10 mt-1 overflow-hidden rounded-control border border-edge bg-panel"
           >
             {rows.map((row, index) => (
               <li key={`${row.kind}-${index}`} role="presentation">

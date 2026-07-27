@@ -2,7 +2,7 @@
  * The few icons the interface needs, drawn here.
  *
  * No icon library: docs/ui-guidelines.md forbids a third-party component
- * library, and three glyphs are not a reason to take a dependency. All are
+ * library, and four glyphs are not a reason to take a dependency. All are
  * decorative in the accessibility sense, because every control that carries one
  * also carries a name in words, so they are hidden from assistive technology
  * rather than described twice.
@@ -38,6 +38,16 @@ export function Cross({ className }: { className?: string }) {
   return (
     <svg {...COMMON} className={className}>
       <path d="M6 6l8 8M14 6l-8 8" />
+    </svg>
+  );
+}
+
+/** Arms the map: the next tap on it places this end of the trip. */
+export function Crosshair({ className }: { className?: string }) {
+  return (
+    <svg {...COMMON} className={className}>
+      <circle cx="10" cy="10" r="4.5" />
+      <path d="M10 2v2.5M10 15.5V18M2 10h2.5M15.5 10H18" />
     </svg>
   );
 }

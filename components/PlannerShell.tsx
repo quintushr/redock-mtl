@@ -354,6 +354,7 @@ export default function PlannerShell() {
           <div className="space-y-3 pb-4">
             <SearchField
               label={t.fields.origin}
+            kind="origin"
               placeholder={t.fields.placeholder}
               value={displayLabel(originText, t.fields.myLocation)}
               point={origin}
@@ -396,6 +397,7 @@ export default function PlannerShell() {
 
             <SearchField
               label={t.fields.destination}
+            kind="destination"
               placeholder={t.fields.placeholder}
               value={displayLabel(destinationText, t.fields.myLocation)}
               point={destination}

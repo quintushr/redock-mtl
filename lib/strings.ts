@@ -47,6 +47,7 @@ const fr = {
 
   app: {
     name: "Redock",
+    city: "Montréal",
     title: "Redock, planificateur de trajets à vélo partagé à Montréal",
     description:
       "Découpe un trajet à vélo partagé en segments assez courts pour rester dans la fenêtre gratuite, et indique où ancrer.",
@@ -356,6 +357,7 @@ const en: Strings = {
 
   app: {
     name: "Redock",
+    city: "Montréal",
     title: "Redock, a share-bike trip planner for Montreal",
     description:
       "Splits a share-bike ride into segments short enough to stay inside the free window, and says where to dock.",
