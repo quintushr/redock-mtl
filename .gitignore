@@ -24,6 +24,10 @@
 .DS_Store
 *.pem
 
+# copied out of node_modules by scripts/copy-maplibre-worker.mjs on every
+# dev/build run, so committing it would only let it go stale
+/public/maplibre/
+
 # debug
 npm-debug.log*
 yarn-debug.log*
@@ -42,3 +46,10 @@ next-env.d.ts
 
 # claude code
 .claude/settings.local.json
+
+# editors and os
+.idea/
+.vscode/
+Thumbs.db
+*.swp
+*.tmp

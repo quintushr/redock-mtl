@@ -31,8 +31,10 @@ Templates requiring updates:
   - .claude/skills/speckit-*/SKILL.md              ✅ reviewed; the CLAUDE.md reference in
                                                      speckit-plan/SKILL.md is correct for this
                                                      Claude-scoped skill directory, left as is
-  - README.md                                      ⚠ pending (still the create-next-app boilerplate;
-                                                     rewrite to state zero-cost / no-key setup)
+  - README.md                                      ✅ rewritten 2026-07-26 (task T067): states the
+                                                     zero-cost, no-key setup, the static hosting
+                                                     target, and the review consequences of each
+                                                     principle. No follow-up items remain.
 
 Deferred TODOs: none
 -->
