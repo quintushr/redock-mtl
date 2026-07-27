@@ -21,15 +21,17 @@ import { useState } from "react";
  */
 
 /**
- * The two rest positions below 1024px, as fractions of the viewport.
+ * The two rest positions below 1024px.
  *
- * The expanded height is the 65dvh ceiling docs/ui-guidelines.md sets, not a
- * value chosen here. The collapsed height is what shows the endpoint fields and
- * the trip summary, which is the "how long, how many stops, is it free"
- * question the summary exists to answer without expanding anything.
+ * Ceilings, not heights. 65dvh is the maximum docs/ui-guidelines.md sets, and a
+ * maximum is not a target: a panel holding two fields and one line of hint has
+ * no business occupying half the viewport and burying the map behind blank
+ * white. The collapsed ceiling is what shows the endpoint fields and the trip
+ * summary, which is the "how long, how many stops, is it free" question the
+ * summary exists to answer without expanding anything.
  */
-const COLLAPSED = "h-[45dvh]";
-const EXPANDED = "h-[65dvh]";
+const COLLAPSED = "max-h-[45dvh]";
+const EXPANDED = "max-h-[65dvh]";
 
 export default function PlannerPanel({
   children,
@@ -56,13 +58,17 @@ export default function PlannerPanel({
         "rounded-t-panel border-t border-line bg-panel",
         expanded ? EXPANDED : COLLAPSED,
         // Anchoring at 1024px and above: left, fixed width, 16px margins,
-        // rounded on all four corners. The rest position no longer applies,
-        // because the panel has the full height of the viewport to work with.
-        "lg:inset-y-4 lg:right-auto lg:left-4 lg:h-auto lg:w-[380px]",
+        // rounded on all four corners.
+        //
+        // `bottom-auto` is the point: anchoring both edges stretched the panel
+        // over the whole viewport height whatever it contained, which is how a
+        // desktop reader got a white column with its content in the top third.
+        // The panel is as tall as what it holds, and stops at the viewport.
+        "lg:top-4 lg:right-auto lg:bottom-auto lg:left-4 lg:w-[380px]",
         "lg:max-h-[calc(100dvh-2rem)] lg:rounded-panel lg:border",
-        // Height is the only thing that animates, and only when the reader has
-        // not asked for stillness.
-        "motion-safe:transition-[height] motion-safe:duration-200",
+        // The ceiling is the only thing that animates, and only when the reader
+        // has not asked for stillness.
+        "motion-safe:transition-[max-height] motion-safe:duration-200",
       ].join(" ")}
     >
       {/*
