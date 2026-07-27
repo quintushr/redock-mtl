@@ -12,6 +12,14 @@ import type { RemainingStatus, Seconds } from "@/lib/types";
  * like the charge gauge on an electric vehicle: a full bar reassures, an empty
  * one alarms, and the direction is legible before the number is.
  *
+ * Three bands, three colours, and the figure carries its band's colour too. The
+ * middle band used to be grey, which on a typical itinerary left the product's
+ * signature element with no colour anywhere on screen.
+ *
+ * These colours are not the accent, and the accent is not one of them. The
+ * accent means "this is your route"; these mean "this is how much slack you
+ * have". Two questions, two palettes, deliberately.
+ *
  * Three redundant encodings, none of which may be the only one (FR-112): the
  * bar length, the colour band, and the figure in words. Colour is never the
  * sole carrier, so the gauge stays readable to someone who cannot tell the
@@ -24,8 +32,21 @@ import type { RemainingStatus, Seconds } from "@/lib/types";
 
 const FILL: Record<RemainingStatus, string> = {
   comfortable: "bg-ok",
-  neutral: "bg-muted",
-  alarming: "bg-warn",
+  neutral: "bg-warn",
+  alarming: "bg-alarm",
+};
+
+/**
+ * The same three hues, dark enough for 12px text.
+ *
+ * The fills clear the 3:1 a non-text element owes; not one of them clears the
+ * 4,5:1 that text owes. Same hue, same saturation, lightness removed until they
+ * pass. See app/globals.css.
+ */
+const FIGURE: Record<RemainingStatus, string> = {
+  comfortable: "text-ok-text",
+  neutral: "text-warn-text",
+  alarming: "text-alarm-text",
 };
 
 export default function RemainingGauge({
@@ -46,8 +67,10 @@ export default function RemainingGauge({
 
   return (
     <div className="mt-1.5">
+      {/* 6px, on a track dark enough to be seen. A gauge whose empty part is
+          invisible is a gauge with no scale to read its fill against. */}
       <div
-        className="h-2 w-full overflow-hidden rounded-full bg-line"
+        className="h-1.5 w-full overflow-hidden rounded-full bg-edge"
         role="img"
         aria-label={spoken}
       >
@@ -63,16 +86,13 @@ export default function RemainingGauge({
       {/* The figure is always present. FR-112 and the quality floor in
           docs/ui-guidelines.md both forbid leaving this to colour. */}
       <p className="mt-1 text-xs text-muted">
-        <span className="font-mono">{t.gauge.remaining(minutes)}</span>{" "}
+        <span className={`font-mono font-medium ${FIGURE[status]}`}>
+          {t.gauge.remaining(minutes)}
+        </span>{" "}
         {t.gauge.onArrival}
-        {/*
-          The state word is set in --ink, not in the band's own colour.
-          #3e8e5a reaches 4,02:1 on the panel and #c4771a only 3,50:1, both
-          below the 4,5:1 that AA asks of 12px text. Those two values are
-          fixed by docs/ui-guidelines.md, so the colour stays where it clears
-          the bar: the fill, which is a non-text element and only owes 3:1.
-        */}
-        <span className="ml-2 font-medium text-ink">{label}</span>
+        {/* The qualifier stays secondary: the figure is the datum, this only
+            says how to feel about it. */}
+        <span className="ml-2">{label}</span>
       </p>
     </div>
   );

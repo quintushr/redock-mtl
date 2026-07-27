@@ -259,7 +259,7 @@ describe("Remaining, never consumed (FR-108, FR-109, SC-005)", () => {
       .map((g) => g.getAttribute("aria-label"));
     expect(tight).not.toBe(comfortable);
     // The 90%-of-budget ride leaves almost nothing; the 30% one leaves plenty.
-    expect(tight).toMatch(/juste/i);
+    expect(tight).toMatch(/risqué/i);
     expect(comfortable).toMatch(/confortable/i);
   });
 
@@ -267,7 +267,7 @@ describe("Remaining, never consumed (FR-108, FR-109, SC-005)", () => {
     render(
       <ItineraryTrail itinerary={oneStop} stations={stations} params={params} />,
     );
-    expect(screen.getByText(/juste/i)).toBeTruthy();
+    expect(screen.getByText(/risqué/i)).toBeTruthy();
     expect(screen.getByText(/confortable/i)).toBeTruthy();
   });
 

@@ -150,7 +150,7 @@ const fr = {
     states: {
       comfortable: "confortable",
       neutral: "correct",
-      alarming: "juste",
+      alarming: "risqué",
     } as Record<RemainingStatus, string>,
   },
 
@@ -446,7 +446,7 @@ const en: Strings = {
     states: {
       comfortable: "comfortable",
       neutral: "some slack",
-      alarming: "cutting it fine",
+      alarming: "risky",
     } as Record<RemainingStatus, string>,
   },
 

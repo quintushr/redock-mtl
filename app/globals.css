@@ -32,10 +32,42 @@
   --line: #e4e4e0; /* borders */
   --muted: #6e6e6b; /* secondary text */
 
-  /* The remaining-time gauge, and nowhere else. A three-state colour code
-     anywhere but the gauge is forbidden. */
+  /**
+   * The outer edge of the panel, and the trail's rail.
+   *
+   * --line is 1,27:1 against the panel, which is invisible against a light
+   * map: the panel had no boundary at all and the trail's rail could not be
+   * followed. This is the same idea one step darker, 1,89:1, still a 1px
+   * border and still discreet. It is an addition to the palette in
+   * docs/ui-guidelines.md, for a job that palette does not cover: separating
+   * the panel from the map underneath it.
+   */
+  --edge: #bdbdb6;
+
+  /**
+   * The remaining-time gauge, and nowhere else. A three-state colour code
+   * anywhere but the gauge is forbidden.
+   *
+   * Three bands, three colours. docs/ui-guidelines.md names three states but
+   * defines two colours, leaving the middle one grey, which is how the
+   * signature element of this product ended up with no colour at all on most
+   * itineraries.
+   *
+   *   > 15 min   --ok     green
+   *   5 to 15    --warn   amber
+   *   < 5 min    --alarm  red
+   *
+   * Each has a darker twin for text. The three fills clear the 3:1 that a
+   * non-text element owes; none of them clears the 4,5:1 that 12px text owes,
+   * and the figure is set in the state's colour. Same hue, same saturation,
+   * enough lightness removed to pass.
+   */
   --ok: #3e8e5a;
+  --ok-text: #398353;
   --warn: #c4771a;
+  --warn-text: #a76516;
+  --alarm: #d64530;
+  --alarm-text: #d4402a;
 }
 
 @theme inline {
@@ -46,9 +78,14 @@
   --color-paper: var(--paper);
   --color-panel: var(--panel);
   --color-line: var(--line);
+  --color-edge: var(--edge);
   --color-muted: var(--muted);
   --color-ok: var(--ok);
+  --color-ok-text: var(--ok-text);
   --color-warn: var(--warn);
+  --color-warn-text: var(--warn-text);
+  --color-alarm: var(--alarm);
+  --color-alarm-text: var(--alarm-text);
 
   /* Two roles, two families. The monospace is not decorative: durations are
      data, they align in columns down the trail, and a fixed advance stops the
