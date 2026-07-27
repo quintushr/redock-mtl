@@ -1,26 +1,59 @@
 @import "tailwindcss";
 
+/**
+ * Design tokens.
+ *
+ * These values are transcribed from docs/ui-guidelines.md, which is
+ * authoritative on every visual decision in this repository. Do not tune a
+ * colour here without changing that document first.
+ *
+ * One palette, deliberately. The guidelines define a single scheme and no dark
+ * variant, so none is invented here.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Accent. Reserved for three uses and nothing else: the itinerary trace, the
+     stop stations, and the active state of a control. */
+  --brand: #e0402b;
+  --brand-soft: #fdece9;
+  --brand-deep: #8f2517;
+
+  --ink: #17171a; /* primary text, never #000 */
+  --paper: #fafaf8; /* page background */
+  --panel: #ffffff; /* panel surface */
+  --line: #e4e4e0; /* borders */
+  --muted: #6e6e6b; /* secondary text */
+
+  /* The remaining-time gauge, and nowhere else. A three-state colour code
+     anywhere but the gauge is forbidden. */
+  --ok: #3e8e5a;
+  --warn: #c4771a;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-brand: var(--brand);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-deep: var(--brand-deep);
+  --color-ink: var(--ink);
+  --color-paper: var(--paper);
+  --color-panel: var(--panel);
+  --color-line: var(--line);
+  --color-muted: var(--muted);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+
+  /* Two roles, two families. The monospace is not decorative: durations are
+     data, they align in columns down the trail, and a fixed advance stops the
+     digits dancing while a value recomputes. */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* 12px on containers, 8px on controls. */
+  --radius-panel: 0.75rem;
+  --radius-control: 0.5rem;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--paper);
+  color: var(--ink);
   font-family: var(--font-sans), system-ui, sans-serif;
 }

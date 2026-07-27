@@ -100,6 +100,27 @@ export const DEFAULT_PARAMETERS: PlanningParameters = {
    * the first station is never the reason an estimate proves optimistic.
    */
   walkingSpeed: 4.5 * KMH_TO_MS,
+
+  /**
+   * 0.19 CAD per minute, before taxes.
+   *
+   * Read on 2026-07-27 from the operator's own pricing page,
+   * https://bixi.com/fr/tarifs/ : a subscriber on a regular BIXI has 45 minutes
+   * included per trip, and beyond that the rate is "19¢ / min." The same page
+   * states "Les prix affichés n'incluent pas les taxes", so this is pre-tax and
+   * the interface says so wherever it shows an amount.
+   *
+   * Stored pre-tax rather than grossed up by the Quebec rate, which does mean
+   * the figure shown understates the final bill by roughly 15%. That trade is
+   * deliberate: a number the rider cannot reconcile against the operator's own
+   * published price reads as an error, and undermines exactly the credibility
+   * the comparison exists to build. Labelling carries the honesty instead, and
+   * a rider who wants a tax-inclusive figure raises the rate.
+   *
+   * This is a published price and it will move. Re-check it against the page
+   * above rather than trusting this comment's age.
+   */
+  overageRate: 0.19,
 };
 
 /**
@@ -124,10 +145,15 @@ export type ParameterValidation =
 export function validateParameters(
   params: PlanningParameters,
 ): ParameterValidation {
-  if (!(params.freeWindow > 0)) {
+  // Finite, not merely positive. `NaN > 0` is already false, but `Infinity > 0`
+  // is true, and an infinite window used to slip through and produce a segment
+  // budget of Infinity. That was harmless while the UI showed a consumed
+  // *share* (anything over infinity is zero), and stops being harmless the
+  // moment the UI shows the remaining *duration*, which would read "Infinity".
+  if (!Number.isFinite(params.freeWindow) || params.freeWindow <= 0) {
     return {
       ok: false,
-      reason: "The free window must be longer than zero.",
+      reason: "The free window must be a real duration longer than zero.",
       corrected: { ...params, freeWindow: DEFAULT_PARAMETERS.freeWindow },
     };
   }
@@ -212,6 +238,16 @@ export function validateParameters(
         ...params,
         segmentOverhead: DEFAULT_PARAMETERS.segmentOverhead,
       },
+    };
+  }
+
+  // Zero is legal: a rider whose plan bills nothing sets it to zero, and the
+  // comparison then reports a free ride, which is true for them.
+  if (!Number.isFinite(params.overageRate) || params.overageRate < 0) {
+    return {
+      ok: false,
+      reason: "The overage rate cannot be negative.",
+      corrected: { ...params, overageRate: 0 },
     };
   }
 

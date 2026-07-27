@@ -161,14 +161,16 @@ describe("planTrip always returns a well-formed result", () => {
     }
   });
 
-  it("keeps budgetShare within [0, 1] whatever the inputs", () => {
+  it("keeps remaining non-negative and finite whatever the inputs", () => {
     for (const run of everyCase) {
       const result = run();
       if (!result.ok) continue;
       for (const step of result.itinerary.steps) {
         if (step.kind !== "bike") continue;
-        expect(step.budgetShare).toBeGreaterThanOrEqual(0);
-        expect(step.budgetShare).toBeLessThanOrEqual(1);
+        // Hostile parameters reach here, NaN and infinite windows included, so
+        // the clamp has to hold without knowing which case produced the step.
+        expect(Number.isFinite(step.remaining)).toBe(true);
+        expect(step.remaining).toBeGreaterThanOrEqual(0);
       }
     }
   });

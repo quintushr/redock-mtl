@@ -108,6 +108,44 @@ export interface PlanningParameters {
   detourFactor: number;
   /** Metres per second. */
   walkingSpeed: number;
+  /**
+   * Currency units billed per minute beyond the free window, before taxes.
+   *
+   * Influences a figure the rider reads, so principle IV makes it adjustable
+   * like every other parameter here (FR-131, FR-133). Local by construction:
+   * no tariff feed, no account, no key.
+   */
+  overageRate: number;
+}
+
+// ---------------------------------------------------------------------------
+// The no-stop comparison
+// ---------------------------------------------------------------------------
+
+/**
+ * The same trip ridden straight through, with no anchor stop.
+ *
+ * Constructed from the plan's own station pair rather than searched, so the two
+ * walking legs are identical to the planned ones and the stops are the only
+ * thing that differs (FR-128a). Anything else would move two variables at once
+ * and the comparison would stop meaning anything.
+ *
+ * Deliberately not a BikeSegment: that type carries `remaining`, and this ride
+ * is defined by exceeding the window. A remaining of zero would be technically
+ * true and rhetorically wrong.
+ */
+export interface NoStopRide {
+  fromStationId: string;
+  toStationId: string;
+  /** Riding time plus one segmentOverhead, on the same terms as any segment. */
+  duration: Seconds;
+  distance: Metres;
+  /** By how much `duration` exceeds the free window. Zero when it fits. */
+  overage: Seconds;
+  /** `overage` in minutes times overageRate. Zero when there is no overage. */
+  cost: number;
+  /** Negative means the no-stop ride is faster than the plan (FR-129a). */
+  deltaAgainstPlan: Seconds;
 }
 
 // ---------------------------------------------------------------------------
@@ -124,8 +162,14 @@ export interface WalkLeg {
   distance: Metres;
 }
 
-/** Three bands, so the UI can distinguish comfortable from merely acceptable. */
-export type BudgetStatus = "comfortable" | "moderate" | "tight";
+/**
+ * Three bands of *remaining* free window, by absolute duration.
+ *
+ * Named for what is left rather than what was spent. The previous type banded
+ * the share consumed, and keeping that name while inverting its meaning would
+ * leave every existing reference reading plausibly and meaning the opposite.
+ */
+export type RemainingStatus = "comfortable" | "neutral" | "alarming";
 
 export interface BikeSegment {
   kind: "bike";
@@ -133,9 +177,15 @@ export interface BikeSegment {
   toStationId: string;
   duration: Seconds;
   distance: Metres;
-  /** duration / segmentBudget, clamped to [0, 1]. */
-  budgetShare: number;
-  budgetStatus: BudgetStatus;
+  /**
+   * Usable segment budget still in hand on arrival: the free window less the
+   * safety margin less this ride. Never negative, never above the budget, and
+   * reset to full at every anchor stop because docking restarts the window
+   * (FR-108, FR-108a, FR-108b).
+   */
+  remaining: Seconds;
+  /** Band of `remaining`. See lib/remaining.ts for the thresholds. */
+  remainingStatus: RemainingStatus;
 }
 
 export interface DockingStop {

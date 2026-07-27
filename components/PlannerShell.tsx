@@ -3,14 +3,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import FeedNotice from "@/components/FeedNotice";
-import ItineraryList from "@/components/ItineraryList";
-import ParameterPanel from "@/components/ParameterPanel";
+import ItineraryTrail from "@/components/ItineraryTrail";
+import AssumptionsLine from "@/components/AssumptionsLine";
+import NoStopComparison from "@/components/NoStopComparison";
+import PlannerPanel from "@/components/PlannerPanel";
 import SearchField from "@/components/SearchField";
+import TripSummary from "@/components/TripSummary";
 import type { FocusRequest, PickTarget } from "@/components/MapView";
 import { loadStationSnapshot } from "@/lib/feed-client";
 import { formatCoordinates } from "@/lib/geocode";
 import { DEFAULT_PARAMETERS, validateParameters } from "@/lib/params";
 import { planTrip } from "@/lib/planner";
+import { noStopRide } from "@/lib/pricing";
 import type {
   FeedStatus,
   LatLon,
@@ -19,8 +23,14 @@ import type {
 } from "@/lib/types";
 
 /**
- * The single surface (FR-025): map and itinerary detail side by side, never on
- * separate screens, so consulting one never discards the other.
+ * The single surface: a map filling the frame, with one panel over it
+ * (FR-139, FR-140).
+ *
+ * The panel's order is fixed and is the point of this feature: endpoint entry,
+ * then the result, then the assumptions (FR-101, FR-102). Parameters are an
+ * input changed once a year; the itinerary is the output read every time. The
+ * old arrangement put the input first and charged a scroll on every
+ * consultation.
  *
  * MapLibre touches window and WebGL, neither of which exists when static export
  * prerenders this at build time, so the map is loaded client-side only.
@@ -74,7 +84,6 @@ export default function PlannerShell() {
   const [picking, setPicking] = useState<PickTarget | null>("origin");
   const [focus, setFocus] = useState<FocusRequest | null>(null);
   const focusCount = useRef(0);
-  const mapPanel = useRef<HTMLDivElement | null>(null);
   const [geolocationDenied, setGeolocationDenied] = useState(false);
 
   // Debounce recomputation so dragging a slider does not queue redundant work
@@ -200,6 +209,18 @@ export default function PlannerShell() {
     return planTrip(origin, destination, snapshot, settled);
   }, [snapshot, origin, destination, settled]);
 
+  /**
+   * The no-stop ride, recomputed with the plan.
+   *
+   * Derived from the same `settled` parameters and behind the same debounce, so
+   * it can never show an amount from superseded assumptions and never lags the
+   * itinerary it is being compared against (FR-135).
+   */
+  const noStop = useMemo(() => {
+    if (plan === null || !plan.ok) return null;
+    return noStopRide(plan.itinerary, snapshot?.stations ?? [], settled);
+  }, [plan, snapshot, settled]);
+
   const handleMapClick = useCallback(
     (point: LatLon) => {
       // An unarmed map is inert. This is the fix for the click that used to
@@ -234,14 +255,16 @@ export default function PlannerShell() {
     focusOn(other === null ? [position] : [position, other]);
   };
 
+  /**
+   * Arms or disarms the map for the next click.
+   *
+   * This used to scroll the map into view, because the map sat above the panel
+   * and was usually scrolled off screen. The map now fills the frame behind the
+   * panel and is always visible, so the scroll has nothing left to do and would
+   * only fight the panel's own scrolling.
+   */
   const arm = (target: PickTarget): void => {
-    const next = picking === target ? null : target;
-    setPicking(next);
-    // On a phone the map sits above the panel and is usually scrolled off.
-    // Arming a map the user cannot see is arming nothing.
-    if (next !== null) {
-      mapPanel.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    }
+    setPicking((current) => (current === target ? null : target));
   };
 
   const clearEndpoint = (target: PickTarget): void => {
@@ -271,19 +294,39 @@ export default function PlannerShell() {
   };
 
   return (
-    <main className="flex min-h-dvh flex-col lg:h-dvh lg:flex-row">
-      <div className="order-2 w-full overflow-y-auto border-zinc-200 p-4 lg:order-1 lg:w-[26rem] lg:shrink-0 lg:border-r dark:border-zinc-800">
-        <h1 className="text-xl font-semibold">Free-window trip planner</h1>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          Split a ride into segments that each stay inside your subscription’s
-          free window.
-        </p>
+    <main className="relative h-dvh w-full overflow-hidden">
+      {/*
+        The map fills the frame and is mounted exactly once, at a position in
+        the tree that nothing conditional sits above (FR-139, FR-145).
+        Relocating it under a conditional would remount it, and a remounted map
+        is a new MapLibre instance at the default camera, which is precisely the
+        silent reset FR-123 and FR-124 forbid.
+      */}
+      <div className="absolute inset-0">
+        <MapView
+          stations={snapshot?.stations ?? []}
+          itinerary={plan?.ok ? plan.itinerary : null}
+          origin={origin}
+          destination={destination}
+          picking={picking}
+          focus={focus}
+          onMapClick={handleMapClick}
+          onEndpointMove={handleEndpointMove}
+          onCancelPicking={() => setPicking(null)}
+        />
+      </div>
 
-        <div className="mt-4">
-          <FeedNotice status={feed} />
-        </div>
+      <PlannerPanel>
+        {/*
+          Endpoint entry first. It is an input, but it is the one input the
+          result cannot exist without, and the prohibition in FR-101 is on
+          planning parameters, not on choosing where you are going.
 
-        <div className="mt-4 space-y-3">
+          There is no heading and no description paragraph here. They spent the
+          top of the screen explaining a result that is now visible immediately
+          (FR-146).
+        */}
+        <div className="space-y-3">
           <SearchField
             label="Start"
             placeholder="123 Rue Sainte-Catherine Ouest"
@@ -302,7 +345,7 @@ export default function PlannerShell() {
           <div className="flex justify-end">
             <button
               type="button"
-              className="rounded border border-zinc-300 px-2 py-0.5 text-xs hover:bg-zinc-100 disabled:opacity-40 dark:border-zinc-700 dark:hover:bg-zinc-800"
+              className="rounded-control border border-line px-2 py-0.5 text-xs hover:bg-paper disabled:opacity-40"
               disabled={origin === null && destination === null}
               onClick={swapEndpoints}
             >
@@ -325,7 +368,7 @@ export default function PlannerShell() {
             onArm={() => arm("destination")}
           />
 
-          <p className="text-xs text-zinc-500">
+          <p className="text-xs text-muted">
             {picking !== null
               ? `Click the map to set your ${picking === "origin" ? "start" : "destination"}, or type an address above.`
               : geolocationDenied
@@ -334,29 +377,43 @@ export default function PlannerShell() {
           </p>
         </div>
 
-        <div className="mt-6 border-t border-zinc-200 pt-4 dark:border-zinc-800">
-          <ParameterPanel
-            parameters={parameters}
-            onChange={setParameters}
-            correction={correction}
-          />
+        <div className="mt-3">
+          <FeedNotice status={feed} />
         </div>
 
-        <div className="mt-6 border-t border-zinc-200 pt-4 dark:border-zinc-800">
+        {/* The result region. Nothing that sets a planning parameter may appear
+            above this point (FR-101). */}
+        <div className="mt-4 border-t border-line pt-4">
           {plan === null ? (
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="text-sm text-muted">
               Set a start and a destination to see a plan.
             </p>
           ) : plan.ok ? (
-            <ItineraryList
-              itinerary={plan.itinerary}
-              stations={snapshot?.stations ?? []}
-            />
+            <>
+              <TripSummary itinerary={plan.itinerary} />
+              <div className="mt-4">
+                <ItineraryTrail
+                  itinerary={plan.itinerary}
+                  stations={snapshot?.stations ?? []}
+                  params={settled}
+                />
+              </div>
+              {/*
+                Keyed on nothing: it must survive a parameter change rather than
+                remount, or it would close under the reader's finger exactly
+                when they are watching the margin move the price (FR-135).
+              */}
+              <NoStopComparison
+                noStop={noStop}
+                overageRate={settled.overageRate}
+                stopCount={plan.itinerary.stopCount}
+              />
+            </>
           ) : (
             // FR-028: name the cause and offer something concrete to do.
             <div role="alert">
               <p className="text-sm font-medium">No plan is possible</p>
-              <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+              <p className="mt-1 text-sm text-muted">
                 {FAILURE_MESSAGES[plan.failure.reason]}
               </p>
               <ul className="mt-3 flex flex-wrap gap-2">
@@ -364,7 +421,7 @@ export default function PlannerShell() {
                   <li key={suggestion.kind}>
                     <button
                       type="button"
-                      className="rounded border border-zinc-300 px-2 py-1 text-xs hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                      className="rounded-control border border-line px-2 py-1 text-xs hover:bg-paper"
                       onClick={() =>
                         applySuggestion(
                           suggestion.kind,
@@ -380,24 +437,16 @@ export default function PlannerShell() {
             </div>
           )}
         </div>
-      </div>
 
-      <div
-        ref={mapPanel}
-        className="order-1 h-[45dvh] w-full lg:order-2 lg:h-auto lg:flex-1"
-      >
-        <MapView
-          stations={snapshot?.stations ?? []}
-          itinerary={plan?.ok ? plan.itinerary : null}
-          origin={origin}
-          destination={destination}
-          picking={picking}
-          focus={focus}
-          onMapClick={handleMapClick}
-          onEndpointMove={handleEndpointMove}
-          onCancelPicking={() => setPicking(null)}
-        />
-      </div>
+        {/* The assumptions, last, and one line until opened (FR-101, FR-103). */}
+        <div className="mt-4 border-t border-line pt-4">
+          <AssumptionsLine
+            parameters={parameters}
+            onChange={setParameters}
+            correction={correction}
+          />
+        </div>
+      </PlannerPanel>
     </main>
   );
 }
