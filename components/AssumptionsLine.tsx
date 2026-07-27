@@ -270,7 +270,7 @@ export default function AssumptionsLine({
             // FR-126: explain and correct rather than failing silently.
             <p
               role="alert"
-              className="mb-2 rounded-control border border-line p-2 text-xs"
+              className="mb-2 rounded-control border border-edge p-2 text-xs"
             >
               {correction}
             </p>
@@ -305,7 +305,7 @@ export default function AssumptionsLine({
           </div>
 
           {showRest && (
-            <div className="mt-1 border-t border-line pt-1">
+            <div className="mt-1 border-t border-edge pt-1">
               {rest.map((control) => (
                 <Slider
                   key={control.key}

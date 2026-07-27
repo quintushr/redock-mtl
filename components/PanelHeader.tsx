@@ -19,7 +19,7 @@ export default function PanelHeader() {
   const t = useStrings();
 
   return (
-    <div className="flex shrink-0 items-center justify-between gap-2 border-b border-line px-4 py-1">
+    <div className="flex shrink-0 items-center justify-between gap-2 border-b border-edge px-4 py-1">
       <span className="text-sm font-medium">{t.app.name}</span>
       <LanguageToggle />
     </div>

@@ -49,7 +49,7 @@ export default function NoStopComparison({
   if (stopCount === 0) return null;
 
   return (
-    <div className="mt-4 border-t border-line pt-3">
+    <div className="mt-4 border-t border-edge pt-3">
       <button
         type="button"
         className="-mx-2 flex min-h-11 w-full items-center gap-1.5 rounded-control px-2 text-left text-xs underline hover:bg-paper"

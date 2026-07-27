@@ -220,7 +220,7 @@ export default function SearchField({
           {point !== null && (
             <button
               type="button"
-              className="min-h-11 rounded-control border border-line px-3 text-xs hover:bg-paper"
+              className="min-h-11 rounded-control border border-edge px-3 text-xs hover:bg-paper"
               onClick={() => {
                 dismiss();
                 onClear();
@@ -238,7 +238,7 @@ export default function SearchField({
               // accent: the active state of a control.
               armed
                 ? "border-brand bg-brand-soft font-medium text-brand-deep"
-                : "border-line hover:bg-paper",
+                : "border-edge hover:bg-paper",
             ].join(" ")}
             onClick={onArm}
           >
@@ -257,7 +257,7 @@ export default function SearchField({
           aria-controls={`${id}-list`}
           aria-activedescendant={active >= 0 ? `${id}-row-${active}` : undefined}
           className={`min-h-11 w-full rounded-control border bg-panel px-3 text-sm ${
-            armed ? "border-brand" : "border-line"
+            armed ? "border-brand" : "border-edge"
           }`}
           placeholder={placeholder}
           value={value}
@@ -277,7 +277,7 @@ export default function SearchField({
           <ul
             id={`${id}-list`}
             role="listbox"
-            className="absolute z-10 mt-1 w-full overflow-hidden rounded-control border border-line bg-panel"
+            className="absolute z-10 mt-1 w-full overflow-hidden rounded-control border border-edge bg-panel"
           >
             {rows.map((row, index) => (
               <li key={`${row.kind}-${index}`} role="presentation">

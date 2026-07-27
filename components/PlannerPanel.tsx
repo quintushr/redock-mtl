@@ -58,7 +58,7 @@ export default function PlannerPanel({
         // Anchoring below 1024px: a sheet on the bottom edge, square at the
         // bottom because there is nothing to round against the viewport edge.
         "absolute inset-x-0 bottom-0 z-10 flex flex-col",
-        "rounded-t-panel border-t border-line bg-panel",
+        "rounded-t-panel border-t border-edge bg-panel",
         expanded ? EXPANDED : COLLAPSED,
         // Anchoring at 1024px and above: left, fixed width, 16px margins,
         // rounded on all four corners.
@@ -68,7 +68,7 @@ export default function PlannerPanel({
         // desktop reader got a white column with its content in the top third.
         // The panel is as tall as what it holds, and stops at the viewport.
         "lg:top-4 lg:right-auto lg:bottom-auto lg:left-4 lg:w-[380px]",
-        "lg:max-h-[calc(100dvh-2rem)] lg:rounded-panel lg:border",
+        "lg:max-h-[calc(100dvh-2rem)] lg:rounded-panel lg:border lg:border-edge",
         // The ceiling is the only thing that animates, and only when the reader
         // has not asked for stillness.
         "motion-safe:transition-[max-height] motion-safe:duration-200",
@@ -112,7 +112,7 @@ export default function PlannerPanel({
       </div>
 
       {footer !== undefined && (
-        <div className="shrink-0 border-t border-line px-4 py-2">{footer}</div>
+        <div className="shrink-0 border-t border-edge px-4 py-2">{footer}</div>
       )}
     </section>
   );

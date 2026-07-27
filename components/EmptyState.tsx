@@ -43,18 +43,21 @@ function Row({
       >
         <span
           className={[
-            "absolute w-[1.5px] bg-line",
+            "absolute w-[1.5px] bg-edge",
             last ? "top-0 h-2" : "inset-y-0",
           ].join(" ")}
         />
         <span
           className={[
-            "relative mt-1 h-[9px] w-[9px] rounded-full",
+            "relative rounded-full",
+            marker === "anchor"
+              ? "mt-0.5 h-[13px] w-[13px] border-2 border-brand bg-panel"
+              : "mt-1 h-[9px] w-[9px]",
             marker === "destination"
               ? "bg-ink"
-              : marker === "anchor"
-                ? "border-[1.5px] border-brand bg-panel"
-                : "border-[1.5px] border-muted bg-panel",
+              : marker === "start"
+                ? "border-[1.5px] border-muted bg-panel"
+                : "",
           ].join(" ")}
         />
       </div>

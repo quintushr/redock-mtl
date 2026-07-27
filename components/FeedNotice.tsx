@@ -32,13 +32,13 @@ export function FeedFailure({
   const retryable = t.feed.retryable.includes(status.reason);
 
   return (
-    <div role="alert" className="rounded-control border border-line p-3">
+    <div role="alert" className="rounded-control border border-edge p-3">
       <p className="text-sm font-medium">{message.title}</p>
       <p className="mt-1 text-xs text-muted">{message.detail}</p>
       {retryable && (
         <button
           type="button"
-          className="mt-2 min-h-11 rounded-control border border-line px-3 text-xs hover:bg-paper"
+          className="mt-2 min-h-11 rounded-control border border-edge px-3 text-xs hover:bg-paper"
           onClick={onRetry}
         >
           {t.feed.retry}

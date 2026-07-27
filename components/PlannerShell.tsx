@@ -350,7 +350,7 @@ export default function PlannerShell() {
           top of the screen explaining a result that is now visible immediately
           (FR-146).
         */}
-        <div className="divide-y divide-line">
+        <div className="divide-y divide-edge">
           <div className="space-y-3 pb-4">
             <SearchField
               label={t.fields.origin}
@@ -376,7 +376,7 @@ export default function PlannerShell() {
             <div className="flex justify-center">
               <button
                 type="button"
-                className="flex h-11 w-11 items-center justify-center rounded-control border border-line hover:bg-paper disabled:text-muted"
+                className="flex h-11 w-11 items-center justify-center rounded-control border border-edge hover:bg-paper disabled:text-muted"
                 disabled={origin === null && destination === null}
                 aria-label={
                   origin === null && destination === null
@@ -466,7 +466,7 @@ export default function PlannerShell() {
                     <li key={suggestion.kind}>
                       <button
                         type="button"
-                        className="min-h-11 rounded-control border border-line px-3 text-xs hover:bg-paper"
+                        className="min-h-11 rounded-control border border-edge px-3 text-xs hover:bg-paper"
                         onClick={() =>
                           applySuggestion(
                             suggestion.kind,
