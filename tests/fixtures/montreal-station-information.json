@@ -1,0 +1,1721 @@
+{
+ "last_updated": 1785042111,
+ "ttl": 10,
+ "version": "2.2",
+ "data": {
+  "stations": [
+   {
+    "station_id": "1140",
+    "external_id": "c7eb32e0-d71b-4364-9d6d-f3f23906033b",
+    "name": "Benny / Sherbrooke",
+    "short_name": "8300",
+    "lat": 45.46482582806366,
+    "lon": -73.62641725691446,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 23,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": true,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "472",
+    "external_id": "0b1565a3-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Sherbrooke / Grand Boulevard",
+    "short_name": "6718",
+    "lat": 45.466869108819964,
+    "lon": -73.62324178218842,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 19,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "367",
+    "external_id": "0b13f8a4-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "de la Côte-St-Antoine / Royal",
+    "short_name": "6363",
+    "lat": 45.468926984877434,
+    "lon": -73.6198702454567,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 19,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "413",
+    "external_id": "0b1465ad-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "de Melrose / Sherbrooke",
+    "short_name": "6415",
+    "lat": 45.46992399656915,
+    "lon": -73.61748313804128,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 23,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "360",
+    "external_id": "0b13f0dd-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Oxford / Upper-Lachine",
+    "short_name": "6356",
+    "lat": 45.46888468151876,
+    "lon": -73.60943713759298,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 19,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "358",
+    "external_id": "0b13ee9f-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "d'Oxford / Sherbrooke",
+    "short_name": "6354",
+    "lat": 45.47131959457235,
+    "lon": -73.61484378576279,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 27,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "418",
+    "external_id": "0b147194-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Notre-Dame-de-Grâce / Décarie",
+    "short_name": "6416",
+    "lat": 45.477332647079656,
+    "lon": -73.61529976129532,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 15,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "72",
+    "external_id": "0b106932-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "de Marlowe / de Maisonneuve",
+    "short_name": "6080",
+    "lat": 45.47398961074379,
+    "lon": -73.60473584441934,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 30,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "625",
+    "external_id": "5d358b14-6a3b-48cf-ba5a-c37f818e20f8",
+    "name": "Grey / Sherbrooke",
+    "short_name": "7099",
+    "lat": 45.47651075689498,
+    "lon": -73.60647261142731,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 21,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "442",
+    "external_id": "0b14c124-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "de la Côte St-Antoine / Argyle",
+    "short_name": "6436",
+    "lat": 45.48624101696415,
+    "lon": -73.59572768211365,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 19,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "661",
+    "external_id": "da0056b9-8b90-49b3-98ef-e9e8da4d9541",
+    "name": "de Maisonneuve / Wood",
+    "short_name": "7134",
+    "lat": 45.48819793805841,
+    "lon": -73.58807051185067,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 19,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "83",
+    "external_id": "0b10765d-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Métro Atwater (Atwater / Ste-Catherine )",
+    "short_name": "6194",
+    "lat": 45.48951455100737,
+    "lon": -73.58452577876506,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 35,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "86",
+    "external_id": "0b107988-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Chomedey / Ste-Catherine",
+    "short_name": "6097",
+    "lat": 45.491017287819965,
+    "lon": -73.58284557343723,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 27,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "84",
+    "external_id": "0b107771-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Chomedey / de Maisonneuve",
+    "short_name": "6095",
+    "lat": 45.491750449903954,
+    "lon": -73.58394473791122,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 27,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "497",
+    "external_id": "0b1582bb-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "St-Mathieu / Sherbrooke",
+    "short_name": "6742",
+    "lat": 45.49589450300848,
+    "lon": -73.58266854731481,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 19,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "1146",
+    "external_id": "7356bea9-fe41-4232-9eb0-9dcbceac1c61",
+    "name": "de Maisonneuve / Mackay",
+    "short_name": "8278",
+    "lat": 45.49643134687886,
+    "lon": -73.57884533707873,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 19,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "89",
+    "external_id": "0b108464-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Mackay / de Maisonneuve",
+    "short_name": "6100",
+    "lat": 45.49680823499591,
+    "lon": -73.57910657374305,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 35,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "213",
+    "external_id": "0b120fbf-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Mackay / Sherbrooke",
+    "short_name": "6215",
+    "lat": 45.49729137739268,
+    "lon": -73.57993644714952,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 23,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "586",
+    "external_id": "0b164b12-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Bishop / de Maisonneuve",
+    "short_name": "7073",
+    "lat": 45.49720422766309,
+    "lon": -73.5777654405865,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 35,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "455",
+    "external_id": "0b15234d-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Stanley / Sherbrooke",
+    "short_name": "6701",
+    "lat": 45.50105732321463,
+    "lon": -73.57722634080346,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 39,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "620",
+    "external_id": "9c482b2f-0a57-4ef8-8bd5-73ac839b1b35",
+    "name": "Metcalfe / de Maisonneuve",
+    "short_name": "7093",
+    "lat": 45.50177034353527,
+    "lon": -73.57427495998309,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 27,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "12",
+    "external_id": "0b0ff5fc-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Metcalfe / de Maisonneuve (sud)",
+    "short_name": "6012",
+    "lat": 45.501375027330134,
+    "lon": -73.5734578129086,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 23,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "26",
+    "external_id": "0b1009b3-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "de Maisonneuve / Mansfield (sud)",
+    "short_name": "6027",
+    "lat": 45.502060854996756,
+    "lon": -73.57348680496216,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 27,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "927",
+    "external_id": "0b783e50-3bf8-43b8-9c1d-5fcf2452a5a8",
+    "name": "Mansfield / Sherbrooke",
+    "short_name": "8219",
+    "lat": 45.50301533529815,
+    "lon": -73.5751303658617,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 35,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "929",
+    "external_id": "473e10e0-0e7b-4aec-9e7c-0e117796c293",
+    "name": "REM McGill (de Maisonneuve / Mansfield)",
+    "short_name": "8183",
+    "lat": 45.502290282919716,
+    "lon": -73.57326424022176,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 23,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": true,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "123",
+    "external_id": "0b10fc41-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "University / Prince Arthur",
+    "short_name": "6047",
+    "lat": 45.5075118991584,
+    "lon": -73.57877546523923,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 47,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "67",
+    "external_id": "0b1062ad-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "University / Milton",
+    "short_name": "6070",
+    "lat": 45.50653308104575,
+    "lon": -73.57660090823629,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 39,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "649",
+    "external_id": "0ae94fea-0db4-4f0d-af33-f185822d1759",
+    "name": "University / Des Pins",
+    "short_name": "7122",
+    "lat": 45.508097025461794,
+    "lon": -73.57993757625081,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 31,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "516",
+    "external_id": "0b15c71c-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Métro McGill (Union / de Maisonneuve)",
+    "short_name": "7003",
+    "lat": 45.504818908706135,
+    "lon": -73.57127962078721,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 27,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "68",
+    "external_id": "0b1063c4-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "de Maisonneuve / Aylmer (ouest)",
+    "short_name": "6073",
+    "lat": 45.505173440423306,
+    "lon": -73.5706517100334,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 37,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "202",
+    "external_id": "0b12034a-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Aylmer / Sherbrooke",
+    "short_name": "6203",
+    "lat": 45.50632270771772,
+    "lon": -73.57282285902329,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 27,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "106",
+    "external_id": "0b10c45c-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "de Maisonneuve / Aylmer (est)",
+    "short_name": "6117",
+    "lat": 45.50538591756765,
+    "lon": -73.5704317688942,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 21,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "580",
+    "external_id": "0b164480-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "City Councillors / du Président-Kennedy",
+    "short_name": "7067",
+    "lat": 45.50634193073862,
+    "lon": -73.5714870578704,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 29,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "31",
+    "external_id": "0b1010e4-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "City Councillors / de Maisonneuve",
+    "short_name": "6032",
+    "lat": 45.505530802680966,
+    "lon": -73.56993003553725,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 19,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "46",
+    "external_id": "0b1025c4-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Milton / Durocher",
+    "short_name": "6204",
+    "lat": 45.508140959417744,
+    "lon": -73.57492983341217,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 31,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "547",
+    "external_id": "0b15ef72-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Durocher / Prince-Arthur",
+    "short_name": "7033",
+    "lat": 45.50928217185779,
+    "lon": -73.577119820402,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 25,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "425",
+    "external_id": "0b147daa-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Milton / Hutchison",
+    "short_name": "6412",
+    "lat": 45.50872157253173,
+    "lon": -73.57433224849046,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 22,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "324",
+    "external_id": "0b139985-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "des Pins / Hutchison",
+    "short_name": "6389",
+    "lat": 45.51077694102021,
+    "lon": -73.57825007289647,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 27,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "203",
+    "external_id": "0b1204af-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Milton / du Parc",
+    "short_name": "6205",
+    "lat": 45.50940178906752,
+    "lon": -73.5738373454842,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 31,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "122",
+    "external_id": "0b10e60a-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Jeanne-Mance / Sherbrooke",
+    "short_name": "6202",
+    "lat": 45.50934693918775,
+    "lon": -73.57122302055359,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 21,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "204",
+    "external_id": "0b1205e1-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Ste-Famille / Prince-Arthur",
+    "short_name": "6206",
+    "lat": 45.51176422538408,
+    "lon": -73.57468044658162,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 35,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "205",
+    "external_id": "0b1206fe-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Ste-Famille / des Pins",
+    "short_name": "6207",
+    "lat": 45.512856179335664,
+    "lon": -73.57692807912827,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 27,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "966",
+    "external_id": "b5b33e06-0ed7-4f1f-9fd5-4e5fe0fe93ca",
+    "name": "Ste-Famille / Sherbrooke",
+    "short_name": "8248",
+    "lat": 45.51006693207122,
+    "lon": -73.57072150607564,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 31,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "552",
+    "external_id": "0b15fa35-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Sewell / Roy",
+    "short_name": "7038",
+    "lat": 45.51467743947122,
+    "lon": -73.57659816741943,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 27,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "1223",
+    "external_id": "28e9ca65-aab8-421b-a889-73872cd12a67",
+    "name": "Milton / Clark",
+    "short_name": "8329",
+    "lat": 45.51257048612341,
+    "lon": -73.5705953836441,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 29,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": true,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "619",
+    "external_id": "0ca346e9-95e1-402f-a074-6b71d2c9e3dd",
+    "name": "St-Cuthbert / Clark",
+    "short_name": "7092",
+    "lat": 45.51567168354896,
+    "lon": -73.57744306325912,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 19,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "207",
+    "external_id": "0b12092a-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Milton / St-Laurent",
+    "short_name": "6209",
+    "lat": 45.51290239811842,
+    "lon": -73.57063252014086,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 21,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "209",
+    "external_id": "0b120b73-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "des Pins / St-Laurent",
+    "short_name": "6211",
+    "lat": 45.51522812881499,
+    "lon": -73.5750961303711,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 31,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "915",
+    "external_id": "ca39b5d2-11b0-4701-9233-7b25ffaabb74",
+    "name": "Roy / St-Laurent",
+    "short_name": "8173",
+    "lat": 45.51565182195085,
+    "lon": -73.57577390039296,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 23,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "834",
+    "external_id": "c3424ed2-ea5d-482d-a457-51c29bafb74f",
+    "name": "Métro St-Laurent (de Maisonneuve / St-Laurent)",
+    "short_name": "8188",
+    "lat": 45.51074821798916,
+    "lon": -73.56512099504471,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 24,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": true,
+    "eightd_has_key_dispenser": false,
+    "eightd_station_services": [
+     {
+      "id": "835846ce-168f-4d45-8508-5148ff77f74c",
+      "service_type": "ATTENDED_SERVICE",
+      "bikes_availability": "LIMITED",
+      "docks_availability": "LIMITED",
+      "name": "Drop-Off Station",
+      "description": "",
+      "schedule_description": "Monday to Friday: 12:00 p.m. to 6:00 p.m.\nJuly 24 to July 26, from 6:00 PM to midnight\n",
+      "link_for_more_info": "https://bixi.com/en/drop-off-stations/"
+     }
+    ],
+    "has_kiosk": true
+   },
+   {
+    "station_id": "233",
+    "external_id": "0b1225d9-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "St-Dominique / Napoléon",
+    "short_name": "6903",
+    "lat": 45.51666442219882,
+    "lon": -73.57722043991089,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 31,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "429",
+    "external_id": "0b1486fb-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "St-Dominique / Duluth",
+    "short_name": "6426",
+    "lat": 45.51758531792454,
+    "lon": -73.5793261978597,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 23,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "390",
+    "external_id": "0b1417e4-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Parc Hilda-Ramacière (Hôtel-de-ville / Prince-Arthur)",
+    "short_name": "6302",
+    "lat": 45.515966786082174,
+    "lon": -73.5716918718026,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 35,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "401",
+    "external_id": "0b14514d-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "de l'Hôtel-de-Ville / Sherbrooke",
+    "short_name": "6021",
+    "lat": 45.514524730294404,
+    "lon": -73.56835573911665,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 39,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "20",
+    "external_id": "0b100167-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "de l'Hôtel-de-Ville / Ontario",
+    "short_name": "6020",
+    "lat": 45.51374520222444,
+    "lon": -73.56666326522826,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 35,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "621",
+    "external_id": "b4d3a74f-e4e1-4e2f-a748-b4c90a4f4b03",
+    "name": "de l'Hôtel-de-Ville / Duluth",
+    "short_name": "7094",
+    "lat": 45.51874574329957,
+    "lon": -73.57754257883697,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 23,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "144",
+    "external_id": "0b115254-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Henri-Julien / Duluth",
+    "short_name": "6143",
+    "lat": 45.519708622694985,
+    "lon": -73.57674568891525,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 27,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "98",
+    "external_id": "0b1094fe-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "du Square-St-Louis / St-Denis",
+    "short_name": "6109",
+    "lat": 45.517312457587366,
+    "lon": -73.56913036219339,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 35,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "174",
+    "external_id": "0b11b7e0-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Roy / St-Denis",
+    "short_name": "6174",
+    "lat": 45.51910107799227,
+    "lon": -73.57268296636903,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 26,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "173",
+    "external_id": "0b11b660-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Berri / Cherrier",
+    "short_name": "6173",
+    "lat": 45.519266156911335,
+    "lon": -73.5692971944809,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 39,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "594",
+    "external_id": "0b165999-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "St-Hubert / de Maisonneuve",
+    "short_name": "7081",
+    "lat": 45.51613214980722,
+    "lon": -73.56049686670303,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 21,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "177",
+    "external_id": "0b11bc2e-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "St-Hubert / Duluth",
+    "short_name": "6177",
+    "lat": 45.522425652788634,
+    "lon": -73.57418417930603,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 27,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "960",
+    "external_id": "359fcea6-4235-4fed-96cd-25dc1925562f",
+    "name": "St-André / Roy",
+    "short_name": "8245",
+    "lat": 45.521743896993634,
+    "lon": -73.57048273086548,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 23,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "17",
+    "external_id": "0b0ffd3a-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Marché St-Jacques (Atateken)",
+    "short_name": "6017",
+    "lat": 45.520665992418884,
+    "lon": -73.5639146839003,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 27,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "146",
+    "external_id": "0b115f14-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "du Parc-La Fontaine / Roy",
+    "short_name": "6146",
+    "lat": 45.5231827906644,
+    "lon": -73.56890878641934,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 23,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "145",
+    "external_id": "0b1159ca-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "du Parc-La Fontaine / Duluth",
+    "short_name": "6145",
+    "lat": 45.52451761488783,
+    "lon": -73.57197672128677,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 31,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "930",
+    "external_id": "80e564d9-eaf4-4d8c-b51d-eb020ea58589",
+    "name": "Wolfe / Robin",
+    "short_name": "8190",
+    "lat": 45.51959908817399,
+    "lon": -73.56020073872969,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 31,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "587",
+    "external_id": "0b164c29-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Montcalm / Ontario",
+    "short_name": "7074",
+    "lat": 45.52108615250219,
+    "lon": -73.56223225593565,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 24,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "800",
+    "external_id": "1929ef6b-926c-43b3-8c28-a3f28718e204",
+    "name": "Hôpital Notre-Dame (Alexandre-DeSève)",
+    "short_name": "8132",
+    "lat": 45.525184121241864,
+    "lon": -73.5618961509499,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 21,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": true,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "148",
+    "external_id": "0b116ed6-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Émile-Duployé / Sherbrooke",
+    "short_name": "6148",
+    "lat": 45.52719536319051,
+    "lon": -73.5645255446434,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 27,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "140",
+    "external_id": "0b113d5d-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Gauthier / Papineau",
+    "short_name": "6139",
+    "lat": 45.529727921630254,
+    "lon": -73.56720596693776,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 23,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "237",
+    "external_id": "0b122a41-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Dorion / Gauthier",
+    "short_name": "6241",
+    "lat": 45.53081165221863,
+    "lon": -73.56643053399237,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 23,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "121",
+    "external_id": "0b10e507-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "de Bordeaux / Sherbrooke",
+    "short_name": "6129",
+    "lat": 45.529817997585944,
+    "lon": -73.56293704368,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 19,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "139",
+    "external_id": "0b1135f2-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Gauthier / de Lorimier",
+    "short_name": "6138",
+    "lat": 45.53166363055749,
+    "lon": -73.56536373496056,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 19,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "136",
+    "external_id": "0b112dc7-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "des Érables / de Rouen",
+    "short_name": "6132",
+    "lat": 45.53039534011241,
+    "lon": -73.56029033660889,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 23,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "753",
+    "external_id": "fe0da6db-f4f5-4907-b683-3bd9416ec9e6",
+    "name": "Fullum / Lalonde",
+    "short_name": "8067",
+    "lat": 45.52988181417389,
+    "lon": -73.55400212144559,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 15,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "119",
+    "external_id": "0b10dd95-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Fullum / Sherbrooke",
+    "short_name": "6131",
+    "lat": 45.53378566312351,
+    "lon": -73.56228053569794,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 38,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "113",
+    "external_id": "0b10d266-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Ontario / Poupart",
+    "short_name": "6124",
+    "lat": 45.53181652808492,
+    "lon": -73.5536502600371,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 19,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "901",
+    "external_id": "b4615bf2-0aaa-45df-a31f-f21ffea74210",
+    "name": "Gascon / Hochelaga",
+    "short_name": "8189",
+    "lat": 45.53606954324286,
+    "lon": -73.55765104293823,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 19,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": true,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "110",
+    "external_id": "0b10cf42-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Gascon / de Rouen",
+    "short_name": "6121",
+    "lat": 45.5353519228624,
+    "lon": -73.55539619966294,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 23,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "92",
+    "external_id": "0b1087c4-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Wurtele / Ontario",
+    "short_name": "6103",
+    "lat": 45.53655058752419,
+    "lon": -73.55038499732473,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 19,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "325",
+    "external_id": "0b139b11-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "de Léry / Sherbrooke",
+    "short_name": "6391",
+    "lat": 45.54104325075958,
+    "lon": -73.55836386945157,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 27,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "985",
+    "external_id": "693a50a4-dfd9-4011-908a-e15ce12d335f",
+    "name": "Métro Préfontaine (Moreau / Hochelaga)",
+    "short_name": "8241",
+    "lat": 45.541313503285316,
+    "lon": -73.5537427291274,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 31,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": true,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "1152",
+    "external_id": "7e32c6de-30af-445e-b4d7-1374e179ecbf",
+    "name": "Moreau / Ontario",
+    "short_name": "8307",
+    "lat": 45.53957807580748,
+    "lon": -73.54867860685772,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 29,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": true,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "533",
+    "external_id": "0b15df6a-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "St-Germain / Hochelaga",
+    "short_name": "7020",
+    "lat": 45.54368571443055,
+    "lon": -73.55362558810157,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 19,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "327",
+    "external_id": "0b139e39-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Dézéry / Ontario",
+    "short_name": "6393",
+    "lat": 45.54095791741757,
+    "lon": -73.54702949523926,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 27,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "2",
+    "external_id": "0b0fdf05-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Ste-Catherine / Dézéry",
+    "short_name": "6002",
+    "lat": 45.53922964167044,
+    "lon": -73.54108846087911,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 27,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "698",
+    "external_id": "090ebced-df78-491a-8615-b08e18023bb1",
+    "name": "Aylwin / Ontario",
+    "short_name": "8044",
+    "lat": 45.54430582757256,
+    "lon": -73.54564570981893,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 27,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": true,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "676",
+    "external_id": "b592407b-8242-4697-8d3f-be5525e640d8",
+    "name": "Nicolet / Hochelaga",
+    "short_name": "7149",
+    "lat": 45.54835929271496,
+    "lon": -73.55025136916083,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 22,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "328",
+    "external_id": "0b139fbc-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Parc Lalancette (de Rouen / Valois)",
+    "short_name": "6394",
+    "lat": 45.54814504700217,
+    "lon": -73.5471260547638,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 23,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "967",
+    "external_id": "b7e128e1-3018-45c1-96a9-8ee52c602e52",
+    "name": "Place Valois (Valois / Ontario)",
+    "short_name": "8252",
+    "lat": 45.54701750084233,
+    "lon": -73.543126247896,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 21,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": true,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "323",
+    "external_id": "0b139808-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Bourbonnière / Hochelaga",
+    "short_name": "6388",
+    "lat": 45.54987688385806,
+    "lon": -73.54922890663147,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 19,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "322",
+    "external_id": "0b139684-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Bourbonnière / Ontario",
+    "short_name": "6387",
+    "lat": 45.547982377134296,
+    "lon": -73.54323193501841,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 29,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "1",
+    "external_id": "0b0fda98-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Drummond / de Maisonneuve",
+    "short_name": "6001",
+    "lat": 45.4996545106653,
+    "lon": -73.57633531093597,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 23,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "4",
+    "external_id": "0b0fe2b5-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "du Champ-de-Mars / Gosford",
+    "short_name": "6004",
+    "lat": 45.50965520472071,
+    "lon": -73.55400860309601,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 22,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "9",
+    "external_id": "0b0fea54-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Crescent / de Maisonneuve",
+    "short_name": "6009",
+    "lat": 45.49812041247333,
+    "lon": -73.57759594917297,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 23,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "23",
+    "external_id": "0b1005a1-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "St-Dominique / St-Viateur",
+    "short_name": "6024",
+    "lat": 45.52649960463402,
+    "lon": -73.59812762595539,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 31,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "127",
+    "external_id": "0b110a66-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "Drolet / Beaubien",
+    "short_name": "6913",
+    "lat": 45.533348,
+    "lon": -73.605834,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 15,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "36",
+    "external_id": "0b1017ec-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "6037_SWAP",
+    "short_name": "6037",
+    "lat": 0.0,
+    "lon": 0.0,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 0,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": true
+   },
+   {
+    "station_id": "304",
+    "external_id": "0b137a21-08f3-11e7-a1cb-3863bb33a4e4",
+    "name": "6404",
+    "short_name": "6404",
+    "lat": 0.0,
+    "lon": 0.0,
+    "rental_methods": [
+     "KEY",
+     "CREDITCARD"
+    ],
+    "capacity": 0,
+    "electric_bike_surcharge_waiver": false,
+    "is_charging": false,
+    "eightd_has_key_dispenser": false,
+    "has_kiosk": false
+   }
+  ]
+ }
+}

@@ -1,0 +1,144 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "properties": {
+                "osm_type": "W",
+                "osm_id": 114875723,
+                "osm_key": "building",
+                "osm_value": "office",
+                "type": "house",
+                "name": "1000 de la Gaucheti\u00e8re",
+                "street": "Rue Saint-Antoine Ouest",
+                "district": "Ville-Marie",
+                "city": "Montr\u00e9al",
+                "county": "Agglom\u00e9ration de Montr\u00e9al",
+                "state": "Qu\u00e9bec",
+                "country": "Canada",
+                "postcode": "H3B 2N2",
+                "countrycode": "CA",
+                "extent": [
+                    -73.5670602,
+                    45.4987371,
+                    -73.5654189,
+                    45.4976697
+                ]
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -73.5662471,
+                    45.4982013
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "osm_type": "N",
+                "osm_id": 3611899391,
+                "osm_key": "amenity",
+                "osm_value": "car_rental",
+                "type": "house",
+                "housenumber": "1000",
+                "name": "Globe Location Auto & Camion (Car & Truck Rental)",
+                "street": "Rue de La Gaucheti\u00e8re Ouest",
+                "district": "Ville-Marie",
+                "city": "Montreal",
+                "county": "Agglom\u00e9ration de Montr\u00e9al",
+                "state": "Quebec",
+                "country": "Canada",
+                "postcode": "H3A 4W5",
+                "countrycode": "CA"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -73.5666994,
+                    45.4984211
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "osm_type": "N",
+                "osm_id": 2439183785,
+                "osm_key": "place",
+                "osm_value": "house",
+                "type": "house",
+                "housenumber": "1000",
+                "street": "Rue De La Gaucheti\u00e8re Ouest",
+                "district": "Ville-Marie",
+                "city": "Montr\u00e9al",
+                "county": "Agglom\u00e9ration de Montr\u00e9al",
+                "state": "Qu\u00e9bec",
+                "country": "Canada",
+                "postcode": "H3A 4W5",
+                "countrycode": "CA"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -73.566572,
+                    45.4987574
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "osm_type": "N",
+                "osm_id": 11973404799,
+                "osm_key": "place",
+                "osm_value": "house",
+                "type": "house",
+                "housenumber": "1000",
+                "street": "Rue De La Gaucheti\u00e8re Est",
+                "locality": "Village gai",
+                "district": "Ville-Marie",
+                "city": "Montr\u00e9al",
+                "county": "Agglom\u00e9ration de Montr\u00e9al",
+                "state": "QC",
+                "country": "Canada",
+                "postcode": "H2L 2P5",
+                "countrycode": "CA"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -73.5537403,
+                    45.5153326
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "osm_type": "N",
+                "osm_id": 6176957502,
+                "osm_key": "office",
+                "osm_value": "consulting",
+                "type": "house",
+                "housenumber": "1000",
+                "name": "Boston Consulting Group",
+                "street": "Rue de La Gaucheti\u00e8re Ouest",
+                "district": "Ville-Marie",
+                "city": "Montr\u00e9al",
+                "county": "Agglom\u00e9ration de Montr\u00e9al",
+                "state": "Qu\u00e9bec",
+                "country": "Canada",
+                "postcode": "H3B 4W5",
+                "countrycode": "CA"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -73.5665041,
+                    45.4983565
+                ]
+            }
+        }
+    ]
+}
