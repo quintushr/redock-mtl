@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import FeedNotice from "@/components/FeedNotice";
 import ItineraryTrail from "@/components/ItineraryTrail";
+import MapAttribution from "@/components/MapAttribution";
 import AssumptionsLine from "@/components/AssumptionsLine";
 import NoStopComparison from "@/components/NoStopComparison";
 import PlannerPanel from "@/components/PlannerPanel";
@@ -301,7 +302,7 @@ export default function PlannerShell() {
         />
       </div>
 
-      <PlannerPanel>
+      <PlannerPanel footer={<MapAttribution />}>
         {/*
           Endpoint entry first. It is an input, but it is the one input the
           result cannot exist without, and the prohibition in FR-101 is on

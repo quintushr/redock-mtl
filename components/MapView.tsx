@@ -12,10 +12,7 @@ import {
   type GeoJSONSource,
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import {
-  MAP_ATTRIBUTION_SUFFIX,
-  MAP_STYLE_URL,
-} from "@/lib/endpoints";
+import { MAP_STYLE_URL } from "@/lib/endpoints";
 import { t } from "@/lib/strings";
 import type { Itinerary, LatLon, Station } from "@/lib/types";
 
@@ -130,9 +127,16 @@ export default function MapView({
       style: MAP_STYLE_URL,
       center: [MONTREAL.lon, MONTREAL.lat],
       zoom: 12,
-      // MapLibre reads the required OpenStreetMap and OpenMapTiles credits from
-      // the style document; the provider credit is added on top (principle V).
-      attributionControl: { customAttribution: MAP_ATTRIBUTION_SUFFIX },
+      /**
+       * The credits are rendered by the panel, not here.
+       *
+       * MapLibre draws them in a corner of the map, and the panel covers the
+       * bottom of the frame below 1024px, so the required OpenStreetMap and
+       * OpenMapTiles credits were hidden for most riders. Displaying them is a
+       * licence obligation, so they moved to the panel footer, which no rest
+       * position and no scroll can hide. See components/MapAttribution.tsx.
+       */
+      attributionControl: false,
     });
 
     instance.addControl(new NavigationControl(), "top-right");

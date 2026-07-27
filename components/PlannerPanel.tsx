@@ -33,8 +33,16 @@ const EXPANDED = "h-[65dvh]";
 
 export default function PlannerPanel({
   children,
+  footer,
 }: {
   children: React.ReactNode;
+  /**
+   * Pinned below the scroll container, so it is visible at either rest
+   * position and whatever the reader has scrolled to. This is where the map
+   * credits live, and displaying those is a licence obligation rather than a
+   * courtesy, which is why they are not simply the last thing in the scroll.
+   */
+  footer?: React.ReactNode;
 }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -85,6 +93,10 @@ export default function PlannerPanel({
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pt-2 pb-4 lg:pt-4">
         {children}
       </div>
+
+      {footer !== undefined && (
+        <div className="shrink-0 border-t border-line px-4 py-2">{footer}</div>
+      )}
     </section>
   );
 }
