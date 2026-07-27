@@ -230,18 +230,27 @@ export default function ItineraryTrail({
   const entries = toEntries(itinerary.steps);
 
   return (
-    <ol aria-label={t.trail.label}>
-      {entries.map((entry, index) => (
-        <EntryRow
-          key={index}
-          entry={entry}
-          first={index === 0}
-          last={index === entries.length - 1}
-          stationName={stationName}
-          params={params}
-          t={t}
-        />
-      ))}
-    </ol>
+    <>
+      <ol aria-label={t.trail.label}>
+        {entries.map((entry, index) => (
+          <EntryRow
+            key={index}
+            entry={entry}
+            first={index === 0}
+            last={index === entries.length - 1}
+            stationName={stationName}
+            params={params}
+            t={t}
+          />
+        ))}
+      </ol>
+
+      {/*
+        The caveat in words, next to the list it qualifies, because the map
+        cannot carry it: docs/ui-guidelines.md allows no second container over
+        the map, and a dashed line alone does not say why it is dashed.
+      */}
+      <p className="text-xs text-muted">{t.trail.traceIsIndicative}</p>
+    </>
   );
 }

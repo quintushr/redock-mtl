@@ -136,6 +136,9 @@ const fr = {
     walkFree: "n'entame pas la fenêtre gratuite",
     rideTo: (place: string): string => `Roule jusqu'à ${place}`,
     unknownStation: (id: string): string => `station ${id}`,
+    /** The trace on the map is a straight line, and says so. */
+    traceIsIndicative:
+      "Sur la carte, le tracé relie les stations en ligne droite. Il est indicatif, pas un itinéraire cyclable.",
   },
 
   gauge: {
@@ -436,6 +439,8 @@ const en: Strings = {
     walkFree: "does not use the free window",
     rideTo: (place: string): string => `Ride to ${place}`,
     unknownStation: (id: string): string => `station ${id}`,
+    traceIsIndicative:
+      "On the map, the trace joins the stations in a straight line. It is indicative, not a cycling route.",
   },
 
   gauge: {

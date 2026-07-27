@@ -244,8 +244,8 @@ export default function MapView({
         layout: { "line-cap": "round", "line-join": "round" },
         paint: {
           // The accent, and one of the three uses docs/ui-guidelines.md allows
-          // it. Walking and riding are told apart by the dash, not by a second
-          // hue: two colours on one trace would be a colour code.
+          // it. Walking and riding are told apart by the dash pattern, not by a
+          // second hue: two colours on one trace would be a colour code.
           "line-color": palette.brand,
           "line-width": ["get", "width"],
           "line-dasharray": ["get", "dash"],
@@ -436,9 +436,9 @@ export default function MapView({
                 [step.to.lon, step.to.lat],
               ],
             },
-            // Walking: same accent, dashed and thinner, because it is part of
-            // the same journey but does not spend the free window.
-            properties: { width: 2.5, dash: [1, 2] },
+            // Walking: the finer dotted pattern. Same accent, because it is
+            // part of the same journey, and it does not spend the free window.
+            properties: { width: 2, dash: [1, 2] },
           });
         } else if (step.kind === "bike") {
           const from = byId.get(step.fromStationId);
@@ -453,7 +453,17 @@ export default function MapView({
                 [to.lon, to.lat],
               ],
             },
-            properties: { width: 4, dash: [1, 0] },
+            /**
+             * Dashed, and thin.
+             *
+             * This is a straight line between two stations with a detour
+             * factor applied to its length, not a route: it crosses the river
+             * and the rail yards because it has never heard of either. A solid
+             * 4px line promised a path somebody could follow. A dashed 3px one
+             * says what this actually is, an estimate, and the trail carries
+             * the same caveat in words.
+             */
+            properties: { width: 3, dash: [3, 2] },
           });
         } else {
           const at = byId.get(step.stationId);
