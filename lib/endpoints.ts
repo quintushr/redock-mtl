@@ -83,7 +83,29 @@ export const GBFS_FALLBACK_ATTRIBUTION = {
  */
 export const MAP_STYLE_URL = "https://tiles.openfreemap.org/styles/positron";
 
-export const MAP_ATTRIBUTION_SUFFIX = "OpenFreeMap";
+/**
+ * The map credits, rendered by the panel rather than by MapLibre.
+ *
+ * MapLibre's own attribution control sits in a corner of the map, and the panel
+ * covers the bottom of the frame below 1024px, so the credits it draws are
+ * hidden exactly where most riders are. Displaying them is a licence
+ * obligation, not a courtesy, so they moved into the panel's footer, which is
+ * visible whatever the panel's rest position and whatever the reader has
+ * scrolled to.
+ *
+ * Read on 2026-07-27 from the `attribution` field of the style's TileJSON,
+ * https://tiles.openfreemap.org/planet, not written from memory. Re-check it
+ * there rather than trusting this comment's age. The style's second source,
+ * Natural Earth raster relief, is public domain and requires no credit.
+ */
+export const MAP_ATTRIBUTION = [
+  { label: "OpenFreeMap", url: "https://openfreemap.org" },
+  { label: "© OpenMapTiles", url: "https://www.openmaptiles.org/" },
+  {
+    label: "© OpenStreetMap",
+    url: "https://www.openstreetmap.org/copyright",
+  },
+] as const;
 
 // ---------------------------------------------------------------------------
 // Geocoding (optional: manual entry and map click are the guaranteed path)

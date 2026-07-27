@@ -1,26 +1,133 @@
 @import "tailwindcss";
 
+/**
+ * Design tokens.
+ *
+ * These values are transcribed from docs/ui-guidelines.md, which is
+ * authoritative on every visual decision in this repository. Do not tune a
+ * colour here without changing that document first.
+ *
+ * One palette, deliberately. The guidelines define a single scheme and no dark
+ * variant, so none is invented here.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /**
+   * One scheme, declared to the browser.
+   *
+   * Without this the user agent paints its own dark defaults into form
+   * controls when the operating system asks for a dark theme, which is how an
+   * input whose text colour is --ink ended up drawn on a near-black canvas.
+   */
+  color-scheme: light;
+
+  /* Accent. Reserved for three uses and nothing else: the itinerary trace, the
+     stop stations, and the active state of a control. */
+  --brand: #e0402b;
+  --brand-soft: #fdece9;
+  --brand-deep: #8f2517;
+
+  --ink: #17171a; /* primary text, never #000 */
+  --paper: #fafaf8; /* page background */
+  --panel: #ffffff; /* panel surface */
+  --line: #e4e4e0; /* borders */
+  --muted: #6e6e6b; /* secondary text */
+
+  /**
+   * The outer edge of the panel, and the trail's rail.
+   *
+   * --line is 1,27:1 against the panel, which is invisible against a light
+   * map: the panel had no boundary at all and the trail's rail could not be
+   * followed. This is the same idea one step darker, 1,89:1, still a 1px
+   * border and still discreet. It is an addition to the palette in
+   * docs/ui-guidelines.md, for a job that palette does not cover: separating
+   * the panel from the map underneath it.
+   */
+  --edge: #bdbdb6;
+
+  /**
+   * The remaining-time gauge, and nowhere else. A three-state colour code
+   * anywhere but the gauge is forbidden.
+   *
+   * Three bands, three colours. docs/ui-guidelines.md names three states but
+   * defines two colours, leaving the middle one grey, which is how the
+   * signature element of this product ended up with no colour at all on most
+   * itineraries.
+   *
+   *   > 15 min   --ok     green
+   *   5 to 15    --warn   amber
+   *   < 5 min    --alarm  red
+   *
+   * Each has a darker twin for text. The three fills clear the 3:1 that a
+   * non-text element owes; none of them clears the 4,5:1 that 12px text owes,
+   * and the figure is set in the state's colour. Same hue, same saturation,
+   * enough lightness removed to pass.
+   */
+  --ok: #3e8e5a;
+  --ok-text: #398353;
+  --warn: #c4771a;
+  --warn-text: #a76516;
+  --alarm: #d64530;
+  --alarm-text: #d4402a;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-brand: var(--brand);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-deep: var(--brand-deep);
+  --color-ink: var(--ink);
+  --color-paper: var(--paper);
+  --color-panel: var(--panel);
+  --color-line: var(--line);
+  --color-edge: var(--edge);
+  --color-muted: var(--muted);
+  --color-ok: var(--ok);
+  --color-ok-text: var(--ok-text);
+  --color-warn: var(--warn);
+  --color-warn-text: var(--warn-text);
+  --color-alarm: var(--alarm);
+  --color-alarm-text: var(--alarm-text);
+
+  /* Two roles, two families. The monospace is not decorative: durations are
+     data, they align in columns down the trail, and a fixed advance stops the
+     digits dancing while a value recomputes. */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* 12px on containers, 8px on controls. */
+  --radius-panel: 0.75rem;
+  --radius-control: 0.5rem;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--paper);
+  color: var(--ink);
   font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+@layer base {
+  /**
+   * One focus ring, everywhere.
+   *
+   * The quality floor requires the whole interface to be navigable by keyboard
+   * with a visible focus, and nothing declared one: what showed was whatever
+   * the browser happened to draw, and it vanished wherever a control already
+   * carried a coloured border. The accent is legitimate here; the guidelines
+   * reserve it for the itinerary trace, the stop stations, and the active
+   * state of a control, and a focused control is exactly the third.
+   */
+  :focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+
+  /**
+   * Tailwind v4 stopped setting `cursor: pointer` on buttons in its preflight.
+   * The result was an interface where nothing looked clickable to a pointer.
+   * Restored for enabled controls only: a disabled one must not claim to do
+   * something.
+   */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
 }

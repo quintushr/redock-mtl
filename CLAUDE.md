@@ -10,5 +10,5 @@
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-specs/001-free-window-trip-planner/plan.md
+specs/002-refonte-affichage-resultat/plan.md
 <!-- SPECKIT END -->

@@ -50,19 +50,6 @@ const KINDS: readonly PlaceKind[] = [
   "other",
 ];
 
-/** Human wording for the badge on a suggestion row. */
-export const KIND_LABELS: Record<PlaceKind, string> = {
-  house: "Address",
-  street: "Street",
-  locality: "Place",
-  district: "District",
-  city: "City",
-  county: "Region",
-  state: "Region",
-  country: "Country",
-  other: "Place",
-};
-
 function text(value: unknown): string | null {
   return typeof value === "string" && value.trim() !== "" ? value.trim() : null;
 }

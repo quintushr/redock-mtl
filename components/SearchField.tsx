@@ -8,12 +8,14 @@ import {
   GEOCODER_URL,
 } from "@/lib/endpoints";
 import {
-  KIND_LABELS,
   formatCoordinates,
   parseCoordinates,
   parseGeocoderResults,
   type GeocodeSuggestion,
 } from "@/lib/geocode";
+import { Crosshair } from "@/components/icons";
+import { useStrings } from "@/components/LocaleProvider";
+import type { Strings } from "@/lib/strings";
 import type { LatLon } from "@/lib/types";
 
 /**
@@ -48,12 +50,13 @@ interface Row {
 function toRows(
   suggestions: GeocodeSuggestion[],
   typed: LatLon | null,
+  t: Strings,
 ): Row[] {
   const rows: Row[] = suggestions.map((suggestion) => ({
     kind: "place",
     primary: suggestion.primary,
     secondary: suggestion.secondary,
-    badge: KIND_LABELS[suggestion.kind],
+    badge: t.placeKinds[suggestion.kind],
     position: suggestion.position,
   }));
 
@@ -62,8 +65,8 @@ function toRows(
     {
       kind: "coordinates",
       primary: formatCoordinates(typed),
-      secondary: "Use this exact point",
-      badge: "Coordinates",
+      secondary: t.fields.useThisPoint,
+      badge: t.fields.coordinates,
       position: typed,
     },
     ...rows,
@@ -72,6 +75,7 @@ function toRows(
 
 export default function SearchField({
   label,
+  kind,
   placeholder,
   value,
   point,
@@ -83,6 +87,8 @@ export default function SearchField({
   onArm,
 }: {
   label: string;
+  /** Which end of the trip, for the marker that opens the row. */
+  kind: "origin" | "destination";
   placeholder: string;
   /** The text shown in the input. Owned by the parent (see the note above). */
   value: string;
@@ -97,6 +103,7 @@ export default function SearchField({
   onArm: () => void;
 }) {
   const id = useId();
+  const t = useStrings();
   const [suggestions, setSuggestions] = useState<GeocodeSuggestion[]>([]);
   const [searching, setSearching] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -116,7 +123,7 @@ export default function SearchField({
   const searchable =
     typing && coordinates === null && trimmed.length >= GEOCODER_MIN_QUERY_LENGTH;
 
-  const rows = typing ? toRows(suggestions, coordinates) : [];
+  const rows = typing ? toRows(suggestions, coordinates, t) : [];
   const showFailure = searchable && failed && !searching;
 
   useEffect(() => {
@@ -203,39 +210,39 @@ export default function SearchField({
 
   return (
     <div>
-      <div className="flex items-baseline justify-between gap-2">
-        <label htmlFor={id} className="text-sm font-medium">
-          {label}
-        </label>
-        <div className="flex items-center gap-2">
-          {point !== null && (
-            <button
-              type="button"
-              className="text-xs text-zinc-500 underline hover:text-zinc-800 dark:hover:text-zinc-200"
-              onClick={() => {
-                dismiss();
-                onClear();
-              }}
-            >
-              Clear
-            </button>
-          )}
-          <button
-            type="button"
-            aria-pressed={armed}
-            className={
-              armed
-                ? "rounded border border-blue-600 bg-blue-600 px-2 py-0.5 text-xs font-medium text-white"
-                : "rounded border border-zinc-300 px-2 py-0.5 text-xs hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
-            }
-            onClick={onArm}
-          >
-            {armed ? "Click the map…" : "Pick on map"}
-          </button>
-        </div>
-      </div>
+      <label htmlFor={id} className="text-sm font-medium">
+        {label}
+      </label>
 
-      <div className="relative mt-1">
+      {/*
+        One row: what this end is, where it is, and the way to place it on the
+        map. The marker is the trail's own grammar, hollow to start from and
+        filled to arrive at, so a reader learns it once and reads it everywhere.
+
+        There is no "clear" button. `type="search"` gives the field its own,
+        and emptying the text now clears the point as well, so the two cannot
+        disagree.
+      */}
+      <div
+        className={[
+          "relative mt-1 flex items-center gap-2 rounded-control border bg-panel pr-1 pl-3",
+          // The input's own outline is suppressed because its border now lives
+          // on this wrapper; the focus ring has to move here with it, or the
+          // field becomes the one control with no visible focus.
+          "focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-brand",
+          armed ? "border-brand" : "border-edge",
+        ].join(" ")}
+      >
+        <span
+          aria-hidden="true"
+          className={[
+            "shrink-0 rounded-full",
+            kind === "destination"
+              ? "h-[9px] w-[9px] bg-ink"
+              : "h-[9px] w-[9px] border-[1.5px] border-muted bg-panel",
+          ].join(" ")}
+        />
+
         <input
           id={id}
           type="search"
@@ -244,17 +251,18 @@ export default function SearchField({
           aria-expanded={rows.length > 0}
           aria-controls={`${id}-list`}
           aria-activedescendant={active >= 0 ? `${id}-row-${active}` : undefined}
-          className={`w-full rounded border px-2 py-1.5 text-sm dark:bg-zinc-900 ${
-            armed
-              ? "border-blue-500 ring-1 ring-blue-500"
-              : "border-zinc-300 dark:border-zinc-700"
-          }`}
+          className="min-h-11 min-w-0 flex-1 bg-transparent py-0 text-sm outline-none"
           placeholder={placeholder}
           value={value}
           onChange={(event) => {
-            onValueChange(event.target.value);
-            setDraft(event.target.value);
+            const next = event.target.value;
+            onValueChange(next);
+            setDraft(next);
             setActive(-1);
+            // The field's own clear control only empties the text. Without
+            // this the pin would stay on the map and the plan would stay
+            // computed under a field that reads as empty.
+            if (next.trim() === "" && point !== null) onClear();
           }}
           onKeyDown={onKeyDown}
           onBlur={() => {
@@ -263,11 +271,32 @@ export default function SearchField({
           }}
         />
 
+        <button
+          type="button"
+          aria-pressed={armed}
+          // Icon only, so the name carries the whole meaning. This is the
+          // guaranteed input path when the geocoder is down, which its
+          // operator does not promise it will not be, so it stays reachable.
+          aria-label={armed ? t.fields.picking : t.fields.pickOnMap}
+          title={armed ? t.fields.picking : t.fields.pickOnMap}
+          className={[
+            "flex h-9 w-9 shrink-0 items-center justify-center rounded-control",
+            // The third and last use docs/ui-guidelines.md allows the accent:
+            // the active state of a control.
+            armed
+              ? "bg-brand-soft text-brand-deep"
+              : "text-muted hover:bg-paper hover:text-ink",
+          ].join(" ")}
+          onClick={onArm}
+        >
+          <Crosshair />
+        </button>
+
         {rows.length > 0 && (
           <ul
             id={`${id}-list`}
             role="listbox"
-            className="absolute z-10 mt-1 w-full overflow-hidden rounded border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
+            className="absolute top-full right-0 left-0 z-10 mt-1 overflow-hidden rounded-control border border-edge bg-panel"
           >
             {rows.map((row, index) => (
               <li key={`${row.kind}-${index}`} role="presentation">
@@ -276,10 +305,8 @@ export default function SearchField({
                   type="button"
                   role="option"
                   aria-selected={index === active}
-                  className={`flex w-full items-baseline gap-2 border-b border-zinc-100 px-2 py-2 text-left last:border-b-0 dark:border-zinc-800 ${
-                    index === active
-                      ? "bg-zinc-100 dark:bg-zinc-800"
-                      : "hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
+                  className={`flex min-h-11 w-full items-center gap-2 border-b border-line px-3 py-2 text-left last:border-b-0 ${
+                    index === active ? "bg-paper" : "hover:bg-paper"
                   }`}
                   // Keep the focus in the input so the field does not blur the
                   // list away between pressing and releasing the pointer.
@@ -290,12 +317,14 @@ export default function SearchField({
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm">{row.primary}</span>
                     {row.secondary !== "" && (
-                      <span className="block truncate text-xs text-zinc-500">
+                      <span className="block truncate text-xs text-muted">
                         {row.secondary}
                       </span>
                     )}
                   </span>
-                  <span className="shrink-0 rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-zinc-500 dark:bg-zinc-800">
+                  {/* Sentence case at the type scale's floor. Ten pixels in
+                      decorative capitals was two rules broken at once. */}
+                  <span className="shrink-0 rounded-control bg-paper px-1.5 py-0.5 text-xs text-muted">
                     {row.badge}
                   </span>
                 </button>
@@ -306,14 +335,11 @@ export default function SearchField({
       </div>
 
       {searching && rows.length === 0 && (
-        <p className="mt-1 text-xs text-zinc-500">Searching…</p>
+        <p className="mt-1 text-xs text-muted">{t.fields.searching}</p>
       )}
 
       {showFailure && (
-        <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
-          Address search is unavailable right now. Pick the point on the map, or
-          type coordinates as “45.5088, -73.5878”.
-        </p>
+        <p className="mt-1 text-xs text-muted">{t.fields.searchUnavailable}</p>
       )}
     </div>
   );

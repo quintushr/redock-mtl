@@ -1,109 +1,82 @@
 "use client";
 
-import type { FeedAttribution, FeedStatus } from "@/lib/types";
+import { useStrings } from "@/components/LocaleProvider";
+import type { FeedStatus } from "@/lib/types";
 
 /**
- * Feed state and attribution.
+ * What the station feed is doing, in two pieces that belong in two places.
+ *
+ * A feed that failed is the reason there is no plan, so it belongs in the
+ * result region, where the reader is already looking for the answer. How fresh
+ * a working snapshot is belongs at the bottom: it qualifies a result the reader
+ * has already read, and it used to sit between the fields and the itinerary,
+ * pushing the answer down the panel on every consultation.
  *
  * Every failure gets a specific message. An empty screen or a raw error is
- * forbidden (FR-030), and the operator credit plus the snapshot timestamp are a
- * standing obligation under constitution principle V.
+ * forbidden (FR-030).
  */
 
-const MESSAGES: Record<string, { title: string; detail: string }> = {
-  network: {
-    title: "Cannot reach the station data",
-    detail:
-      "The network feed did not respond. Check your connection and try again; the map and manual entry still work.",
-  },
-  malformed: {
-    title: "The station data could not be read",
-    detail:
-      "The feed responded but its contents were not in the expected shape. This is a problem at the provider, not with your connection.",
-  },
-  "out-of-season": {
-    title: "The network is out of season",
-    detail:
-      "The operator is not publishing any active stations right now, so no trip can be planned.",
-  },
-};
-
-function Attribution({
-  attribution,
-  observedAt,
+/** The alert. Null unless the feed actually failed. */
+export function FeedFailure({
+  status,
+  onRetry,
 }: {
-  attribution: FeedAttribution;
-  observedAt: Date;
+  status: FeedStatus;
+  onRetry: () => void;
 }) {
+  const t = useStrings();
+  if (status.state !== "unavailable") return null;
+  const message = t.feed.unavailable[status.reason];
+  // A season is not something retrying can fix, and a button that cannot work
+  // is worse than no button.
+  const retryable = t.feed.retryable.includes(status.reason);
+
   return (
-    <p className="text-xs text-zinc-500">
-      Station data from {attribution.operatorName}
-      {attribution.licenseUrl !== null && (
-        <>
-          {" · "}
-          <a
-            className="underline"
-            href={attribution.licenseUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {attribution.licenseName ?? "licence"}
-          </a>
-        </>
+    <div role="alert" className="rounded-control border border-edge p-3">
+      <p className="text-sm font-medium">{message.title}</p>
+      <p className="mt-1 text-xs text-muted">{message.detail}</p>
+      {retryable && (
+        <button
+          type="button"
+          className="mt-2 min-h-11 rounded-control border border-edge px-3 text-xs hover:bg-paper"
+          onClick={onRetry}
+        >
+          {t.feed.retry}
+        </button>
       )}
-      {" · "}
-      {/* FR-014: availability is a snapshot at a stated moment, never a promise. */}
-      snapshot taken{" "}
-      <time dateTime={observedAt.toISOString()}>
-        {observedAt.toLocaleTimeString()}
-      </time>
-      . Availability can change before you arrive.
-    </p>
+    </div>
   );
 }
 
-export default function FeedNotice({ status }: { status: FeedStatus }) {
+/** How old the figures are. Null while there is nothing to qualify. */
+export function FeedFreshness({ status }: { status: FeedStatus }) {
+  const t = useStrings();
+
   if (status.state === "loading") {
     return (
-      <p className="text-sm text-zinc-600 dark:text-zinc-400" role="status">
-        Loading station data…
+      <p className="text-xs text-muted" role="status">
+        {t.feed.loading}
       </p>
     );
   }
 
-  if (status.state === "unavailable") {
-    const message = MESSAGES[status.reason];
-    return (
-      <div
-        role="alert"
-        className="rounded-md border border-amber-300 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950"
-      >
-        <p className="text-sm font-medium">{message.title}</p>
-        <p className="mt-1 text-xs text-zinc-700 dark:text-zinc-300">
-          {message.detail}
-        </p>
-      </div>
-    );
-  }
+  if (status.state === "unavailable") return null;
 
-  const { snapshot } = status;
+  // FR-014: availability is a snapshot at a stated moment, never a promise.
+  const time = status.snapshot.observedAt.toLocaleTimeString(t.units.locale, {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
   return (
     <div>
       {status.state === "stale" && (
-        <p
-          role="status"
-          className="mb-1 text-xs font-medium text-amber-700 dark:text-amber-400"
-        >
-          {/* A stale plan clearly labelled beats no plan at all. */}
-          This data is {Math.round(status.age / 60)} min old and may no longer
-          match what is at the docks.
+        // A stale plan clearly labelled beats no plan at all.
+        <p role="status" className="mb-1 text-xs font-medium">
+          {t.feed.stale(Math.round(status.age / 60))}
         </p>
       )}
-      <Attribution
-        attribution={snapshot.attribution}
-        observedAt={snapshot.observedAt}
-      />
+      <p className="text-xs text-muted">{t.feed.freshness(time)}</p>
     </div>
   );
 }
