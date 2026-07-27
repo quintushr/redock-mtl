@@ -26,7 +26,7 @@ function setup(overrides: Partial<Parameters<typeof SearchField>[0]> = {}) {
 
   const props = {
     label: "Start",
-    placeholder: "Address",
+    placeholder: "Adresse",
     value: "",
     point: null,
     bias: MONTREAL,
@@ -79,7 +79,7 @@ describe("text that did not come from the keyboard", () => {
 describe("arming the map", () => {
   it("says which end it is arming and reports the toggle", () => {
     const { onArm } = setup();
-    const button = screen.getByRole("button", { name: /pick on map/i });
+    const button = screen.getByRole("button", { name: /choisir sur la carte/i });
     expect(button.getAttribute("aria-pressed")).toBe("false");
 
     fireEvent.click(button);
@@ -88,16 +88,16 @@ describe("arming the map", () => {
 
   it("shows the armed state rather than leaving the user guessing", () => {
     setup({ armed: true });
-    const button = screen.getByRole("button", { name: /click the map/i });
+    const button = screen.getByRole("button", { name: /touche la carte/i });
     expect(button.getAttribute("aria-pressed")).toBe("true");
   });
 
   it("offers clearing only once a point is set", () => {
     const { rerender, onClear } = setup();
-    expect(screen.queryByRole("button", { name: /clear/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /effacer/i })).toBeNull();
 
     rerender({ point: MONTREAL, value: "45.5088, -73.5878" });
-    fireEvent.click(screen.getByRole("button", { name: /clear/i }));
+    fireEvent.click(screen.getByRole("button", { name: /effacer/i }));
     expect(onClear).toHaveBeenCalled();
   });
 });

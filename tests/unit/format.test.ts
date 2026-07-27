@@ -15,23 +15,23 @@ import {
 describe("approximateDuration", () => {
   it("never returns a bare number: every value is hedged", () => {
     for (const seconds of [0, 30, 59, 60, 300, 599, 600, 1800, 5400]) {
-      expect(approximateDuration(seconds)).toMatch(/^(about |under )/);
+      expect(approximateDuration(seconds)).toMatch(/^(environ |moins d')/);
     }
   });
 
   it("says under a minute rather than zero", () => {
-    expect(approximateDuration(0)).toBe("under a minute");
-    expect(approximateDuration(59)).toBe("under a minute");
+    expect(approximateDuration(0)).toBe("moins d'une minute");
+    expect(approximateDuration(59)).toBe("moins d'une minute");
   });
 
   it("rounds to the minute below ten minutes", () => {
-    expect(approximateDuration(5 * 60)).toBe("about 5 min");
-    expect(approximateDuration(5 * 60 + 20)).toBe("about 5 min");
+    expect(approximateDuration(5 * 60)).toBe("environ 5 min");
+    expect(approximateDuration(5 * 60 + 20)).toBe("environ 5 min");
   });
 
   it("rounds to five minutes beyond ten, so it cannot read as a measurement", () => {
-    expect(approximateDuration(23 * 60)).toBe("about 25 min");
-    expect(approximateDuration(47 * 60)).toBe("about 45 min");
+    expect(approximateDuration(23 * 60)).toBe("environ 25 min");
+    expect(approximateDuration(47 * 60)).toBe("environ 45 min");
   });
 
   it("never produces anything resembling a clock time", () => {
@@ -56,7 +56,7 @@ describe("formatDistance", () => {
   });
 
   it("switches to kilometres at a kilometre", () => {
-    expect(formatDistance(1000)).toBe("1.0 km");
-    expect(formatDistance(4237)).toBe("4.2 km");
+    expect(formatDistance(1000)).toBe("1,0 km");
+    expect(formatDistance(4237)).toBe("4,2 km");
   });
 });

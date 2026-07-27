@@ -16,6 +16,7 @@ import {
   MAP_ATTRIBUTION_SUFFIX,
   MAP_STYLE_URL,
 } from "@/lib/endpoints";
+import { t } from "@/lib/strings";
 import type { Itinerary, LatLon, Station } from "@/lib/types";
 
 /**
@@ -60,8 +61,8 @@ const ENDPOINT_COLOUR: Record<PickTarget, string> = {
 };
 
 const ENDPOINT_LABEL: Record<PickTarget, string> = {
-  origin: "Start, drag to move",
-  destination: "Destination, drag to move",
+  origin: t.map.originPin,
+  destination: t.map.destinationPin,
 };
 
 /**
@@ -399,16 +400,13 @@ export default function MapView({
       {picking !== null && (
         <div className="pointer-events-none absolute inset-x-0 top-0 flex justify-center p-3">
           <div className="pointer-events-auto flex items-center gap-3 rounded-full bg-blue-600 px-4 py-2 text-sm text-white shadow-lg">
-            <span>
-              Click the map to set your{" "}
-              {picking === "origin" ? "start" : "destination"}
-            </span>
+            <span>{t.map.hintPicking(picking)}</span>
             <button
               type="button"
               className="rounded-full bg-blue-500 px-2 py-0.5 text-xs hover:bg-blue-400"
               onClick={onCancelPicking}
             >
-              Cancel
+              {t.fields.clear}
             </button>
           </div>
         </div>
@@ -419,9 +417,9 @@ export default function MapView({
           mechanical bike (FR-011). */}
       <ul className="absolute bottom-8 left-2 space-y-1 rounded bg-white/90 p-2 text-[11px] shadow">
         {[
-          ["#059669", "Mechanical bike available"],
-          ["#d97706", "E-bike only"],
-          ["#9ca3af", "No bike"],
+          ["#059669", "Vélo mécanique disponible"],
+          ["#d97706", "Vélo électrique seulement"],
+          ["#9ca3af", "Aucun vélo"],
         ].map(([colour, text]) => (
           <li key={text} className="flex items-center gap-1.5">
             <span

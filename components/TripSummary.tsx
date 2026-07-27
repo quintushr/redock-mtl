@@ -1,6 +1,7 @@
 "use client";
 
 import { approximateDuration } from "@/lib/format";
+import { t } from "@/lib/strings";
 import type { Itinerary } from "@/lib/types";
 
 /**
@@ -21,7 +22,7 @@ export default function TripSummary({ itinerary }: { itinerary: Itinerary }) {
   const stops = itinerary.stopCount;
 
   return (
-    <section aria-label="Trip summary">
+    <section aria-label={t.summary.label}>
       {/* Monospace, because durations are data: they align down the trail and
           the digits must not dance while a value recomputes. */}
       <p className="font-mono text-[30px] leading-none font-medium">
@@ -29,15 +30,11 @@ export default function TripSummary({ itinerary }: { itinerary: Itinerary }) {
       </p>
 
       <p className="mt-2 text-sm">
-        {stops === 0
-          ? "No stops needed. This trip is free."
-          : `${stops} ${stops === 1 ? "stop" : "stops"} to stay inside the free window. This trip is free.`}
+        {stops === 0 ? t.summary.noStops : t.summary.stops(stops)}
       </p>
 
       {/* Principle IV: say plainly that these are estimates. */}
-      <p className="mt-1 text-xs text-muted">
-        Durations are estimates, not arrival times.
-      </p>
+      <p className="mt-1 text-xs text-muted">{t.summary.estimate}</p>
     </section>
   );
 }

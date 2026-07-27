@@ -8,12 +8,12 @@ import {
   GEOCODER_URL,
 } from "@/lib/endpoints";
 import {
-  KIND_LABELS,
   formatCoordinates,
   parseCoordinates,
   parseGeocoderResults,
   type GeocodeSuggestion,
 } from "@/lib/geocode";
+import { t } from "@/lib/strings";
 import type { LatLon } from "@/lib/types";
 
 /**
@@ -53,7 +53,7 @@ function toRows(
     kind: "place",
     primary: suggestion.primary,
     secondary: suggestion.secondary,
-    badge: KIND_LABELS[suggestion.kind],
+    badge: t.placeKinds[suggestion.kind],
     position: suggestion.position,
   }));
 
@@ -62,8 +62,8 @@ function toRows(
     {
       kind: "coordinates",
       primary: formatCoordinates(typed),
-      secondary: "Use this exact point",
-      badge: "Coordinates",
+      secondary: t.fields.useThisPoint,
+      badge: t.fields.coordinates,
       position: typed,
     },
     ...rows,
@@ -217,7 +217,7 @@ export default function SearchField({
                 onClear();
               }}
             >
-              Clear
+              {t.fields.clear}
             </button>
           )}
           <button
@@ -230,7 +230,7 @@ export default function SearchField({
             }
             onClick={onArm}
           >
-            {armed ? "Click the map…" : "Pick on map"}
+            {armed ? t.fields.picking : t.fields.pickOnMap}
           </button>
         </div>
       </div>
@@ -306,14 +306,11 @@ export default function SearchField({
       </div>
 
       {searching && rows.length === 0 && (
-        <p className="mt-1 text-xs text-zinc-500">Searching…</p>
+        <p className="mt-1 text-xs text-muted">{t.fields.searching}</p>
       )}
 
       {showFailure && (
-        <p className="mt-1 text-xs text-amber-700">
-          Address search is unavailable right now. Pick the point on the map, or
-          type coordinates as “45.5088, -73.5878”.
-        </p>
+        <p className="mt-1 text-xs text-muted">{t.fields.searchUnavailable}</p>
       )}
     </div>
   );

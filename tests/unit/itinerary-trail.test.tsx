@@ -136,7 +136,7 @@ describe("ItineraryTrail is one continuous list (FR-116, FR-117)", () => {
   it("opens at the start and closes at the destination", () => {
     render(<ItineraryTrail itinerary={oneStop} stations={stations} params={params} />);
     const items = screen.getAllByRole("listitem");
-    expect(items[0].textContent).toMatch(/^Start/);
+    expect(items[0].textContent).toMatch(/^Départ/);
     expect(items[items.length - 1].textContent).toMatch(/^Destination/);
   });
 
@@ -146,8 +146,8 @@ describe("ItineraryTrail is one continuous list (FR-116, FR-117)", () => {
     // start, walk, ride, anchor, ride, walk, destination
     expect(text).toHaveLength(7);
     expect(text[3]).toMatch(/Station Bravo/);
-    expect(text[2]).toMatch(/Ride to/);
-    expect(text[4]).toMatch(/Ride to/);
+    expect(text[2]).toMatch(/Roule jusqu'à/);
+    expect(text[4]).toMatch(/Roule jusqu'à/);
   });
 
   it("names its stations rather than showing raw ids", () => {
@@ -165,7 +165,7 @@ describe("ItineraryTrail is one continuous list (FR-116, FR-117)", () => {
     render(<ItineraryTrail itinerary={noStop} stations={stations} params={params} />);
     // start, walk, ride, walk, destination
     expect(screen.getAllByRole("listitem")).toHaveLength(5);
-    expect(screen.queryByText(/Dock here/i)).toBeNull();
+    expect(screen.queryByText(/Ancre le vélo ici/i)).toBeNull();
   });
 });
 
@@ -173,13 +173,13 @@ describe("What does not spend the free window says so (FR-114)", () => {
   it("labels every walking leg", () => {
     render(<ItineraryTrail itinerary={oneStop} stations={stations} params={params} />);
     expect(
-      screen.getAllByText(/does not use the free window/i).length,
+      screen.getAllByText(/n'entame pas la fenêtre gratuite/i).length,
     ).toBeGreaterThanOrEqual(2);
   });
 
   it("says the docking wait resets the window rather than spending it", () => {
     render(<ItineraryTrail itinerary={oneStop} stations={stations} params={params} />);
-    expect(screen.getByText(/resets the free window/i)).toBeTruthy();
+    expect(screen.getByText(/remet la fenêtre gratuite à zéro/i)).toBeTruthy();
   });
 });
 
@@ -198,21 +198,21 @@ describe("Estimate honesty (FR-113, FR-138, SC-010)", () => {
 
   it("words the total as an estimate and says so out loud", () => {
     render(<TripSummary itinerary={oneStop} />);
-    expect(screen.getByText(/about/i)).toBeTruthy();
-    expect(screen.getByText(/estimates, not arrival times/i)).toBeTruthy();
+    expect(screen.getByText(/environ/i)).toBeTruthy();
+    expect(screen.getByText(/durées estimées/i)).toBeTruthy();
   });
 });
 
 describe("TripSummary answers the whole question (FR-105)", () => {
   it("states the stop count and that the trip is free", () => {
     render(<TripSummary itinerary={oneStop} />);
-    expect(screen.getByText(/1 stop/i)).toBeTruthy();
-    expect(screen.getByText(/free/i)).toBeTruthy();
+    expect(screen.getByText(/1 arrêt/i)).toBeTruthy();
+    expect(screen.getByText(/gratuit/i)).toBeTruthy();
   });
 
   it("says no stops are needed rather than reporting a zero", () => {
     render(<TripSummary itinerary={noStop} />);
-    expect(screen.getByText(/No stops needed/i)).toBeTruthy();
+    expect(screen.getByText(/aucun arrêt/i)).toBeTruthy();
     expect(screen.queryByText(/0 stops/)).toBeNull();
   });
 });
@@ -231,7 +231,7 @@ describe("Remaining, never consumed (FR-108, FR-109, SC-005)", () => {
     render(
       <ItineraryTrail itinerary={oneStop} stations={stations} params={params} />,
     );
-    expect(screen.getAllByText(/left on arrival/i)).toHaveLength(2);
+    expect(screen.getAllByText(/d'avance à l'arrivée/i)).toHaveLength(2);
   });
 
   it("never reports time consumed or a consumed percentage", () => {
@@ -239,14 +239,14 @@ describe("Remaining, never consumed (FR-108, FR-109, SC-005)", () => {
       <ItineraryTrail itinerary={oneStop} stations={stations} params={params} />,
     );
     const text = container.textContent ?? "";
-    expect(text).not.toMatch(/consumed/i);
+    expect(text).not.toMatch(/consommé|écoulé/i);
     expect(text).not.toMatch(/%/);
     expect(text).not.toMatch(/\bof the free window\b/);
     // Nor in what a screen reader hears.
     for (const gauge of screen.getAllByRole("img")) {
       const spoken = gauge.getAttribute("aria-label") ?? "";
-      expect(spoken).toMatch(/left on arrival/i);
-      expect(spoken).not.toMatch(/percent|consumed/i);
+      expect(spoken).toMatch(/d'avance à l'arrivée/i);
+      expect(spoken).not.toMatch(/pour cent|consommé|écoulé/i);
     }
   });
 
@@ -259,16 +259,16 @@ describe("Remaining, never consumed (FR-108, FR-109, SC-005)", () => {
       .map((g) => g.getAttribute("aria-label"));
     expect(tight).not.toBe(comfortable);
     // The 90%-of-budget ride leaves almost nothing; the 30% one leaves plenty.
-    expect(tight).toMatch(/cutting it fine/i);
-    expect(comfortable).toMatch(/comfortable/i);
+    expect(tight).toMatch(/juste/i);
+    expect(comfortable).toMatch(/confortable/i);
   });
 
   it("carries the state in words, not only in colour (FR-112)", () => {
     render(
       <ItineraryTrail itinerary={oneStop} stations={stations} params={params} />,
     );
-    expect(screen.getByText(/cutting it fine/i)).toBeTruthy();
-    expect(screen.getByText(/comfortable/i)).toBeTruthy();
+    expect(screen.getByText(/juste/i)).toBeTruthy();
+    expect(screen.getByText(/confortable/i)).toBeTruthy();
   });
 
   it("keeps a visible sliver when nothing is left, so an empty gauge is not a bug", () => {
@@ -284,7 +284,7 @@ describe("Remaining, never consumed (FR-108, FR-109, SC-005)", () => {
     expect(fill).toBeTruthy();
     expect(fill.style.width).not.toBe("0%");
     expect(screen.getByRole("img").getAttribute("aria-label")).toMatch(
-      /about 0 min/i,
+      /environ 0 min/i,
     );
   });
 });

@@ -15,6 +15,7 @@ import { formatCoordinates } from "@/lib/geocode";
 import { DEFAULT_PARAMETERS, validateParameters } from "@/lib/params";
 import { planTrip } from "@/lib/planner";
 import { noStopRide } from "@/lib/pricing";
+import { describeCorrection, t } from "@/lib/strings";
 import type {
   FeedStatus,
   LatLon,
@@ -39,28 +40,9 @@ const MapView = dynamic(() => import("@/components/MapView"), { ssr: false });
 
 const MONTREAL: LatLon = { lat: 45.5088, lon: -73.5878 };
 
-const FAILURE_MESSAGES: Record<string, string> = {
-  "origin-out-of-coverage":
-    "Your starting point is outside the area this network serves.",
-  "destination-out-of-coverage":
-    "Your destination is outside the area this network serves.",
-  "no-station-near-origin":
-    "No station is within walking distance of your starting point.",
-  "no-mechanical-bike-near-origin":
-    "There are stations nearby, but none has a mechanical bike. The free window does not apply to electric bikes.",
-  "no-station-near-destination":
-    "No station is within walking distance of your destination.",
-  "gap-too-large":
-    "The stations along this route are too far apart to link with segments that stay inside the free window.",
-  "invalid-parameters":
-    "These assumptions cannot produce a plan. Adjust them and try again.",
-};
+const FAILURE_MESSAGES = t.plan.failures;
 
-const SUGGESTION_LABELS: Record<string, string> = {
-  "increase-walk-distance": "Walk further",
-  "increase-speed": "Assume a faster pace",
-  "reduce-safety-margin": "Keep less margin in hand",
-};
+const SUGGESTION_LABELS = t.plan.suggestions;
 
 export default function PlannerShell() {
   const [feed, setFeed] = useState<FeedStatus>({ state: "loading" });
@@ -187,7 +169,7 @@ export default function PlannerShell() {
           lat: position.coords.latitude,
           lon: position.coords.longitude,
         };
-        setEndpoint("origin", here, "Your location");
+        setEndpoint("origin", here, t.fields.myLocation);
         advance("origin");
         // The user granted the permission; showing them where they are is the
         // whole point of having asked.
@@ -202,7 +184,10 @@ export default function PlannerShell() {
     feed.state === "ready" || feed.state === "stale" ? feed.snapshot : null;
 
   const validation = validateParameters(parameters);
-  const correction = validation.ok ? null : validation.reason;
+  // The domain stays the authority on what is wrong; only the wording is ours.
+  const correction = validation.ok
+    ? null
+    : describeCorrection(parameters, validation.corrected);
 
   const plan: PlanResult | null = useMemo(() => {
     if (snapshot === null || origin === null || destination === null) return null;
@@ -328,8 +313,8 @@ export default function PlannerShell() {
         */}
         <div className="space-y-3">
           <SearchField
-            label="Start"
-            placeholder="123 Rue Sainte-Catherine Ouest"
+            label={t.fields.origin}
+            placeholder={t.fields.placeholder}
             value={originText}
             point={origin}
             bias={MONTREAL}
@@ -349,13 +334,13 @@ export default function PlannerShell() {
               disabled={origin === null && destination === null}
               onClick={swapEndpoints}
             >
-              Swap start and destination
+              {t.fields.swap}
             </button>
           </div>
 
           <SearchField
-            label="Destination"
-            placeholder="123 Rue Sainte-Catherine Ouest"
+            label={t.fields.destination}
+            placeholder={t.fields.placeholder}
             value={destinationText}
             point={destination}
             bias={MONTREAL}
@@ -370,10 +355,10 @@ export default function PlannerShell() {
 
           <p className="text-xs text-muted">
             {picking !== null
-              ? `Click the map to set your ${picking === "origin" ? "start" : "destination"}, or type an address above.`
+              ? t.map.hintPicking(picking)
               : geolocationDenied
-                ? "Location is unavailable. Type an address, drag a pin, or use “Pick on map”."
-                : "Drag a pin to adjust it, or use “Pick on map” to place one again."}
+                ? t.map.hintGeolocationDenied
+                : t.map.hintPlaced}
           </p>
         </div>
 
@@ -385,9 +370,7 @@ export default function PlannerShell() {
             above this point (FR-101). */}
         <div className="mt-4 border-t border-line pt-4">
           {plan === null ? (
-            <p className="text-sm text-muted">
-              Set a start and a destination to see a plan.
-            </p>
+            <p className="text-sm text-muted">{t.plan.empty}</p>
           ) : plan.ok ? (
             <>
               <TripSummary itinerary={plan.itinerary} />
@@ -412,7 +395,7 @@ export default function PlannerShell() {
           ) : (
             // FR-028: name the cause and offer something concrete to do.
             <div role="alert">
-              <p className="text-sm font-medium">No plan is possible</p>
+              <p className="text-sm font-medium">{t.plan.failureTitle}</p>
               <p className="mt-1 text-sm text-muted">
                 {FAILURE_MESSAGES[plan.failure.reason]}
               </p>

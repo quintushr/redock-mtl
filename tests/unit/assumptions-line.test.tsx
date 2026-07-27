@@ -35,12 +35,12 @@ const renderLine = (
 };
 
 const open = (): void => {
-  fireEvent.click(screen.getByRole("button", { name: /assumptions/i }));
+  fireEvent.click(screen.getByRole("button", { name: /réglages/i }));
 };
 
 const showRest = (): void => {
   fireEvent.click(
-    screen.getByRole("button", { name: /show the other assumptions/i }),
+    screen.getByRole("button", { name: /afficher les autres réglages/i }),
   );
 };
 
@@ -53,18 +53,18 @@ describe("at rest it is one line (FR-103, FR-125)", () => {
 
   it("says the assumptions are the defaults when they are", () => {
     renderLine();
-    expect(screen.getByText(/all defaults/i)).toBeTruthy();
+    expect(screen.getByText(/valeurs par défaut/i)).toBeTruthy();
   });
 
   it("says how many were changed when some were", () => {
     renderLine(withParams({ safetyMargin: 600, cyclingSpeed: 5 }));
-    expect(screen.getByText(/2 changed/i)).toBeTruthy();
-    expect(screen.queryByText(/all defaults/i)).toBeNull();
+    expect(screen.getByText(/2 valeurs modifiées/i)).toBeTruthy();
+    expect(screen.queryByText(/valeurs par défaut/i)).toBeNull();
   });
 
   it("uses the singular for a single change", () => {
     renderLine(withParams({ safetyMargin: 600 }));
-    expect(screen.getByText(/1 changed from its default/i)).toBeTruthy();
+    expect(screen.getByText(/1 valeur modifiée/i)).toBeTruthy();
   });
 });
 
@@ -75,7 +75,7 @@ describe("opened, the safety margin is the only first-level control (FR-120, FR-
 
     const sliders = screen.getAllByRole("slider");
     expect(sliders).toHaveLength(1);
-    expect(screen.getByLabelText(/safety margin/i)).toBe(sliders[0]);
+    expect(screen.getByLabelText(/marge de sécurité/i)).toBe(sliders[0]);
   });
 
   it("keeps the other assumptions in a group that starts closed", () => {
@@ -83,10 +83,10 @@ describe("opened, the safety margin is the only first-level control (FR-120, FR-
     open();
 
     const disclosure = screen.getByRole("button", {
-      name: /show the other assumptions/i,
+      name: /afficher les autres réglages/i,
     });
     expect(disclosure.getAttribute("aria-expanded")).toBe("false");
-    expect(screen.queryByLabelText(/cycling speed/i)).toBeNull();
+    expect(screen.queryByLabelText(/vitesse à vélo/i)).toBeNull();
   });
 
   it("exposes every remaining parameter once that group is opened", () => {
@@ -101,8 +101,8 @@ describe("opened, the safety margin is the only first-level control (FR-120, FR-
     expect(screen.getAllByRole("slider")).toHaveLength(
       Object.keys(DEFAULT_PARAMETERS).length,
     );
-    expect(screen.getByLabelText(/cycling speed/i)).toBeTruthy();
-    expect(screen.getByLabelText(/detour factor/i)).toBeTruthy();
+    expect(screen.getByLabelText(/vitesse à vélo/i)).toBeTruthy();
+    expect(screen.getByLabelText(/facteur de détour/i)).toBeTruthy();
   });
 });
 
@@ -113,7 +113,7 @@ describe("reset (FR-127)", () => {
     );
 
     open();
-    fireEvent.click(screen.getByRole("button", { name: /reset all/i }));
+    fireEvent.click(screen.getByRole("button", { name: /tout réinitialiser/i }));
 
     expect(onChange).toHaveBeenCalledTimes(1);
     expect(onChange).toHaveBeenCalledWith(DEFAULT_PARAMETERS);
@@ -123,7 +123,7 @@ describe("reset (FR-127)", () => {
     renderLine();
     open();
     const reset = screen.getByRole("button", {
-      name: /reset all/i,
+      name: /tout réinitialiser/i,
     }) as HTMLButtonElement;
     expect(reset.disabled).toBe(true);
   });
@@ -134,7 +134,7 @@ describe("changing the safety margin (FR-120)", () => {
     const { onChange } = renderLine();
     open();
 
-    fireEvent.change(screen.getByLabelText(/safety margin/i), {
+    fireEvent.change(screen.getByLabelText(/marge de sécurité/i), {
       target: { value: "8" },
     });
 
@@ -150,11 +150,11 @@ describe("an unusable value is explained, not swallowed (FR-126)", () => {
   it("surfaces the correction as an alert", () => {
     renderLine(
       withParams({ safetyMargin: 4000 }),
-      "The safety margin must be shorter than the free window.",
+      "La marge de sécurité doit être plus courte que la fenêtre gratuite.",
     );
     open();
     expect(screen.getByRole("alert").textContent).toMatch(
-      /shorter than the free window/i,
+      /plus courte que la fenêtre gratuite/i,
     );
   });
 });

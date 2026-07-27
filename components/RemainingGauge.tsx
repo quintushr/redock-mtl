@@ -1,7 +1,7 @@
 "use client";
 
 import { roundedMinutes } from "@/lib/format";
-import { remainingLabel } from "@/lib/remaining";
+import { t } from "@/lib/strings";
 import type { RemainingStatus, Seconds } from "@/lib/types";
 
 /**
@@ -46,8 +46,8 @@ export default function RemainingGauge({
   budget?: Seconds;
 }) {
   const minutes = roundedMinutes(remaining);
-  const label = remainingLabel(status);
-  const spoken = `about ${minutes} min of free window left on arrival, ${label}`;
+  const label = t.gauge.states[status];
+  const spoken = t.gauge.spoken(minutes, label);
 
   return (
     <div className="mt-1.5">
@@ -68,7 +68,8 @@ export default function RemainingGauge({
       {/* The figure is always present. FR-112 and the quality floor in
           docs/ui-guidelines.md both forbid leaving this to colour. */}
       <p className="mt-1 text-xs text-muted">
-        <span className="font-mono">about {minutes} min</span> left on arrival
+        <span className="font-mono">{t.gauge.remaining(minutes)}</span>{" "}
+        {t.gauge.onArrival}
         <span className={`ml-2 font-medium ${TEXT[status]}`}>{label}</span>
       </p>
     </div>

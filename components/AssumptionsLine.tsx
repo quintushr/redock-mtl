@@ -1,8 +1,9 @@
 "use client";
 
 import { useId, useState } from "react";
-import { approximateDuration } from "@/lib/format";
+import { approximateDuration, formatDecimal } from "@/lib/format";
 import { DEFAULT_PARAMETERS } from "@/lib/params";
+import { t } from "@/lib/strings";
 import type { PlanningParameters } from "@/lib/types";
 
 /**
@@ -27,10 +28,13 @@ import type { PlanningParameters } from "@/lib/types";
 
 const MS_TO_KMH = 3600 / 1000;
 
+/**
+ * A control's range and unit. Its label and its hint come from lib/strings.ts,
+ * keyed by the parameter name, so wording and arithmetic are not maintained in
+ * the same place.
+ */
 interface Control {
   key: keyof PlanningParameters;
-  label: string;
-  hint: string;
   min: number;
   max: number;
   step: number;
@@ -49,8 +53,6 @@ interface Control {
 const CONTROLS: Control[] = [
   {
     key: "safetyMargin",
-    label: "Safety margin",
-    hint: "Held back from the free window. Lower it for fewer stops and tighter segments.",
     min: 0,
     max: 20,
     step: 1,
@@ -61,8 +63,6 @@ const CONTROLS: Control[] = [
   },
   {
     key: "freeWindow",
-    label: "Free window",
-    hint: "The free duration your subscription includes per ride.",
     min: 10,
     max: 90,
     step: 5,
@@ -72,8 +72,6 @@ const CONTROLS: Control[] = [
   },
   {
     key: "cyclingSpeed",
-    label: "Cycling speed",
-    hint: "Your pace on a share bike.",
     min: 8,
     max: 28,
     step: 1,
@@ -83,8 +81,6 @@ const CONTROLS: Control[] = [
   },
   {
     key: "maxWalkDistance",
-    label: "Maximum walk",
-    hint: "How far you will walk to or from a station.",
     min: 100,
     max: 2500,
     step: 100,
@@ -94,8 +90,6 @@ const CONTROLS: Control[] = [
   },
   {
     key: "walkingSpeed",
-    label: "Walking speed",
-    hint: "Used for the walk at each end, which never uses the free window.",
     min: 2,
     max: 7,
     step: 0.5,
@@ -105,8 +99,6 @@ const CONTROLS: Control[] = [
   },
   {
     key: "dockCooldown",
-    label: "Docking cooldown",
-    hint: "The operator's wait before you can take the same bike again.",
     min: 0,
     max: 300,
     step: 15,
@@ -116,8 +108,6 @@ const CONTROLS: Control[] = [
   },
   {
     key: "segmentOverhead",
-    label: "Unlock and dock time",
-    hint: "Charged once per ride, and it does use the free window.",
     min: 0,
     max: 300,
     step: 15,
@@ -127,8 +117,6 @@ const CONTROLS: Control[] = [
   },
   {
     key: "bikeReserve",
-    label: "Bikes held in reserve",
-    hint: "Never plan on the last bikes; someone may take them first.",
     min: 0,
     max: 5,
     step: 1,
@@ -138,8 +126,6 @@ const CONTROLS: Control[] = [
   },
   {
     key: "dockReserve",
-    label: "Docks held in reserve",
-    hint: "Never plan on the last free docks.",
     min: 0,
     max: 5,
     step: 1,
@@ -149,8 +135,6 @@ const CONTROLS: Control[] = [
   },
   {
     key: "detourFactor",
-    label: "Detour factor",
-    hint: "How much longer streets are than a straight line.",
     min: 1,
     max: 2,
     step: 0.05,
@@ -160,8 +144,6 @@ const CONTROLS: Control[] = [
   },
   {
     key: "overageRate",
-    label: "Overage rate",
-    hint: "What a minute past the free window costs, before taxes. Only used to price a ride without stops.",
     min: 0,
     max: 1,
     step: 0.01,
@@ -182,13 +164,15 @@ function Slider({
 }) {
   const id = useId();
   const shown = control.toDisplay(value);
+  const { label, hint } = t.settings.controls[control.key];
 
   return (
     <div className="py-2">
       <label htmlFor={id} className="flex items-baseline justify-between">
-        <span className="text-sm font-medium">{control.label}</span>
+        <span className="text-sm font-medium">{label}</span>
         <span className="font-mono text-sm text-muted tabular-nums">
-          {Number.isInteger(shown) ? shown : shown.toFixed(2)} {control.unit}
+          {Number.isInteger(shown) ? shown : formatDecimal(shown, 2)}{" "}
+          {control.unit}
         </span>
       </label>
       <input
@@ -205,7 +189,7 @@ function Slider({
         }
       />
       <p id={`${id}-hint`} className="text-xs text-muted">
-        {control.hint}
+        {hint}
       </p>
     </div>
   );
@@ -238,7 +222,7 @@ export default function AssumptionsLine({
   const changed = changedCount(parameters);
 
   return (
-    <section aria-label="Planning assumptions">
+    <section aria-label={t.settings.label}>
       {/*
         At rest this is the whole component: one line, and enough of it to know
         whether the plan above rests on the defaults or on something the reader
@@ -250,12 +234,16 @@ export default function AssumptionsLine({
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
       >
-        <span className="text-sm font-medium">Assumptions</span>
+        <span className="text-sm font-medium">{t.settings.label}</span>
         <span className="truncate text-xs text-muted">
-          {approximateDuration(parameters.safetyMargin)} of margin
           {changed === 0
-            ? ", all defaults"
-            : `, ${changed} changed from ${changed === 1 ? "its default" : "their defaults"}`}
+            ? t.settings.summaryDefaults(
+                approximateDuration(parameters.safetyMargin),
+              )
+            : t.settings.summaryChanged(
+                approximateDuration(parameters.safetyMargin),
+                changed,
+              )}
         </span>
       </button>
 
@@ -287,7 +275,7 @@ export default function AssumptionsLine({
               aria-expanded={showRest}
               onClick={() => setShowRest((current) => !current)}
             >
-              {showRest ? "Hide" : "Show"} the other assumptions
+              {showRest ? t.settings.hideRest : t.settings.showRest}
             </button>
             <button
               type="button"
@@ -295,7 +283,7 @@ export default function AssumptionsLine({
               disabled={changed === 0}
               onClick={() => onChange(DEFAULT_PARAMETERS)}
             >
-              Reset all
+              {t.settings.reset}
             </button>
           </div>
 

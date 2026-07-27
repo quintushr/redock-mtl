@@ -3,6 +3,7 @@
 import RemainingGauge from "@/components/RemainingGauge";
 import { approximateDuration, formatDistance } from "@/lib/format";
 import { gaugeFraction } from "@/lib/remaining";
+import { t } from "@/lib/strings";
 import type {
   Itinerary,
   ItineraryStep,
@@ -138,10 +139,10 @@ function EntryRow({
   function content() {
     switch (entry.kind) {
       case "start":
-        return <p className="text-sm font-medium">Start</p>;
+        return <p className="text-sm font-medium">{t.trail.start}</p>;
 
       case "destination":
-        return <p className="text-sm font-medium">Destination</p>;
+        return <p className="text-sm font-medium">{t.trail.destination}</p>;
 
       case "anchor":
         return (
@@ -150,10 +151,9 @@ function EntryRow({
               {stationName(entry.stationId)}
             </p>
             <p className="text-xs text-muted">
-              Dock here and take the same bike again after{" "}
-              {approximateDuration(entry.cooldown)}
+              {t.trail.anchor(approximateDuration(entry.cooldown))}
               {/* FR-114: the wait costs time but buys a fresh window. */}
-              <span className="ml-1 italic">resets the free window</span>
+              <span className="ml-1">{t.trail.anchorResets}</span>
             </p>
           </>
         );
@@ -164,15 +164,14 @@ function EntryRow({
         return (
           <>
             <p className="text-sm">
-              Walk{" "}
               {entry.step.toStationId !== null
-                ? `to ${stationName(entry.step.toStationId)}`
-                : "to your destination"}
+                ? t.trail.walkTo(stationName(entry.step.toStationId))
+                : t.trail.walkToDestination}
             </p>
             <p className="text-xs text-muted">
               {approximateDuration(entry.step.duration)} ·{" "}
               {formatDistance(entry.step.distance)}
-              <span className="ml-1 italic">does not use the free window</span>
+              <span className="ml-1">{t.trail.walkFree}</span>
             </p>
           </>
         );
@@ -183,7 +182,7 @@ function EntryRow({
         return (
           <>
             <p className="text-sm">
-              Ride to {stationName(entry.step.toStationId)}
+              {t.trail.rideTo(stationName(entry.step.toStationId))}
             </p>
             <p className="text-xs text-muted">
               {approximateDuration(entry.step.duration)} ·{" "}
@@ -211,12 +210,13 @@ export default function ItineraryTrail({
   params: PlanningParameters;
 }) {
   const names = new Map(stations.map((s) => [s.id, s.name]));
-  const stationName = (id: string): string => names.get(id) ?? `station ${id}`;
+  const stationName = (id: string): string =>
+    names.get(id) ?? t.trail.unknownStation(id);
 
   const entries = toEntries(itinerary.steps);
 
   return (
-    <ol aria-label="Itinerary">
+    <ol aria-label={t.trail.label}>
       {entries.map((entry, index) => (
         <EntryRow
           key={index}

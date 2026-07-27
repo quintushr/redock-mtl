@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { approximateDuration } from "@/lib/format";
+import { approximateDuration, formatMoney } from "@/lib/format";
+import { t } from "@/lib/strings";
 import type { NoStopRide } from "@/lib/types";
 
 /**
@@ -19,15 +20,13 @@ import type { NoStopRide } from "@/lib/types";
  * Nothing is computed here. The ride arrives from lib/pricing.ts.
  */
 
-function formatMoney(amount: number): string {
-  return `$${amount.toFixed(2)}`;
-}
-
 /** Signed, and worded rather than signed with a character. */
 function describeDelta(seconds: number): string {
   const magnitude = approximateDuration(Math.abs(seconds));
-  if (Math.abs(seconds) < 60) return "about the same time";
-  return seconds < 0 ? `${magnitude} faster` : `${magnitude} slower`;
+  if (Math.abs(seconds) < 60) return t.noStop.sameTime;
+  return seconds < 0
+    ? t.noStop.faster(magnitude)
+    : t.noStop.slower(magnitude);
 }
 
 export default function NoStopComparison({
@@ -54,13 +53,13 @@ export default function NoStopComparison({
         aria-expanded={shown}
         onClick={() => setShown((current) => !current)}
       >
-        {shown ? "Hide" : "What if I ride it without stopping?"}
+        {shown ? t.noStop.hide : t.noStop.reveal}
       </button>
 
       {shown &&
         (noStop === null ? (
           <p className="mt-2 text-xs text-muted">
-            There is no ride to compare: this trip is walked end to end.
+            {t.noStop.nothingToCompare}
           </p>
         ) : (
           <div className="mt-2">
@@ -68,28 +67,26 @@ export default function NoStopComparison({
               <span className="font-mono font-medium">
                 {approximateDuration(noStop.duration)}
               </span>{" "}
-              in one go, {describeDelta(noStop.deltaAgainstPlan)} than{" "}
-              {stopCount === 1 ? "the stop" : "the stops"}.
+              {t.noStop.inOneGo(describeDelta(noStop.deltaAgainstPlan))}
             </p>
 
             <p className="mt-1 text-sm">
               {noStop.cost === 0 ? (
-                <>Still free: it stays inside the free window.</>
+                t.noStop.stillFree
               ) : (
                 <>
-                  You would pay{" "}
+                  {t.noStop.wouldPayBefore}{" "}
                   <span className="font-mono font-medium">
                     {formatMoney(noStop.cost)}
                   </span>{" "}
-                  for the {approximateDuration(noStop.overage)} over the window.
+                  {t.noStop.wouldPayAfter(approximateDuration(noStop.overage))}
                 </>
               )}
             </p>
 
             {/* FR-130: the amount states the assumptions it rests on. */}
             <p className="mt-1 text-xs text-muted">
-              Estimated, before taxes, at {formatMoney(overageRate)} per minute.
-              Change that rate in the assumptions below.
+              {t.noStop.rateNote(formatMoney(overageRate))}
             </p>
           </div>
         ))}

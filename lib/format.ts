@@ -18,11 +18,11 @@ import type { Metres, Seconds } from "./types";
  */
 export function approximateDuration(seconds: Seconds): string {
   const minutes = seconds / 60;
-  if (minutes < 1) return "under a minute";
-  if (minutes < 10) return `about ${Math.round(minutes)} min`;
+  if (minutes < 1) return "moins d'une minute";
+  if (minutes < 10) return `environ ${Math.round(minutes)} min`;
   // Beyond ten minutes, round to five so the figure cannot be mistaken for a
   // measurement.
-  return `about ${Math.round(minutes / 5) * 5} min`;
+  return `environ ${Math.round(minutes / 5) * 5} min`;
 }
 
 /**
@@ -40,5 +40,26 @@ export function roundedMinutes(seconds: Seconds): number {
 export function formatDistance(metres: Metres): string {
   return metres < 1000
     ? `${Math.round(metres / 10) * 10} m`
-    : `${(metres / 1000).toFixed(1)} km`;
+    : `${formatDecimal(metres / 1000, 1)} km`;
+}
+
+/**
+ * A decimal for a French-speaking reader: comma separator, fixed number of
+ * digits so a value cannot appear to gain precision as it changes.
+ */
+export function formatDecimal(value: number, digits: number): string {
+  return value.toFixed(digits).replace(".", ",");
+}
+
+/**
+ * An amount in Canadian dollars.
+ *
+ * Through Intl rather than a template, because the position of the sign and
+ * the space before it are conventions of the locale, not of this codebase.
+ */
+export function formatMoney(amount: number): string {
+  return new Intl.NumberFormat("fr-CA", {
+    style: "currency",
+    currency: "CAD",
+  }).format(amount);
 }

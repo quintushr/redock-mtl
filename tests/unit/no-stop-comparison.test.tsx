@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import NoStopComparison from "@/components/NoStopComparison";
+import { formatMoney } from "@/lib/format";
 import { DEFAULT_PARAMETERS } from "@/lib/params";
 import type { NoStopRide } from "@/lib/types";
 
@@ -15,6 +16,16 @@ import type { NoStopRide } from "@/lib/types";
 afterEach(cleanup);
 
 const rate = DEFAULT_PARAMETERS.overageRate;
+
+/**
+ * The rendered amount as the DOM reports it.
+ *
+ * Intl separates the figure from the sign with a non-breaking space, and
+ * Testing Library's default normaliser collapses it to a plain one. Comparing
+ * against the raw output would fail on that invisible difference alone.
+ */
+const money = (amount: number): string =>
+  formatMoney(amount).replace(/\s/g, " ");
 
 const billed: NoStopRide = {
   fromStationId: "a",
@@ -37,7 +48,7 @@ const free: NoStopRide = {
 };
 
 const reveal = (): void => {
-  fireEvent.click(screen.getByRole("button", { name: /without stopping/i }));
+  fireEvent.click(screen.getByRole("button", { name: /sans aucun arrêt/i }));
 };
 
 describe("reachable in one action (FR-128, SC-007)", () => {
@@ -45,12 +56,12 @@ describe("reachable in one action (FR-128, SC-007)", () => {
     render(
       <NoStopComparison noStop={billed} overageRate={rate} stopCount={2} />,
     );
-    const trigger = screen.getByRole("button", { name: /without stopping/i });
+    const trigger = screen.getByRole("button", { name: /sans aucun arrêt/i });
     expect(trigger.getAttribute("aria-expanded")).toBe("false");
 
     fireEvent.click(trigger);
     expect(trigger.getAttribute("aria-expanded")).toBe("true");
-    expect(screen.getByText(/in one go/i)).toBeTruthy();
+    expect(screen.getByText(/d'une traite/i)).toBeTruthy();
   });
 
   it("returns to the trail when dismissed, revealing nothing", () => {
@@ -58,8 +69,8 @@ describe("reachable in one action (FR-128, SC-007)", () => {
       <NoStopComparison noStop={billed} overageRate={rate} stopCount={2} />,
     );
     reveal();
-    fireEvent.click(screen.getByRole("button", { name: /hide/i }));
-    expect(screen.queryByText(/in one go/i)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /masquer/i }));
+    expect(screen.queryByText(/d'une traite/i)).toBeNull();
   });
 });
 
@@ -70,9 +81,9 @@ describe("what it reports (FR-129, FR-129a, FR-130)", () => {
     );
     reveal();
 
-    expect(screen.getByText(/about 65 min/i)).toBeTruthy();
-    expect(screen.getByText(`$${(20 * rate).toFixed(2)}`)).toBeTruthy();
-    expect(screen.getByText(/faster/i)).toBeTruthy();
+    expect(screen.getByText(/environ 65 min/i)).toBeTruthy();
+    expect(screen.getByText(money(20 * rate))).toBeTruthy();
+    expect(screen.getByText(/de moins/i)).toBeTruthy();
   });
 
   it("states that the amount is an estimate, pre-tax, and at what rate", () => {
@@ -81,8 +92,8 @@ describe("what it reports (FR-129, FR-129a, FR-130)", () => {
     );
     reveal();
 
-    const note = screen.getByText(/estimated, before taxes/i);
-    expect(note.textContent).toMatch(/\$0\.19 per minute/);
+    const note = screen.getByText(/estimation avant taxes/i);
+    expect(note.textContent).toMatch(/0,19\s?\$ la minute/);
   });
 
   it("follows the rate it is given rather than a constant", () => {
@@ -94,15 +105,15 @@ describe("what it reports (FR-129, FR-129a, FR-130)", () => {
       />,
     );
     reveal();
-    expect(screen.getByText("$10.00")).toBeTruthy();
-    expect(screen.getByText(/\$0\.50 per minute/)).toBeTruthy();
+    expect(screen.getByText(money(10))).toBeTruthy();
+    expect(screen.getByText(/0,50\s?\$ la minute/)).toBeTruthy();
   });
 
   it("says so plainly when the direct ride would still be free", () => {
     render(<NoStopComparison noStop={free} overageRate={rate} stopCount={1} />);
     reveal();
-    expect(screen.getByText(/still free/i)).toBeTruthy();
-    expect(screen.queryByText(/you would pay/i)).toBeNull();
+    expect(screen.getByText(/toujours gratuit/i)).toBeTruthy();
+    expect(screen.queryByText(/tu paierais/i)).toBeNull();
   });
 
   it("never renders a clock time", () => {
@@ -118,7 +129,7 @@ describe("when there is nothing to compare (FR-132)", () => {
   it("says there is no ride rather than showing an amount", () => {
     render(<NoStopComparison noStop={null} overageRate={rate} stopCount={1} />);
     reveal();
-    expect(screen.getByText(/no ride to compare/i)).toBeTruthy();
+    expect(screen.getByText(/rien à comparer/i)).toBeTruthy();
     expect(screen.queryByText(/\$/)).toBeNull();
   });
 
