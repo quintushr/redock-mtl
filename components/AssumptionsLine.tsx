@@ -253,7 +253,7 @@ export default function AssumptionsLine({
             // FR-126: explain and correct rather than failing silently.
             <p
               role="alert"
-              className="mb-2 rounded-control border border-warn/40 bg-brand-soft p-2 text-xs text-brand-deep"
+              className="mb-2 rounded-control border border-line p-2 text-xs"
             >
               {correction}
             </p>

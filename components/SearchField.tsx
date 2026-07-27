@@ -211,7 +211,7 @@ export default function SearchField({
           {point !== null && (
             <button
               type="button"
-              className="text-xs text-zinc-500 underline hover:text-zinc-800"
+              className="text-xs text-muted underline hover:text-ink"
               onClick={() => {
                 dismiss();
                 onClear();
@@ -223,11 +223,14 @@ export default function SearchField({
           <button
             type="button"
             aria-pressed={armed}
-            className={
+            className={[
+              "rounded-control border px-2 py-0.5 text-xs",
+              // The third and last use docs/ui-guidelines.md allows the
+              // accent: the active state of a control.
               armed
-                ? "rounded border border-blue-600 bg-blue-600 px-2 py-0.5 text-xs font-medium text-white"
-                : "rounded border border-zinc-300 px-2 py-0.5 text-xs hover:bg-zinc-100"
-            }
+                ? "border-brand bg-brand-soft font-medium text-brand-deep"
+                : "border-line hover:bg-paper",
+            ].join(" ")}
             onClick={onArm}
           >
             {armed ? t.fields.picking : t.fields.pickOnMap}
@@ -244,10 +247,8 @@ export default function SearchField({
           aria-expanded={rows.length > 0}
           aria-controls={`${id}-list`}
           aria-activedescendant={active >= 0 ? `${id}-row-${active}` : undefined}
-          className={`w-full rounded border px-2 py-1.5 text-sm ${
-            armed
-              ? "border-blue-500 ring-1 ring-blue-500"
-              : "border-zinc-300"
+          className={`w-full rounded-control border bg-panel px-2 py-1.5 text-sm ${
+            armed ? "border-brand" : "border-line"
           }`}
           placeholder={placeholder}
           value={value}
@@ -267,7 +268,7 @@ export default function SearchField({
           <ul
             id={`${id}-list`}
             role="listbox"
-            className="absolute z-10 mt-1 w-full overflow-hidden rounded border border-zinc-200 bg-white shadow-lg"
+            className="absolute z-10 mt-1 w-full overflow-hidden rounded-control border border-line bg-panel"
           >
             {rows.map((row, index) => (
               <li key={`${row.kind}-${index}`} role="presentation">
@@ -276,10 +277,8 @@ export default function SearchField({
                   type="button"
                   role="option"
                   aria-selected={index === active}
-                  className={`flex w-full items-baseline gap-2 border-b border-zinc-100 px-2 py-2 text-left last:border-b-0 ${
-                    index === active
-                      ? "bg-zinc-100"
-                      : "hover:bg-zinc-50"
+                  className={`flex w-full items-baseline gap-2 border-b border-line px-2 py-2 text-left last:border-b-0 ${
+                    index === active ? "bg-paper" : "hover:bg-paper"
                   }`}
                   // Keep the focus in the input so the field does not blur the
                   // list away between pressing and releasing the pointer.
@@ -290,12 +289,14 @@ export default function SearchField({
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm">{row.primary}</span>
                     {row.secondary !== "" && (
-                      <span className="block truncate text-xs text-zinc-500">
+                      <span className="block truncate text-xs text-muted">
                         {row.secondary}
                       </span>
                     )}
                   </span>
-                  <span className="shrink-0 rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-zinc-500">
+                  {/* Sentence case at the type scale's floor. Ten pixels in
+                      decorative capitals was two rules broken at once. */}
+                  <span className="shrink-0 rounded-control bg-paper px-1.5 py-0.5 text-xs text-muted">
                     {row.badge}
                   </span>
                 </button>
