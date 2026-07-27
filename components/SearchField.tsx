@@ -203,15 +203,21 @@ export default function SearchField({
 
   return (
     <div>
-      <div className="flex items-baseline justify-between gap-2">
+      {/*
+        Both controls are bordered and 44px tall at rest. Most of this product's
+        readers are on a touch screen, where there is no hover to reveal that
+        something is a control, and "Effacer" used to be underlined text at
+        about twenty pixels of height.
+      */}
+      <div className="flex items-center justify-between gap-2">
         <label htmlFor={id} className="text-sm font-medium">
           {label}
         </label>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           {point !== null && (
             <button
               type="button"
-              className="text-xs text-muted underline hover:text-ink"
+              className="min-h-11 rounded-control border border-line px-3 text-xs hover:bg-paper"
               onClick={() => {
                 dismiss();
                 onClear();
@@ -224,7 +230,7 @@ export default function SearchField({
             type="button"
             aria-pressed={armed}
             className={[
-              "rounded-control border px-2 py-0.5 text-xs",
+              "min-h-11 rounded-control border px-3 text-xs",
               // The third and last use docs/ui-guidelines.md allows the
               // accent: the active state of a control.
               armed
@@ -247,7 +253,7 @@ export default function SearchField({
           aria-expanded={rows.length > 0}
           aria-controls={`${id}-list`}
           aria-activedescendant={active >= 0 ? `${id}-row-${active}` : undefined}
-          className={`w-full rounded-control border bg-panel px-2 py-1.5 text-sm ${
+          className={`min-h-11 w-full rounded-control border bg-panel px-3 text-sm ${
             armed ? "border-brand" : "border-line"
           }`}
           placeholder={placeholder}
@@ -277,7 +283,7 @@ export default function SearchField({
                   type="button"
                   role="option"
                   aria-selected={index === active}
-                  className={`flex w-full items-baseline gap-2 border-b border-line px-2 py-2 text-left last:border-b-0 ${
+                  className={`flex min-h-11 w-full items-center gap-2 border-b border-line px-3 py-2 text-left last:border-b-0 ${
                     index === active ? "bg-paper" : "hover:bg-paper"
                   }`}
                   // Keep the focus in the input so the field does not blur the

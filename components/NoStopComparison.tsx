@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ChevronDown } from "@/components/icons";
 import { approximateDuration, formatMoney } from "@/lib/format";
 import { t } from "@/lib/strings";
 import type { NoStopRide } from "@/lib/types";
@@ -49,10 +50,17 @@ export default function NoStopComparison({
     <div className="mt-4 border-t border-line pt-3">
       <button
         type="button"
-        className="text-xs underline"
+        className="-mx-2 flex min-h-11 w-full items-center gap-1.5 rounded-control px-2 text-left text-xs underline hover:bg-paper"
         aria-expanded={shown}
         onClick={() => setShown((current) => !current)}
       >
+        <ChevronDown
+          className={[
+            "shrink-0 text-muted",
+            shown ? "rotate-180" : "",
+            "motion-safe:transition-transform motion-safe:duration-150",
+          ].join(" ")}
+        />
         {shown ? t.noStop.hide : t.noStop.reveal}
       </button>
 

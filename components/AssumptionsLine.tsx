@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
+import { ChevronDown } from "@/components/icons";
 import { approximateDuration, formatDecimal } from "@/lib/format";
 import { DEFAULT_PARAMETERS } from "@/lib/params";
 import { t } from "@/lib/strings";
@@ -228,13 +229,27 @@ export default function AssumptionsLine({
         whether the plan above rests on the defaults or on something the reader
         changed (FR-125).
       */}
+      {/*
+        A chevron, a full-width hit area and 44px of height. At rest this line
+        was two runs of text with no border, no chevron and, since Tailwind v4
+        stopped setting it, no pointer cursor either: nothing said it opened.
+      */}
       <button
         type="button"
-        className="flex w-full items-baseline justify-between gap-3 text-left"
+        className="-mx-2 flex min-h-11 w-full items-center justify-between gap-3 rounded-control px-2 text-left hover:bg-paper"
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
       >
-        <span className="text-sm font-medium">{t.settings.label}</span>
+        <span className="flex items-center gap-1.5 text-sm font-medium">
+          <ChevronDown
+            className={[
+              "shrink-0 text-muted",
+              open ? "rotate-180" : "",
+              "motion-safe:transition-transform motion-safe:duration-150",
+            ].join(" ")}
+          />
+          {t.settings.label}
+        </span>
         <span className="truncate text-xs text-muted">
           {changed === 0
             ? t.settings.summaryDefaults(
@@ -271,7 +286,7 @@ export default function AssumptionsLine({
           <div className="mt-1 flex items-center justify-between">
             <button
               type="button"
-              className="text-xs underline"
+              className="-mx-2 min-h-11 rounded-control px-2 text-xs underline hover:bg-paper"
               aria-expanded={showRest}
               onClick={() => setShowRest((current) => !current)}
             >
@@ -279,7 +294,7 @@ export default function AssumptionsLine({
             </button>
             <button
               type="button"
-              className="text-xs underline disabled:text-muted disabled:no-underline"
+              className="-mx-2 min-h-11 rounded-control px-2 text-xs underline hover:bg-paper disabled:text-muted disabled:no-underline disabled:hover:bg-transparent"
               disabled={changed === 0}
               onClick={() => onChange(DEFAULT_PARAMETERS)}
             >

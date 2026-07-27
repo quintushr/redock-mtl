@@ -67,6 +67,12 @@ export const t = {
       "Ta position n'est pas disponible. Tape une adresse, ou touche la carte pour placer ton départ.",
   },
 
+  panel: {
+    label: "Planificateur de trajet",
+    expand: "Afficher l'itinéraire complet",
+    collapse: "Replier sur le résumé",
+  },
+
   summary: {
     label: "Résumé du trajet",
     noStops: "Aucun arrêt. Ce trajet est gratuit.",

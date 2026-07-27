@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { FeedFailure, FeedFreshness } from "@/components/FeedNotice";
 import ItineraryTrail from "@/components/ItineraryTrail";
 import MapAttribution from "@/components/MapAttribution";
+import { SwapVertical } from "@/components/icons";
 import AssumptionsLine from "@/components/AssumptionsLine";
 import NoStopComparison from "@/components/NoStopComparison";
 import PlannerPanel from "@/components/PlannerPanel";
@@ -329,14 +330,30 @@ export default function PlannerShell() {
             onArm={() => arm("origin")}
           />
 
-          <div className="flex justify-end">
+          {/*
+            On the seam between the two fields, which is where the gesture it
+            performs actually happens, and 44px square. It used to be a
+            full-width run of text off to one side, and it went inert without
+            ever saying why; the reason is now in its accessible name.
+          */}
+          <div className="flex justify-center">
             <button
               type="button"
-              className="rounded-control border border-line px-2 py-0.5 text-xs hover:bg-paper disabled:text-muted"
+              className="flex h-11 w-11 items-center justify-center rounded-control border border-line hover:bg-paper disabled:text-muted"
               disabled={origin === null && destination === null}
+              aria-label={
+                origin === null && destination === null
+                  ? t.fields.swapUnavailable
+                  : t.fields.swap
+              }
+              title={
+                origin === null && destination === null
+                  ? t.fields.swapUnavailable
+                  : t.fields.swap
+              }
               onClick={swapEndpoints}
             >
-              {t.fields.swap}
+              <SwapVertical />
             </button>
           </div>
 
@@ -412,7 +429,7 @@ export default function PlannerShell() {
                   <li key={suggestion.kind}>
                     <button
                       type="button"
-                      className="rounded-control border border-line px-2 py-1 text-xs hover:bg-paper"
+                      className="min-h-11 rounded-control border border-line px-3 text-xs hover:bg-paper"
                       onClick={() =>
                         applySuggestion(
                           suggestion.kind,

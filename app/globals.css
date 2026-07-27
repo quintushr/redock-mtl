@@ -66,3 +66,31 @@ body {
   color: var(--ink);
   font-family: var(--font-sans), system-ui, sans-serif;
 }
+
+@layer base {
+  /**
+   * One focus ring, everywhere.
+   *
+   * The quality floor requires the whole interface to be navigable by keyboard
+   * with a visible focus, and nothing declared one: what showed was whatever
+   * the browser happened to draw, and it vanished wherever a control already
+   * carried a coloured border. The accent is legitimate here; the guidelines
+   * reserve it for the itinerary trace, the stop stations, and the active
+   * state of a control, and a focused control is exactly the third.
+   */
+  :focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+
+  /**
+   * Tailwind v4 stopped setting `cursor: pointer` on buttons in its preflight.
+   * The result was an interface where nothing looked clickable to a pointer.
+   * Restored for enabled controls only: a disabled one must not claim to do
+   * something.
+   */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+}

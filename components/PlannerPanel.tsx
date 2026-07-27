@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { t } from "@/lib/strings";
 
 /**
  * The single panel (FR-140).
@@ -50,7 +51,7 @@ export default function PlannerPanel({
 
   return (
     <section
-      aria-label="Trip planner"
+      aria-label={t.panel.label}
       className={[
         // Anchoring below 1024px: a sheet on the bottom edge, square at the
         // bottom because there is nothing to round against the viewport edge.
@@ -78,17 +79,18 @@ export default function PlannerPanel({
       */}
       <button
         type="button"
-        className="group flex w-full shrink-0 cursor-pointer justify-center py-2 lg:hidden"
+        className="flex min-h-11 w-full shrink-0 items-center justify-center lg:hidden"
         aria-expanded={expanded}
         onClick={() => setExpanded((open) => !open)}
       >
         <span className="sr-only">
-          {expanded ? "Collapse to the summary" : "Show the full itinerary"}
+          {expanded ? t.panel.collapse : t.panel.expand}
         </span>
-        <span
-          aria-hidden="true"
-          className="h-1 w-9 rounded-full bg-line group-hover:bg-muted"
-        />
+        {/*
+          Visible at rest. On a touch screen nothing reveals itself on hover,
+          and --line against --panel is 1,27:1, which is a grip nobody sees.
+        */}
+        <span aria-hidden="true" className="h-1 w-9 rounded-full bg-muted" />
       </button>
 
       {/*
