@@ -65,7 +65,7 @@ function Attribution({
 export default function FeedNotice({ status }: { status: FeedStatus }) {
   if (status.state === "loading") {
     return (
-      <p className="text-sm text-zinc-600 dark:text-zinc-400" role="status">
+      <p className="text-sm text-zinc-600" role="status">
         Loading station data…
       </p>
     );
@@ -76,10 +76,10 @@ export default function FeedNotice({ status }: { status: FeedStatus }) {
     return (
       <div
         role="alert"
-        className="rounded-md border border-amber-300 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950"
+        className="rounded-md border border-amber-300 bg-amber-50 p-3"
       >
         <p className="text-sm font-medium">{message.title}</p>
-        <p className="mt-1 text-xs text-zinc-700 dark:text-zinc-300">
+        <p className="mt-1 text-xs text-zinc-700">
           {message.detail}
         </p>
       </div>
@@ -93,7 +93,7 @@ export default function FeedNotice({ status }: { status: FeedStatus }) {
       {status.state === "stale" && (
         <p
           role="status"
-          className="mb-1 text-xs font-medium text-amber-700 dark:text-amber-400"
+          className="mb-1 text-xs font-medium text-amber-700"
         >
           {/* A stale plan clearly labelled beats no plan at all. */}
           This data is {Math.round(status.age / 60)} min old and may no longer

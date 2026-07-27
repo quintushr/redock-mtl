@@ -11,6 +11,15 @@
  * variant, so none is invented here.
  */
 :root {
+  /**
+   * One scheme, declared to the browser.
+   *
+   * Without this the user agent paints its own dark defaults into form
+   * controls when the operating system asks for a dark theme, which is how an
+   * input whose text colour is --ink ended up drawn on a near-black canvas.
+   */
+  color-scheme: light;
+
   /* Accent. Reserved for three uses and nothing else: the itinerary trace, the
      stop stations, and the active state of a control. */
   --brand: #e0402b;

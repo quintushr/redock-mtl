@@ -417,7 +417,7 @@ export default function MapView({
       {/* The dot colours are meaningless without this, and a rider choosing a
           starting point needs to know which stations can actually lend a
           mechanical bike (FR-011). */}
-      <ul className="absolute bottom-8 left-2 space-y-1 rounded bg-white/90 p-2 text-[11px] shadow dark:bg-zinc-900/90">
+      <ul className="absolute bottom-8 left-2 space-y-1 rounded bg-white/90 p-2 text-[11px] shadow">
         {[
           ["#059669", "Mechanical bike available"],
           ["#d97706", "E-bike only"],

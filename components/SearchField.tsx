@@ -211,7 +211,7 @@ export default function SearchField({
           {point !== null && (
             <button
               type="button"
-              className="text-xs text-zinc-500 underline hover:text-zinc-800 dark:hover:text-zinc-200"
+              className="text-xs text-zinc-500 underline hover:text-zinc-800"
               onClick={() => {
                 dismiss();
                 onClear();
@@ -226,7 +226,7 @@ export default function SearchField({
             className={
               armed
                 ? "rounded border border-blue-600 bg-blue-600 px-2 py-0.5 text-xs font-medium text-white"
-                : "rounded border border-zinc-300 px-2 py-0.5 text-xs hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                : "rounded border border-zinc-300 px-2 py-0.5 text-xs hover:bg-zinc-100"
             }
             onClick={onArm}
           >
@@ -244,10 +244,10 @@ export default function SearchField({
           aria-expanded={rows.length > 0}
           aria-controls={`${id}-list`}
           aria-activedescendant={active >= 0 ? `${id}-row-${active}` : undefined}
-          className={`w-full rounded border px-2 py-1.5 text-sm dark:bg-zinc-900 ${
+          className={`w-full rounded border px-2 py-1.5 text-sm ${
             armed
               ? "border-blue-500 ring-1 ring-blue-500"
-              : "border-zinc-300 dark:border-zinc-700"
+              : "border-zinc-300"
           }`}
           placeholder={placeholder}
           value={value}
@@ -267,7 +267,7 @@ export default function SearchField({
           <ul
             id={`${id}-list`}
             role="listbox"
-            className="absolute z-10 mt-1 w-full overflow-hidden rounded border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
+            className="absolute z-10 mt-1 w-full overflow-hidden rounded border border-zinc-200 bg-white shadow-lg"
           >
             {rows.map((row, index) => (
               <li key={`${row.kind}-${index}`} role="presentation">
@@ -276,10 +276,10 @@ export default function SearchField({
                   type="button"
                   role="option"
                   aria-selected={index === active}
-                  className={`flex w-full items-baseline gap-2 border-b border-zinc-100 px-2 py-2 text-left last:border-b-0 dark:border-zinc-800 ${
+                  className={`flex w-full items-baseline gap-2 border-b border-zinc-100 px-2 py-2 text-left last:border-b-0 ${
                     index === active
-                      ? "bg-zinc-100 dark:bg-zinc-800"
-                      : "hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
+                      ? "bg-zinc-100"
+                      : "hover:bg-zinc-50"
                   }`}
                   // Keep the focus in the input so the field does not blur the
                   // list away between pressing and releasing the pointer.
@@ -295,7 +295,7 @@ export default function SearchField({
                       </span>
                     )}
                   </span>
-                  <span className="shrink-0 rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-zinc-500 dark:bg-zinc-800">
+                  <span className="shrink-0 rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-zinc-500">
                     {row.badge}
                   </span>
                 </button>
@@ -310,7 +310,7 @@ export default function SearchField({
       )}
 
       {showFailure && (
-        <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
+        <p className="mt-1 text-xs text-amber-700">
           Address search is unavailable right now. Pick the point on the map, or
           type coordinates as “45.5088, -73.5878”.
         </p>
