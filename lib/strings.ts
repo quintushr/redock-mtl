@@ -61,7 +61,20 @@ const fr = {
     /** Drives Intl for amounts and decimals. */
     locale: "fr-CA",
     underAMinute: "moins d'une minute",
-    approximateMinutes: (minutes: number): string => `environ ${minutes} min`,
+    approximateMinutes: (totalMinutes: number): string => {
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+
+        if (hours === 0) {
+          return `${minutes} minutes`;
+        }
+        
+        if (minutes === 0) {
+          return `${hours} heures`;
+        }
+
+        return `${hours} h ${minutes} min`;
+      },
     metres: (metres: number): string => `${metres} m`,
     kilometres: (value: string): string => `${value} km`,
   },
@@ -366,7 +379,20 @@ const en: Strings = {
   units: {
     locale: "en-CA",
     underAMinute: "under a minute",
-    approximateMinutes: (minutes: number): string => `about ${minutes} min`,
+    approximateMinutes: (totalMinutes: number): string => {
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+
+        if (hours === 0) {
+          return `${minutes} minutes`;
+        }
+        
+        if (minutes === 0) {
+          return `${hours} hours`;
+        }
+
+        return `${hours} h ${minutes} min`;
+    },
     metres: (metres: number): string => `${metres} m`,
     kilometres: (value: string): string => `${value} km`,
   },
