@@ -298,7 +298,6 @@ export default function PlannerShell() {
           focus={focus}
           onMapClick={handleMapClick}
           onEndpointMove={handleEndpointMove}
-          onCancelPicking={() => setPicking(null)}
         />
       </div>
 

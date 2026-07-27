@@ -12,6 +12,16 @@ import {
   type GeoJSONSource,
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+import {
+  RING_LEVELS,
+  RING_PIXEL_RATIO,
+  endpointElement,
+  readTokens,
+  ringIcon,
+  ringImage,
+  ringLevel,
+  type MapTokens,
+} from "@/components/map-symbols";
 import { MAP_STYLE_URL } from "@/lib/endpoints";
 import { t } from "@/lib/strings";
 import type { Itinerary, LatLon, Station } from "@/lib/types";
@@ -52,11 +62,6 @@ export interface FocusRequest {
   id: number;
 }
 
-const ENDPOINT_COLOUR: Record<PickTarget, string> = {
-  origin: "#059669",
-  destination: "#dc2626",
-};
-
 const ENDPOINT_LABEL: Record<PickTarget, string> = {
   origin: t.map.originPin,
   destination: t.map.destinationPin,
@@ -78,6 +83,46 @@ const ENDPOINT_LABEL: Record<PickTarget, string> = {
  */
 setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
 
+/**
+ * Camera moves, in milliseconds.
+ *
+ * A map flight is not interface furniture: cutting it to nothing turns every
+ * recentring into a jump and costs the reader the one thing the movement is
+ * for, which is knowing where they were taken from. It stays short, and it
+ * disappears entirely for a reader who asked for stillness.
+ */
+const CAMERA_MS = 400;
+
+function cameraDuration(): number {
+  if (typeof window === "undefined" || window.matchMedia === undefined) return 0;
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ? 0
+    : CAMERA_MS;
+}
+
+/**
+ * Room to leave around a fitted view.
+ *
+ * The panel overlays the map, so the visible part of the frame is not the
+ * frame. Below 1024px the panel takes the bottom edge, above it the left.
+ * Without this, fitting the network extent centres it neatly underneath the
+ * panel.
+ */
+function framePadding(): {
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
+} {
+  const wide =
+    typeof window !== "undefined" &&
+    window.matchMedia !== undefined &&
+    window.matchMedia("(min-width: 1024px)").matches;
+  return wide
+    ? { top: 48, bottom: 48, left: 428, right: 48 }
+    : { top: 48, bottom: 320, left: 24, right: 24 };
+}
+
 export default function MapView({
   stations,
   itinerary,
@@ -87,7 +132,6 @@ export default function MapView({
   focus,
   onMapClick,
   onEndpointMove,
-  onCancelPicking,
 }: {
   stations: Station[];
   itinerary: Itinerary | null;
@@ -97,11 +141,13 @@ export default function MapView({
   focus: FocusRequest | null;
   onMapClick: (point: LatLon) => void;
   onEndpointMove: (target: PickTarget, point: LatLon) => void;
-  onCancelPicking: () => void;
 }) {
   const container = useRef<HTMLDivElement | null>(null);
   const map = useRef<MapLibreMap | null>(null);
   const ready = useRef(false);
+  const tokens = useRef<MapTokens | null>(null);
+  /** The opening framing happens once, on the first stations that arrive. */
+  const framed = useRef(false);
   const markers = useRef<Record<PickTarget, Marker | null>>({
     origin: null,
     destination: null,
@@ -152,7 +198,19 @@ export default function MapView({
       clickHandler.current({ lat: event.lngLat.lat, lon: event.lngLat.lng });
     });
 
+    const palette = readTokens();
+    tokens.current = palette;
+
     instance.on("load", () => {
+      // One image per ring level, registered before the layer that names them.
+      for (const level of RING_LEVELS) {
+        const image = ringImage(level, palette);
+        if (image === null) continue;
+        instance.addImage(ringIcon(level), image, {
+          pixelRatio: RING_PIXEL_RATIO,
+        });
+      }
+
       for (const id of [STATIONS_SOURCE, STOPS_SOURCE]) {
         instance.addSource(id, {
           type: "geojson",
@@ -166,22 +224,30 @@ export default function MapView({
 
       instance.addLayer({
         id: "stations-dots",
-        type: "circle",
+        type: "symbol",
         source: STATIONS_SOURCE,
-        paint: {
-          "circle-radius": 4,
-          "circle-color": ["get", "colour"],
-          "circle-stroke-width": 1,
-          "circle-stroke-color": "#ffffff",
+        layout: {
+          "icon-image": ["get", "icon"],
+          // Several hundred markers, and a station omitted because a
+          // neighbour was placed first is a station the rider cannot see.
+          "icon-allow-overlap": true,
+          "icon-ignore-placement": true,
+          // Dust at the network scale, readable once the reader has zoomed
+          // into the streets they are actually planning through.
+          "icon-size": ["interpolate", ["linear"], ["zoom"], 11, 0.5, 14, 1],
         },
       });
       instance.addLayer({
         id: "route-line",
         type: "line",
         source: ROUTE_SOURCE,
+        layout: { "line-cap": "round", "line-join": "round" },
         paint: {
-          "line-width": 4,
-          "line-color": ["get", "colour"],
+          // The accent, and one of the three uses docs/ui-guidelines.md allows
+          // it. Walking and riding are told apart by the dash, not by a second
+          // hue: two colours on one trace would be a colour code.
+          "line-color": palette.brand,
+          "line-width": ["get", "width"],
           "line-dasharray": ["get", "dash"],
         },
       });
@@ -190,10 +256,12 @@ export default function MapView({
         type: "circle",
         source: STOPS_SOURCE,
         paint: {
+          // The second allowed use of the accent, at a larger diameter than
+          // any other station. These are the only coloured points on the map.
           "circle-radius": 7,
-          "circle-color": "#111827",
+          "circle-color": palette.brand,
           "circle-stroke-width": 2,
-          "circle-stroke-color": "#ffffff",
+          "circle-stroke-color": palette.panel,
         },
       });
 
@@ -231,8 +299,9 @@ export default function MapView({
         return;
       }
 
+      const palette = tokens.current ?? readTokens();
       const marker = new Marker({
-        color: ENDPOINT_COLOUR[target],
+        element: endpointElement(target, palette),
         draggable: true,
       });
       const element = marker.getElement();
@@ -254,8 +323,9 @@ export default function MapView({
     sync("destination", destination);
   }, [origin, destination]);
 
-  // Arming a point turns the whole map into a target, so say so with the
-  // cursor as well as with the banner below.
+  // Arming a point turns the whole map into a target, so the cursor says so.
+  // On a touch screen there is no cursor to say it, which is why the panel
+  // carries the same message in words.
   useEffect(() => {
     const instance = map.current;
     if (instance === null) return;
@@ -274,14 +344,19 @@ export default function MapView({
       instance.easeTo({
         center: [point.lon, point.lat],
         zoom: Math.max(instance.getZoom(), 14),
-        duration: 600,
+        padding: framePadding(),
+        duration: cameraDuration(),
       });
       return;
     }
 
     const bounds = new LngLatBounds();
     for (const point of focus.points) bounds.extend([point.lon, point.lat]);
-    instance.fitBounds(bounds, { padding: 72, maxZoom: 15, duration: 600 });
+    instance.fitBounds(bounds, {
+      padding: framePadding(),
+      maxZoom: 15,
+      duration: cameraDuration(),
+    });
   }, [focus]);
 
   // Stations, shown before any input (FR-027).
@@ -300,16 +375,34 @@ export default function MapView({
             type: "Point" as const,
             coordinates: [station.position.lon, station.position.lat],
           },
-          properties: {
-            colour:
-              station.mechanicalBikesAvailable > 0
-                ? "#059669"
-                : station.ebikesAvailable > 0
-                  ? "#d97706"
-                  : "#9ca3af",
-          },
+          // No hue at any level. The ring's fill carries what this station
+          // holds; see components/map-symbols.ts.
+          properties: { icon: ringIcon(ringLevel(station)) },
         })),
       });
+
+      /**
+       * The opening framing, once.
+       *
+       * The map used to open on a fixed zoom over the region, where several
+       * hundred stations are indistinguishable dust. It now opens on the
+       * extent of the network it actually serves.
+       *
+       * Guarded by a ref rather than by a dependency: this must fire on the
+       * first snapshot and never again, or a feed refresh would drag the
+       * camera away from wherever the reader had moved it (FR-026).
+       */
+      if (!framed.current && stations.length > 0) {
+        framed.current = true;
+        const bounds = new LngLatBounds();
+        for (const station of stations) {
+          bounds.extend([station.position.lon, station.position.lat]);
+        }
+        instance.fitBounds(bounds, {
+          padding: framePadding(),
+          duration: 0,
+        });
+      }
     };
 
     if (ready.current) apply();
@@ -343,7 +436,9 @@ export default function MapView({
                 [step.to.lon, step.to.lat],
               ],
             },
-            properties: { colour: "#6b7280", dash: [2, 2] },
+            // Walking: same accent, dashed and thinner, because it is part of
+            // the same journey but does not spend the free window.
+            properties: { width: 2.5, dash: [1, 2] },
           });
         } else if (step.kind === "bike") {
           const from = byId.get(step.fromStationId);
@@ -358,7 +453,7 @@ export default function MapView({
                 [to.lon, to.lat],
               ],
             },
-            properties: { colour: "#1d4ed8", dash: [1, 0] },
+            properties: { width: 4, dash: [1, 0] },
           });
         } else {
           const at = byId.get(step.stationId);
@@ -401,39 +496,17 @@ export default function MapView({
         role="presentation"
       />
 
-      {picking !== null && (
-        <div className="pointer-events-none absolute inset-x-0 top-0 flex justify-center p-3">
-          <div className="pointer-events-auto flex items-center gap-3 rounded-full bg-blue-600 px-4 py-2 text-sm text-white shadow-lg">
-            <span>{t.map.hintPicking(picking)}</span>
-            <button
-              type="button"
-              className="rounded-full bg-blue-500 px-2 py-0.5 text-xs hover:bg-blue-400"
-              onClick={onCancelPicking}
-            >
-              {t.fields.clear}
-            </button>
-          </div>
-        </div>
-      )}
+      {/*
+        Nothing floats over the map any more.
 
-      {/* The dot colours are meaningless without this, and a rider choosing a
-          starting point needs to know which stations can actually lend a
-          mechanical bike (FR-011). */}
-      <ul className="absolute bottom-8 left-2 space-y-1 rounded bg-white/90 p-2 text-[11px] shadow">
-        {[
-          ["#059669", "Vélo mécanique disponible"],
-          ["#d97706", "Vélo électrique seulement"],
-          ["#9ca3af", "Aucun vélo"],
-        ].map(([colour, text]) => (
-          <li key={text} className="flex items-center gap-1.5">
-            <span
-              className="inline-block h-2 w-2 rounded-full"
-              style={{ backgroundColor: colour }}
-            />
-            {text}
-          </li>
-        ))}
-      </ul>
+        docs/ui-guidelines.md allows exactly one container above the map, and
+        it is the panel. The arming banner and the availability legend were two
+        more, and between them they carried a shadow, a blue outside the
+        palette and the three-colour availability code the guidelines forbid
+        outright. The banner's message now lives in the panel, next to the
+        field it concerns, and the legend has nothing left to explain: the
+        markers carry availability in the length of a ring, not in a hue.
+      */}
     </div>
   );
 }
