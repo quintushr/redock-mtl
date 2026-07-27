@@ -13,6 +13,7 @@ import {
   parseGeocoderResults,
   type GeocodeSuggestion,
 } from "@/lib/geocode";
+import { Cross } from "@/components/icons";
 import { useStrings } from "@/components/LocaleProvider";
 import type { Strings } from "@/lib/strings";
 import type { LatLon } from "@/lib/types";
@@ -207,10 +208,12 @@ export default function SearchField({
   return (
     <div>
       {/*
-        Both controls are bordered and 44px tall at rest. Most of this product's
-        readers are on a touch screen, where there is no hover to reveal that
-        something is a control, and "Effacer" used to be underlined text at
-        about twenty pixels of height.
+        Two controls of unequal weight, which is the point.
+        "Choisir sur la carte" is the one a reader needs before the field holds
+        anything, so it keeps its words. Clearing is a correction, it only
+        exists once there is something to correct, and it is the mark rather
+        than the sentence. Both were bordered text buttons of the same size,
+        which read as two equally important choices.
       */}
       <div className="flex items-center justify-between gap-2">
         <label htmlFor={id} className="text-sm font-medium">
@@ -220,13 +223,16 @@ export default function SearchField({
           {point !== null && (
             <button
               type="button"
-              className="min-h-11 rounded-control border border-edge px-3 text-xs hover:bg-paper"
+              // Icon only, so the name has to carry the whole meaning.
+              aria-label={t.fields.clear}
+              title={t.fields.clear}
+              className="flex h-11 w-11 items-center justify-center rounded-control text-muted hover:bg-paper hover:text-ink"
               onClick={() => {
                 dismiss();
                 onClear();
               }}
             >
-              {t.fields.clear}
+              <Cross />
             </button>
           )}
           <button

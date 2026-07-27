@@ -104,7 +104,7 @@ function cameraDuration(): number {
  * Room to leave around a fitted view.
  *
  * The panel overlays the map, so the visible part of the frame is not the
- * frame. Below 1024px the panel takes the bottom edge, above it the left.
+ * frame. Below 768px the panel takes the bottom edge, above it the left.
  * Without this, fitting the network extent centres it neatly underneath the
  * panel.
  */
@@ -117,7 +117,7 @@ function framePadding(): {
   const wide =
     typeof window !== "undefined" &&
     window.matchMedia !== undefined &&
-    window.matchMedia("(min-width: 1024px)").matches;
+    window.matchMedia("(min-width: 768px)").matches;
   return wide
     ? { top: 48, bottom: 48, left: 428, right: 48 }
     : { top: 48, bottom: 320, left: 24, right: 24 };

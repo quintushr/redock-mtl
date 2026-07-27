@@ -304,7 +304,7 @@ const fr = {
 
   attribution: {
     label: "Attributions",
-    map: "Fond de carte",
+    map: "Carte",
     stations: "Stations",
   },
 
@@ -595,7 +595,7 @@ const en: Strings = {
 
   attribution: {
     label: "Attributions",
-    map: "Base map",
+    map: "Map",
     stations: "Stations",
   },
 

@@ -1,8 +1,8 @@
 /**
- * The two icons the interface needs, drawn here.
+ * The few icons the interface needs, drawn here.
  *
  * No icon library: docs/ui-guidelines.md forbids a third-party component
- * library, and two glyphs are not a reason to take a dependency. Both are
+ * library, and three glyphs are not a reason to take a dependency. All are
  * decorative in the accessibility sense, because every control that carries one
  * also carries a name in words, so they are hidden from assistive technology
  * rather than described twice.
@@ -29,6 +29,15 @@ export function ChevronDown({ className }: { className?: string }) {
   return (
     <svg {...COMMON} className={className}>
       <path d="M5 8l5 5 5-5" />
+    </svg>
+  );
+}
+
+/** Clears a field. Never used without a name in words on the control. */
+export function Cross({ className }: { className?: string }) {
+  return (
+    <svg {...COMMON} className={className}>
+      <path d="M6 6l8 8M14 6l-8 8" />
     </svg>
   );
 }

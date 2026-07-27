@@ -55,20 +55,29 @@ export default function PlannerPanel({
     <section
       aria-label={t.panel.label}
       className={[
-        // Anchoring below 1024px: a sheet on the bottom edge, square at the
+        // Anchoring below 768px: a sheet on the bottom edge, square at the
         // bottom because there is nothing to round against the viewport edge.
         "absolute inset-x-0 bottom-0 z-10 flex flex-col",
         "rounded-t-panel border-t border-edge bg-panel",
+        "md:inset-x-auto",
         expanded ? EXPANDED : COLLAPSED,
-        // Anchoring at 1024px and above: left, fixed width, 16px margins,
-        // rounded on all four corners.
+        // Anchoring at 768px and above: an inset card, 16px on all four
+        // sides, rounded on all four corners, as tall as its content and no
+        // taller.
         //
-        // `bottom-auto` is the point: anchoring both edges stretched the panel
-        // over the whole viewport height whatever it contained, which is how a
-        // desktop reader got a white column with its content in the top third.
-        // The panel is as tall as what it holds, and stops at the viewport.
-        "lg:top-4 lg:right-auto lg:bottom-auto lg:left-4 lg:w-[380px]",
-        "lg:max-h-[calc(100dvh-2rem)] lg:rounded-panel lg:border lg:border-edge",
+        // docs/ui-guidelines.md puts this switch at 1024px and calls
+        // everything below it a bottom sheet. It sits at 768px here: a sheet
+        // spanning the full width of a tablet, edge to edge, is the layout
+        // that produced "the panel touches the edges of the screen". Below
+        // 768px the sheet is still a sheet, because a sheet floating clear of
+        // the bottom edge is neither sheet nor card.
+        //
+        // `bottom-auto` is the other half: anchoring both edges stretched the
+        // panel over the whole viewport height whatever it contained, which is
+        // how a desktop reader got a white column with content in its top
+        // third.
+        "md:top-4 md:right-auto md:bottom-auto md:left-4 md:w-[380px]",
+        "md:h-auto md:max-h-[calc(100dvh-2rem)] md:rounded-panel md:border md:border-edge",
         // The ceiling is the only thing that animates, and only when the reader
         // has not asked for stillness.
         "motion-safe:transition-[max-height] motion-safe:duration-200",
@@ -81,7 +90,7 @@ export default function PlannerPanel({
       */}
       <button
         type="button"
-        className="flex min-h-11 w-full shrink-0 items-center justify-center lg:hidden"
+        className="flex min-h-11 w-full shrink-0 items-center justify-center md:hidden"
         aria-expanded={expanded}
         onClick={() => setExpanded((open) => !open)}
       >
@@ -107,7 +116,7 @@ export default function PlannerPanel({
         region inside it; it never swaps this element out, because a swap loses
         the reading position (FR-122).
       */}
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pt-2 pb-4 lg:pt-4">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pt-2 pb-5 md:pt-4">
         {children}
       </div>
 
