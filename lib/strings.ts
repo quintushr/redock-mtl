@@ -203,37 +203,51 @@ export const t = {
       network: {
         title: "Les données de stations sont injoignables",
         detail:
-          "Le réseau n'a pas répondu. Vérifie ta connexion et réessaie ; la carte et la saisie manuelle fonctionnent toujours.",
+          "Le réseau n'a pas répondu. Vérifie ta connexion, puis réessaie.",
       },
       malformed: {
         title: "Les données de stations sont illisibles",
         detail:
-          "Le fournisseur a répondu, mais pas dans le format attendu. Le problème vient de sa source, pas de ta connexion.",
+          "L'opérateur a répondu, mais pas dans le format attendu. Le problème vient de sa source, pas de ta connexion. Réessaie dans quelques minutes.",
       },
       "out-of-season": {
         title: "Le réseau est hors saison",
         detail:
-          "L'opérateur ne publie aucune station active en ce moment, aucun trajet ne peut être planifié.",
+          "L'opérateur ne publie aucune station active en ce moment. Reviens à la réouverture du réseau, au printemps.",
       },
     } as Record<string, { title: string; detail: string }>,
+    retry: "Réessayer",
+    /** No point offering a retry against a season. */
+    retryable: ["network", "malformed"] as readonly string[],
+  },
+
+  empty: {
+    label: "Comment ça marche",
+    title: "Reste dans la fenêtre gratuite",
+    lead: (window: string): string =>
+      `Ton abonnement offre ${window} par trajet. Ancrer le vélo à une station remet ce compteur à zéro.`,
+    start: "Ton départ",
+    anchor: "Un arrêt en chemin",
+    anchorNote: "ancrer relance la fenêtre gratuite",
+    destination: "Ta destination",
+    call: "Indique un départ et une destination : le trajet est découpé en segments qui restent gratuits, et chaque arrêt est indiqué.",
   },
 
   plan: {
-    empty: "Indique un départ et une destination pour voir un trajet.",
     failureTitle: "Aucun trajet possible",
     failures: {
       "origin-out-of-coverage":
-        "Ton départ est hors de la zone desservie par le réseau.",
+        "Ton départ est hors de la zone desservie par le réseau. Déplace-le vers un secteur couvert par les stations affichées sur la carte.",
       "destination-out-of-coverage":
-        "Ta destination est hors de la zone desservie par le réseau.",
+        "Ta destination est hors de la zone desservie par le réseau. Déplace-la vers un secteur couvert par les stations affichées sur la carte.",
       "no-station-near-origin":
-        "Aucune station à distance de marche de ton départ.",
+        "Aucune station à distance de marche de ton départ. Augmente ta distance de marche, ou déplace ton départ.",
       "no-mechanical-bike-near-origin":
-        "Il y a des stations à proximité, mais aucune n'a de vélo mécanique. La fenêtre gratuite ne s'applique pas aux vélos électriques.",
+        "Des stations sont à proximité, mais aucune n'a de vélo mécanique, et la fenêtre gratuite ne s'applique pas aux vélos électriques. Augmente ta distance de marche pour en atteindre d'autres.",
       "no-station-near-destination":
-        "Aucune station à distance de marche de ta destination.",
+        "Aucune station à distance de marche de ta destination. Augmente ta distance de marche, ou déplace ta destination.",
       "gap-too-large":
-        "Les stations de ce trajet sont trop éloignées les unes des autres pour être reliées sans dépasser la fenêtre gratuite.",
+        "Les stations de ce trajet sont trop éloignées les unes des autres pour être reliées sans dépasser la fenêtre gratuite. Baisse ta marge de sécurité, ou accepte une allure plus rapide.",
       "invalid-parameters":
         "Ces réglages ne peuvent produire aucun trajet. Ajuste-les et réessaie.",
     } as Record<string, string>,

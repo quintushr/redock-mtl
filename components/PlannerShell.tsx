@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import EmptyState from "@/components/EmptyState";
 import { FeedFailure, FeedFreshness } from "@/components/FeedNotice";
 import ItineraryTrail from "@/components/ItineraryTrail";
 import MapAttribution from "@/components/MapAttribution";
@@ -84,9 +85,19 @@ export default function PlannerShell() {
     };
   }, [parameters]);
 
-  // Fetch after mount, never during render: static export prerenders this
-  // component at build time, and a render-time fetch would bake a stale
-  // snapshot into the shipped HTML.
+  /**
+   * Load the snapshot, or load it again.
+   *
+   * Never during render: static export prerenders this component at build
+   * time, and a render-time fetch would bake a stale snapshot into the shipped
+   * HTML. Held in a callback rather than inlined in the effect so the failure
+   * state can offer a retry that means something.
+   */
+  const loadFeed = useCallback(() => {
+    setFeed({ state: "loading" });
+    loadStationSnapshot().then(setFeed);
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     loadStationSnapshot().then((status) => {
@@ -192,7 +203,8 @@ export default function PlannerShell() {
     : describeCorrection(parameters, validation.corrected);
 
   const plan: PlanResult | null = useMemo(() => {
-    if (snapshot === null || origin === null || destination === null) return null;
+    if (snapshot === null || origin === null || destination === null)
+      return null;
     return planTrip(origin, destination, snapshot, settled);
   }, [snapshot, origin, destination, settled]);
 
@@ -314,156 +326,158 @@ export default function PlannerShell() {
           top of the screen explaining a result that is now visible immediately
           (FR-146).
         */}
-        <div className="space-y-3">
-          <SearchField
-            label={t.fields.origin}
-            placeholder={t.fields.placeholder}
-            value={originText}
-            point={origin}
-            bias={MONTREAL}
-            armed={picking === "origin"}
-            onValueChange={setOriginText}
-            onPick={(position, label) =>
-              pickFromSearch("origin", position, label)
-            }
-            onClear={() => clearEndpoint("origin")}
-            onArm={() => arm("origin")}
-          />
+        <div className="divide-y divide-line">
+          <div className="space-y-3 pb-4">
+            <SearchField
+              label={t.fields.origin}
+              placeholder={t.fields.placeholder}
+              value={originText}
+              point={origin}
+              bias={MONTREAL}
+              armed={picking === "origin"}
+              onValueChange={setOriginText}
+              onPick={(position, label) =>
+                pickFromSearch("origin", position, label)
+              }
+              onClear={() => clearEndpoint("origin")}
+              onArm={() => arm("origin")}
+            />
 
-          {/*
+            {/*
             On the seam between the two fields, which is where the gesture it
             performs actually happens, and 44px square. It used to be a
             full-width run of text off to one side, and it went inert without
             ever saying why; the reason is now in its accessible name.
           */}
-          <div className="flex justify-center">
-            <button
-              type="button"
-              className="flex h-11 w-11 items-center justify-center rounded-control border border-line hover:bg-paper disabled:text-muted"
-              disabled={origin === null && destination === null}
-              aria-label={
-                origin === null && destination === null
-                  ? t.fields.swapUnavailable
-                  : t.fields.swap
-              }
-              title={
-                origin === null && destination === null
-                  ? t.fields.swapUnavailable
-                  : t.fields.swap
-              }
-              onClick={swapEndpoints}
-            >
-              <SwapVertical />
-            </button>
-          </div>
+            <div className="flex justify-center">
+              <button
+                type="button"
+                className="flex h-11 w-11 items-center justify-center rounded-control border border-line hover:bg-paper disabled:text-muted"
+                disabled={origin === null && destination === null}
+                aria-label={
+                  origin === null && destination === null
+                    ? t.fields.swapUnavailable
+                    : t.fields.swap
+                }
+                title={
+                  origin === null && destination === null
+                    ? t.fields.swapUnavailable
+                    : t.fields.swap
+                }
+                onClick={swapEndpoints}
+              >
+                <SwapVertical />
+              </button>
+            </div>
 
-          <SearchField
-            label={t.fields.destination}
-            placeholder={t.fields.placeholder}
-            value={destinationText}
-            point={destination}
-            bias={MONTREAL}
-            armed={picking === "destination"}
-            onValueChange={setDestinationText}
-            onPick={(position, label) =>
-              pickFromSearch("destination", position, label)
-            }
-            onClear={() => clearEndpoint("destination")}
-            onArm={() => arm("destination")}
-          />
+            <SearchField
+              label={t.fields.destination}
+              placeholder={t.fields.placeholder}
+              value={destinationText}
+              point={destination}
+              bias={MONTREAL}
+              armed={picking === "destination"}
+              onValueChange={setDestinationText}
+              onPick={(position, label) =>
+                pickFromSearch("destination", position, label)
+              }
+              onClear={() => clearEndpoint("destination")}
+              onArm={() => arm("destination")}
+            />
 
-          {/*
+            {/*
             One line, and only when it has something to say. It used to be
             printed unconditionally, and stacked with the feed notice and the
             empty state into three grey paragraphs of equal weight where
             nothing told the reader what to do first.
           */}
-          {(picking !== null || geolocationDenied) && (
-            <p className="text-xs text-muted">
-              {picking !== null
-                ? t.map.hintPicking(picking)
-                : t.map.hintGeolocationDenied}
-            </p>
-          )}
-        </div>
+            {(picking !== null || geolocationDenied) && (
+              <p className="text-xs text-muted">
+                {picking !== null
+                  ? t.map.hintPicking(picking)
+                  : t.map.hintGeolocationDenied}
+              </p>
+            )}
+          </div>
 
-        {/* The result region. Nothing that sets a planning parameter may appear
+          {/* The result region. Nothing that sets a planning parameter may appear
             above this point (FR-101). */}
-        <div className="mt-4 border-t border-line pt-4">
-          {feed.state === "unavailable" ? (
-            // Without stations there is no plan, so the feed failure *is* the
-            // result. It belongs where the reader is already looking.
-            <FeedFailure status={feed} />
-          ) : plan === null ? (
-            <p className="text-sm text-muted">{t.plan.empty}</p>
-          ) : plan.ok ? (
-            <>
-              <TripSummary itinerary={plan.itinerary} />
-              <div className="mt-4">
-                <ItineraryTrail
-                  itinerary={plan.itinerary}
-                  stations={snapshot?.stations ?? []}
-                  params={settled}
-                />
-              </div>
-              {/*
+          <div className="py-4">
+            {feed.state === "unavailable" ? (
+              // Without stations there is no plan, so the feed failure *is* the
+              // result. It belongs where the reader is already looking.
+              <FeedFailure status={feed} onRetry={loadFeed} />
+            ) : plan === null ? (
+              <EmptyState freeWindow={parameters.freeWindow} />
+            ) : plan.ok ? (
+              <>
+                <TripSummary itinerary={plan.itinerary} />
+                <div className="mt-4">
+                  <ItineraryTrail
+                    itinerary={plan.itinerary}
+                    stations={snapshot?.stations ?? []}
+                    params={settled}
+                  />
+                </div>
+                {/*
                 Keyed on nothing: it must survive a parameter change rather than
                 remount, or it would close under the reader's finger exactly
                 when they are watching the margin move the price (FR-135).
               */}
-              <NoStopComparison
-                noStop={noStop}
-                overageRate={settled.overageRate}
-                stopCount={plan.itinerary.stopCount}
-              />
-            </>
-          ) : (
-            // FR-028: name the cause and offer something concrete to do.
-            <div role="alert">
-              <p className="text-sm font-medium">{t.plan.failureTitle}</p>
-              <p className="mt-1 text-sm text-muted">
-                {FAILURE_MESSAGES[plan.failure.reason]}
-              </p>
-              <ul className="mt-3 flex flex-wrap gap-2">
-                {plan.failure.suggestions.map((suggestion) => (
-                  <li key={suggestion.kind}>
-                    <button
-                      type="button"
-                      className="min-h-11 rounded-control border border-line px-3 text-xs hover:bg-paper"
-                      onClick={() =>
-                        applySuggestion(
-                          suggestion.kind,
-                          suggestion.suggestedValue,
-                        )
-                      }
-                    >
-                      {SUGGESTION_LABELS[suggestion.kind]}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
+                <NoStopComparison
+                  noStop={noStop}
+                  overageRate={settled.overageRate}
+                  stopCount={plan.itinerary.stopCount}
+                />
+              </>
+            ) : (
+              // FR-028: name the cause and offer something concrete to do.
+              <div role="alert">
+                <p className="text-sm font-medium">{t.plan.failureTitle}</p>
+                <p className="mt-1 text-sm text-muted">
+                  {FAILURE_MESSAGES[plan.failure.reason]}
+                </p>
+                <ul className="mt-3 flex flex-wrap gap-2">
+                  {plan.failure.suggestions.map((suggestion) => (
+                    <li key={suggestion.kind}>
+                      <button
+                        type="button"
+                        className="min-h-11 rounded-control border border-line px-3 text-xs hover:bg-paper"
+                        onClick={() =>
+                          applySuggestion(
+                            suggestion.kind,
+                            suggestion.suggestedValue,
+                          )
+                        }
+                      >
+                        {SUGGESTION_LABELS[suggestion.kind]}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
 
-        {/* The settings, last, and one line until opened (FR-101, FR-103). */}
-        <div className="mt-4 border-t border-line pt-4">
-          <AssumptionsLine
-            parameters={parameters}
-            onChange={setParameters}
-            correction={correction}
-          />
-        </div>
+          {/* The settings, last, and one line until opened (FR-101, FR-103). */}
+          <div className="py-4">
+            <AssumptionsLine
+              parameters={parameters}
+              onChange={setParameters}
+              correction={correction}
+            />
+          </div>
 
-        {/*
+          {/*
           How fresh the figures are, after the result rather than before it.
           It qualifies an answer the reader has already read; between the
           fields and the itinerary it pushed that answer down the panel on
           every single consultation, and the guidelines' imposed order has no
           fifth block above the result.
         */}
-        <div className="mt-4">
-          <FeedFreshness status={feed} />
+          <div className="pt-4">
+            <FeedFreshness status={feed} />
+          </div>
         </div>
       </PlannerPanel>
     </main>

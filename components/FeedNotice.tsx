@@ -17,14 +17,32 @@ import type { FeedStatus } from "@/lib/types";
  */
 
 /** The alert. Null unless the feed actually failed. */
-export function FeedFailure({ status }: { status: FeedStatus }) {
+export function FeedFailure({
+  status,
+  onRetry,
+}: {
+  status: FeedStatus;
+  onRetry: () => void;
+}) {
   if (status.state !== "unavailable") return null;
   const message = t.feed.unavailable[status.reason];
+  // A season is not something retrying can fix, and a button that cannot work
+  // is worse than no button.
+  const retryable = t.feed.retryable.includes(status.reason);
 
   return (
     <div role="alert" className="rounded-control border border-line p-3">
       <p className="text-sm font-medium">{message.title}</p>
       <p className="mt-1 text-xs text-muted">{message.detail}</p>
+      {retryable && (
+        <button
+          type="button"
+          className="mt-2 min-h-11 rounded-control border border-line px-3 text-xs hover:bg-paper"
+          onClick={onRetry}
+        >
+          {t.feed.retry}
+        </button>
+      )}
     </div>
   );
 }
