@@ -1,10 +1,10 @@
 "use client";
 
 import { useId, useState } from "react";
+import { useStrings } from "@/components/LocaleProvider";
 import { ChevronDown } from "@/components/icons";
 import { approximateDuration, formatDecimal } from "@/lib/format";
 import { DEFAULT_PARAMETERS } from "@/lib/params";
-import { t } from "@/lib/strings";
 import type { PlanningParameters } from "@/lib/types";
 
 /**
@@ -164,6 +164,7 @@ function Slider({
   onChange: (next: number) => void;
 }) {
   const id = useId();
+  const t = useStrings();
   const shown = control.toDisplay(value);
   const { label, hint } = t.settings.controls[control.key];
 
@@ -172,7 +173,7 @@ function Slider({
       <label htmlFor={id} className="flex items-baseline justify-between">
         <span className="text-sm font-medium">{label}</span>
         <span className="font-mono text-sm text-muted tabular-nums">
-          {Number.isInteger(shown) ? shown : formatDecimal(shown, 2)}{" "}
+          {Number.isInteger(shown) ? shown : formatDecimal(shown, 2, t)}{" "}
           {control.unit}
         </span>
       </label>
@@ -212,6 +213,7 @@ export default function AssumptionsLine({
   onChange: (next: PlanningParameters) => void;
   correction: string | null;
 }) {
+  const t = useStrings();
   const [open, setOpen] = useState(false);
   const [showRest, setShowRest] = useState(false);
 
@@ -253,10 +255,10 @@ export default function AssumptionsLine({
         <span className="truncate text-xs text-muted">
           {changed === 0
             ? t.settings.summaryDefaults(
-                approximateDuration(parameters.safetyMargin),
+                approximateDuration(parameters.safetyMargin, t),
               )
             : t.settings.summaryChanged(
-                approximateDuration(parameters.safetyMargin),
+                approximateDuration(parameters.safetyMargin, t),
                 changed,
               )}
         </span>

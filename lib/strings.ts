@@ -2,26 +2,67 @@ import type { PlaceKind } from "./geocode";
 import type { PlanningParameters, RemainingStatus } from "./types";
 
 /**
- * Every string the interface shows, in one place.
+ * Every string the interface shows, in two languages.
  *
- * French is the product language. The strings live here rather than inline in
- * the components for two reasons: a label has to keep the same wording
- * everywhere it appears, which is impossible to guarantee when the same phrase
- * is typed in three files, and the FR/EN toggle docs/ui-guidelines.md calls for
- * needs a second object beside this one rather than a rewrite of every
- * component.
+ * One bundle per language, identical in shape: `Strings` is derived from the
+ * French one, so the English one cannot compile while a key is missing or
+ * misspelled. That is the whole reason the copy is not inline in the
+ * components, and it is what docs/ui-guidelines.md's FR/EN toggle needs.
  *
- * Wording follows the "Écriture" section of docs/ui-guidelines.md: active
- * voice, sentence case, no apology, and an error states what happened and what
- * to do next. Tutoiement throughout, as in that document's own examples.
+ * French is the default. Montreal's is a French-speaking network, and a rider
+ * who wants English asks for it.
+ *
+ * Wording follows the "Écriture" section of docs/ui-guidelines.md in both
+ * languages: active voice, sentence case, no apology, and an error states what
+ * happened and what to do next. Tutoiement in French, as in that document's own
+ * examples, and the matching second person in English.
  */
 
-export const t = {
+export type Locale = "fr" | "en";
+
+export const LOCALES: readonly Locale[] = ["fr", "en"];
+
+export const DEFAULT_LOCALE: Locale = "fr";
+
+/**
+ * How a language names itself, never how another language names it. A reader
+ * looking for English is looking for the word "English".
+ */
+export const LOCALE_NAMES: Record<Locale, string> = {
+  fr: "Français",
+  en: "English",
+};
+
+/** The two-letter code shown in the toggle. */
+export const LOCALE_CODES: Record<Locale, string> = {
+  fr: "FR",
+  en: "EN",
+};
+
+const fr = {
+  language: {
+    label: "Langue",
+    switchTo: (name: string): string => `Afficher l'interface en ${name}`,
+  },
+
   app: {
     name: "Redock",
     title: "Redock, planificateur de trajets à vélo partagé à Montréal",
     description:
       "Découpe un trajet à vélo partagé en segments assez courts pour rester dans la fenêtre gratuite, et indique où ancrer.",
+  },
+
+  /**
+   * Units and durations. Held here rather than in lib/format.ts because they
+   * are wording, and wording has a language.
+   */
+  units: {
+    /** Drives Intl for amounts and decimals. */
+    locale: "fr-CA",
+    underAMinute: "moins d'une minute",
+    approximateMinutes: (minutes: number): string => `environ ${minutes} min`,
+    metres: (metres: number): string => `${metres} m`,
+    kilometres: (value: string): string => `${value} km`,
   },
 
   fields: {
@@ -53,7 +94,7 @@ export const t = {
     state: "Région",
     country: "Pays",
     other: "Lieu",
-  } satisfies Record<PlaceKind, string>,
+  } as Record<PlaceKind, string>,
 
   map: {
     originPin: "Départ, fais glisser pour déplacer",
@@ -110,19 +151,19 @@ export const t = {
       comfortable: "confortable",
       neutral: "correct",
       alarming: "juste",
-    } satisfies Record<RemainingStatus, string>,
+    } as Record<RemainingStatus, string>,
   },
 
   noStop: {
     reveal: "Et sans aucun arrêt ?",
     hide: "Masquer la comparaison sans arrêt",
-    nothingToCompare:
-      "Rien à comparer : ce trajet se fait entièrement à pied.",
+    nothingToCompare: "Rien à comparer : ce trajet se fait entièrement à pied.",
     /**
      * Split around the figure it frames: durations and amounts are set in the
      * monospace family, which is impossible if the sentence is one string.
      */
-    inOneGo: (delta: string): string => `d'une traite, ${delta} qu'avec les arrêts.`,
+    inOneGo: (delta: string): string =>
+      `d'une traite, ${delta} qu'avec les arrêts.`,
     faster: (magnitude: string): string => `${magnitude} de moins`,
     slower: (magnitude: string): string => `${magnitude} de plus`,
     sameTime: "à peu près le même temps",
@@ -190,7 +231,7 @@ export const t = {
         label: "Tarif hors fenêtre",
         hint: "Ce que coûte une minute au-delà de la fenêtre gratuite, avant taxes. Sert uniquement à chiffrer un trajet sans arrêt.",
       },
-    } satisfies Record<keyof PlanningParameters, { label: string; hint: string }>,
+    } as Record<keyof PlanningParameters, { label: string; hint: string }>,
   },
 
   feed: {
@@ -263,44 +304,336 @@ export const t = {
     map: "Fond de carte",
     stations: "Stations",
   },
-} as const;
+
+  /**
+   * Why a parameter set was rejected.
+   *
+   * `validateParameters` returns its explanation as English prose with no code
+   * to key on, and it belongs to the planning logic this work may not touch.
+   * Rather than matching on that sentence, which would break the moment its
+   * wording changed, `describeCorrection` reads the *corrected* set the domain
+   * hands back and words the field it had to fix. The domain stays the
+   * authority on what is wrong; only the wording lives here.
+   */
+  corrections: {
+    fallback: "Ces réglages ne peuvent produire aucun trajet. Ajuste-les et réessaie.",
+    byKey: {
+      freeWindow: "La fenêtre gratuite doit être une durée réelle et positive.",
+      safetyMargin:
+        "La marge de sécurité doit être positive et plus courte que la fenêtre gratuite.",
+      cyclingSpeed: "La vitesse à vélo doit être supérieure à zéro.",
+      walkingSpeed: "La vitesse de marche doit être supérieure à zéro.",
+      maxWalkDistance: "La marche maximale ne peut pas être négative.",
+      detourFactor:
+        "Le facteur de détour ne peut pas descendre sous 1 : une rue n'est jamais plus courte que la ligne droite.",
+      dockCooldown: "Le délai après ancrage ne peut pas être négatif.",
+      segmentOverhead:
+        "Le temps de déverrouillage et d'ancrage doit être plus court que le budget d'un segment.",
+      overageRate: "Le tarif hors fenêtre ne peut pas être négatif.",
+      bikeReserve:
+        "Les réserves de vélos et d'ancrages sont des entiers positifs.",
+      dockReserve:
+        "Les réserves de vélos et d'ancrages sont des entiers positifs.",
+    } as Partial<Record<keyof PlanningParameters, string>>,
+  },
+};
 
 /**
- * Why a parameter set was rejected, in French.
- *
- * `validateParameters` returns its explanation as English prose with no code to
- * key on, and it belongs to the planning logic this work is not allowed to
- * touch. Rather than matching on that sentence, which would break the moment
- * its wording changed, this reads the *corrected* set the domain hands back and
- * words the field it had to fix. The domain stays the authority on what is
- * wrong; only the wording lives here.
+ * The shape both bundles share. Derived from the French one, so a missing or
+ * misspelled key in any other language is a compile error rather than a blank
+ * label discovered by a user.
  */
-const CORRECTION_BY_KEY: Partial<Record<keyof PlanningParameters, string>> = {
-  freeWindow: "La fenêtre gratuite doit être une durée réelle et positive.",
-  safetyMargin:
-    "La marge de sécurité doit être positive et plus courte que la fenêtre gratuite.",
-  cyclingSpeed: "La vitesse à vélo doit être supérieure à zéro.",
-  walkingSpeed: "La vitesse de marche doit être supérieure à zéro.",
-  maxWalkDistance: "La marche maximale ne peut pas être négative.",
-  detourFactor:
-    "Le facteur de détour ne peut pas descendre sous 1 : une rue n'est jamais plus courte que la ligne droite.",
-  dockCooldown: "Le délai après ancrage ne peut pas être négatif.",
-  segmentOverhead:
-    "Le temps de déverrouillage et d'ancrage doit être plus court que le budget d'un segment.",
-  overageRate: "Le tarif hors fenêtre ne peut pas être négatif.",
-  bikeReserve: "Les réserves de vélos et d'ancrages sont des entiers positifs.",
-  dockReserve: "Les réserves de vélos et d'ancrages sont des entiers positifs.",
+export type Strings = typeof fr;
+
+const en: Strings = {
+  language: {
+    label: "Language",
+    switchTo: (name: string): string => `Show the interface in ${name}`,
+  },
+
+  app: {
+    name: "Redock",
+    title: "Redock, a share-bike trip planner for Montreal",
+    description:
+      "Splits a share-bike ride into segments short enough to stay inside the free window, and says where to dock.",
+  },
+
+  units: {
+    locale: "en-CA",
+    underAMinute: "under a minute",
+    approximateMinutes: (minutes: number): string => `about ${minutes} min`,
+    metres: (metres: number): string => `${metres} m`,
+    kilometres: (value: string): string => `${value} km`,
+  },
+
+  fields: {
+    origin: "Start",
+    destination: "Destination",
+    placeholder: "Address, place, or latitude, longitude",
+    clear: "Clear",
+    myLocation: "My location",
+    pickOnMap: "Pick on the map",
+    picking: "Tap the map",
+    swap: "Swap the start and the destination",
+    swapUnavailable:
+      "Swap the start and the destination, available once one of them is set",
+    searching: "Searching",
+    searchUnavailable:
+      "Address search is not responding. Tap the map to place the point, or type coordinates such as “45.5088, -73.5878”.",
+    useThisPoint: "Use this exact point",
+    coordinates: "Coordinates",
+  },
+
+  placeKinds: {
+    house: "Address",
+    street: "Street",
+    locality: "Place",
+    district: "District",
+    city: "City",
+    county: "Region",
+    state: "Region",
+    country: "Country",
+    other: "Place",
+  } as Record<PlaceKind, string>,
+
+  map: {
+    originPin: "Start, drag to move",
+    destinationPin: "Destination, drag to move",
+    hintPicking: (which: "origin" | "destination"): string =>
+      which === "origin"
+        ? "Tap the map to place your start, or type an address."
+        : "Tap the map to place your destination, or type an address.",
+    hintPlaced: "Drag a point to adjust it.",
+    hintGeolocationDenied:
+      "Your location is unavailable. Type an address, or tap the map to place your start.",
+  },
+
+  panel: {
+    label: "Trip planner",
+    expand: "Show the full itinerary",
+    collapse: "Collapse to the summary",
+  },
+
+  summary: {
+    label: "Trip summary",
+    noStops: "No stops. This trip is free.",
+    stops: (count: number): string =>
+      count === 1
+        ? "1 stop to stay inside the free window. This trip is free."
+        : `${count} stops to stay inside the free window. This trip is free.`,
+    estimate: "Durations are estimates, not arrival times.",
+  },
+
+  trail: {
+    label: "Itinerary",
+    start: "Start",
+    destination: "Destination",
+    anchor: (wait: string): string =>
+      `Dock the bike here and take another after ${wait}`,
+    anchorResets: "resets the free window",
+    walkTo: (place: string): string => `Walk to ${place}`,
+    walkToDestination: "Walk to your destination",
+    walkFree: "does not use the free window",
+    rideTo: (place: string): string => `Ride to ${place}`,
+    unknownStation: (id: string): string => `station ${id}`,
+  },
+
+  gauge: {
+    spoken: (minutes: number, state: string): string =>
+      `about ${minutes} min of free window left on arrival, ${state}`,
+    remaining: (minutes: number): string => `about ${minutes} min`,
+    onArrival: "left on arrival",
+    states: {
+      comfortable: "comfortable",
+      neutral: "some slack",
+      alarming: "cutting it fine",
+    } as Record<RemainingStatus, string>,
+  },
+
+  noStop: {
+    reveal: "And without any stop?",
+    hide: "Hide the no-stop comparison",
+    nothingToCompare: "Nothing to compare: this trip is walked end to end.",
+    inOneGo: (delta: string): string => `in one go, ${delta} than with the stops.`,
+    faster: (magnitude: string): string => `${magnitude} less`,
+    slower: (magnitude: string): string => `${magnitude} more`,
+    sameTime: "about the same time",
+    stillFree: "Still free: the ride stays inside the free window.",
+    wouldPayBefore: "You would pay",
+    wouldPayAfter: (overage: string): string =>
+      `for the ${overage} past the window.`,
+    rateNote: (rate: string): string =>
+      `Estimated before taxes, at ${rate} per minute. That rate is in the settings.`,
+  },
+
+  settings: {
+    label: "Settings",
+    summaryDefaults: (margin: string): string =>
+      `${margin} of margin, default values`,
+    summaryChanged: (margin: string, count: number): string =>
+      count === 1
+        ? `${margin} of margin, 1 value changed`
+        : `${margin} of margin, ${count} values changed`,
+    showRest: "Show the other settings",
+    hideRest: "Hide the other settings",
+    reset: "Reset everything",
+    controls: {
+      safetyMargin: {
+        label: "Safety margin",
+        hint: "Held back from the free window. Lower it for fewer stops and tighter segments.",
+      },
+      freeWindow: {
+        label: "Free window",
+        hint: "The free duration your subscription includes per ride.",
+      },
+      cyclingSpeed: {
+        label: "Cycling speed",
+        hint: "Your pace on a share bike.",
+      },
+      maxWalkDistance: {
+        label: "Maximum walk",
+        hint: "How far you will walk to a station, or from one.",
+      },
+      walkingSpeed: {
+        label: "Walking speed",
+        hint: "Used for the walk at each end, which never uses the free window.",
+      },
+      dockCooldown: {
+        label: "Wait after docking",
+        hint: "The operator's wait before you can take the same bike again.",
+      },
+      segmentOverhead: {
+        label: "Unlocking and docking",
+        hint: "Counted once per ride, and it does use the free window.",
+      },
+      bikeReserve: {
+        label: "Bikes held in reserve",
+        hint: "Never count on the last bikes, someone may take them before you.",
+      },
+      dockReserve: {
+        label: "Docks held in reserve",
+        hint: "Never count on the last free docks.",
+      },
+      detourFactor: {
+        label: "Detour factor",
+        hint: "How much longer streets are than a straight line.",
+      },
+      overageRate: {
+        label: "Rate past the window",
+        hint: "What a minute past the free window costs, before taxes. Only used to price a ride without stops.",
+      },
+    } as Record<keyof PlanningParameters, { label: string; hint: string }>,
+  },
+
+  feed: {
+    loading: "Loading stations",
+    stale: (minutes: number): string =>
+      `This data is ${minutes} min old and may no longer match the stations.`,
+    freshness: (time: string): string =>
+      `Stations as of ${time}. Availability can change before you arrive.`,
+    unavailable: {
+      network: {
+        title: "The station data is unreachable",
+        detail: "The network did not answer. Check your connection, then retry.",
+      },
+      malformed: {
+        title: "The station data cannot be read",
+        detail:
+          "The operator answered, but not in the expected format. The problem is at their source, not with your connection. Retry in a few minutes.",
+      },
+      "out-of-season": {
+        title: "The network is out of season",
+        detail:
+          "The operator is publishing no active station right now. Come back when the network reopens, in the spring.",
+      },
+    } as Record<string, { title: string; detail: string }>,
+    retry: "Retry",
+    retryable: ["network", "malformed"] as readonly string[],
+  },
+
+  empty: {
+    label: "How this works",
+    title: "Stay inside the free window",
+    lead: (window: string): string =>
+      `Your subscription includes ${window} per ride. Docking the bike at a station resets that counter.`,
+    start: "Your start",
+    anchor: "A stop along the way",
+    anchorNote: "docking restarts the free window",
+    destination: "Your destination",
+    call: "Set a start and a destination: the ride is split into segments that stay free, and every stop is named.",
+  },
+
+  plan: {
+    failureTitle: "No trip is possible",
+    failures: {
+      "origin-out-of-coverage":
+        "Your start is outside the area this network serves. Move it into a sector covered by the stations shown on the map.",
+      "destination-out-of-coverage":
+        "Your destination is outside the area this network serves. Move it into a sector covered by the stations shown on the map.",
+      "no-station-near-origin":
+        "No station within walking distance of your start. Raise your walking distance, or move your start.",
+      "no-mechanical-bike-near-origin":
+        "Stations are nearby, but none has a mechanical bike, and the free window does not apply to electric bikes. Raise your walking distance to reach others.",
+      "no-station-near-destination":
+        "No station within walking distance of your destination. Raise your walking distance, or move your destination.",
+      "gap-too-large":
+        "The stations along this trip are too far apart to be linked without exceeding the free window. Lower your safety margin, or accept a faster pace.",
+      "invalid-parameters":
+        "These settings cannot produce a trip. Adjust them and try again.",
+    } as Record<string, string>,
+    suggestions: {
+      "increase-walk-distance": "Walk further",
+      "increase-speed": "Ride faster",
+      "reduce-safety-margin": "Keep less margin",
+    } as Record<string, string>,
+  },
+
+  attribution: {
+    label: "Attributions",
+    map: "Base map",
+    stations: "Stations",
+  },
+
+  corrections: {
+    fallback: "These settings cannot produce a trip. Adjust them and try again.",
+    byKey: {
+      freeWindow: "The free window must be a real, positive duration.",
+      safetyMargin:
+        "The safety margin must be positive and shorter than the free window.",
+      cyclingSpeed: "Cycling speed must be greater than zero.",
+      walkingSpeed: "Walking speed must be greater than zero.",
+      maxWalkDistance: "The maximum walk cannot be negative.",
+      detourFactor:
+        "The detour factor cannot go below 1: a street is never shorter than a straight line.",
+      dockCooldown: "The wait after docking cannot be negative.",
+      segmentOverhead:
+        "Unlocking and docking must take less than a segment's budget.",
+      overageRate: "The rate past the window cannot be negative.",
+      bikeReserve: "Bike and dock reserves are whole positive numbers.",
+      dockReserve: "Bike and dock reserves are whole positive numbers.",
+    } as Partial<Record<keyof PlanningParameters, string>>,
+  },
 };
+
+export const STRINGS: Record<Locale, Strings> = { fr, en };
+
+/** The default bundle, for callers with no reason to hold a locale. */
+export const t: Strings = fr;
+
+export function isLocale(value: unknown): value is Locale {
+  return value === "fr" || value === "en";
+}
 
 export function describeCorrection(
   parameters: PlanningParameters,
   corrected: PlanningParameters,
+  strings: Strings,
 ): string {
   const keys = Object.keys(corrected) as (keyof PlanningParameters)[];
   for (const key of keys) {
     if (parameters[key] === corrected[key]) continue;
-    const message = CORRECTION_BY_KEY[key];
+    const message = strings.corrections.byKey[key];
     if (message !== undefined) return message;
   }
-  return "Ces réglages ne peuvent produire aucun trajet. Ajuste-les et réessaie.";
+  return strings.corrections.fallback;
 }

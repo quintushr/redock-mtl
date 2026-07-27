@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import NoStopComparison from "@/components/NoStopComparison";
 import { formatMoney } from "@/lib/format";
+import { STRINGS } from "@/lib/strings";
 import { DEFAULT_PARAMETERS } from "@/lib/params";
 import type { NoStopRide } from "@/lib/types";
 
@@ -25,7 +26,7 @@ const rate = DEFAULT_PARAMETERS.overageRate;
  * against the raw output would fail on that invisible difference alone.
  */
 const money = (amount: number): string =>
-  formatMoney(amount).replace(/\s/g, " ");
+  formatMoney(amount, STRINGS.fr).replace(/\s/g, " ");
 
 const billed: NoStopRide = {
   fromStationId: "a",

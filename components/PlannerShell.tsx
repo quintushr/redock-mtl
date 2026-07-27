@@ -18,7 +18,13 @@ import { formatCoordinates } from "@/lib/geocode";
 import { DEFAULT_PARAMETERS, validateParameters } from "@/lib/params";
 import { planTrip } from "@/lib/planner";
 import { noStopRide } from "@/lib/pricing";
-import { describeCorrection, t } from "@/lib/strings";
+import { useStrings } from "@/components/LocaleProvider";
+import {
+  DEFAULT_LOCALE,
+  LOCALES,
+  STRINGS,
+  describeCorrection,
+} from "@/lib/strings";
 import type {
   FeedStatus,
   LatLon,
@@ -43,11 +49,29 @@ const MapView = dynamic(() => import("@/components/MapView"), { ssr: false });
 
 const MONTREAL: LatLon = { lat: 45.5088, lon: -73.5878 };
 
-const FAILURE_MESSAGES = t.plan.failures;
+/**
+ * The one label this shell generates rather than receives.
+ *
+ * A field filled from an address holds what the reader chose, and translating
+ * that would be rewriting their input. A field filled from the browser's
+ * geolocation holds a label we wrote, so it has to follow the interface's
+ * language. It is stored in the default language and translated on the way to
+ * the field, which keeps the geolocation effect free of any dependency on the
+ * current one: making that effect re-run on a language change would ask the
+ * browser for the position again.
+ */
+const MY_LOCATION = STRINGS[DEFAULT_LOCALE].fields.myLocation;
 
-const SUGGESTION_LABELS = t.plan.suggestions;
+const MY_LOCATION_IN_ANY_LANGUAGE: readonly string[] = LOCALES.map(
+  (code) => STRINGS[code].fields.myLocation,
+);
+
+function displayLabel(text: string, myLocation: string): string {
+  return MY_LOCATION_IN_ANY_LANGUAGE.includes(text) ? myLocation : text;
+}
 
 export default function PlannerShell() {
+  const t = useStrings();
   const [feed, setFeed] = useState<FeedStatus>({ state: "loading" });
   const [parameters, setParameters] =
     useState<PlanningParameters>(DEFAULT_PARAMETERS);
@@ -182,7 +206,7 @@ export default function PlannerShell() {
           lat: position.coords.latitude,
           lon: position.coords.longitude,
         };
-        setEndpoint("origin", here, t.fields.myLocation);
+        setEndpoint("origin", here, MY_LOCATION);
         advance("origin");
         // The user granted the permission; showing them where they are is the
         // whole point of having asked.
@@ -200,7 +224,7 @@ export default function PlannerShell() {
   // The domain stays the authority on what is wrong; only the wording is ours.
   const correction = validation.ok
     ? null
-    : describeCorrection(parameters, validation.corrected);
+    : describeCorrection(parameters, validation.corrected, t);
 
   const plan: PlanResult | null = useMemo(() => {
     if (snapshot === null || origin === null || destination === null)
@@ -331,7 +355,7 @@ export default function PlannerShell() {
             <SearchField
               label={t.fields.origin}
               placeholder={t.fields.placeholder}
-              value={originText}
+              value={displayLabel(originText, t.fields.myLocation)}
               point={origin}
               bias={MONTREAL}
               armed={picking === "origin"}
@@ -373,7 +397,7 @@ export default function PlannerShell() {
             <SearchField
               label={t.fields.destination}
               placeholder={t.fields.placeholder}
-              value={destinationText}
+              value={displayLabel(destinationText, t.fields.myLocation)}
               point={destination}
               bias={MONTREAL}
               armed={picking === "destination"}
@@ -435,7 +459,7 @@ export default function PlannerShell() {
               <div role="alert">
                 <p className="text-sm font-medium">{t.plan.failureTitle}</p>
                 <p className="mt-1 text-sm text-muted">
-                  {FAILURE_MESSAGES[plan.failure.reason]}
+                  {t.plan.failures[plan.failure.reason]}
                 </p>
                 <ul className="mt-3 flex flex-wrap gap-2">
                   {plan.failure.suggestions.map((suggestion) => (
@@ -450,7 +474,7 @@ export default function PlannerShell() {
                           )
                         }
                       >
-                        {SUGGESTION_LABELS[suggestion.kind]}
+                        {t.plan.suggestions[suggestion.kind]}
                       </button>
                     </li>
                   ))}

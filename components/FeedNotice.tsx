@@ -1,6 +1,6 @@
 "use client";
 
-import { t } from "@/lib/strings";
+import { useStrings } from "@/components/LocaleProvider";
 import type { FeedStatus } from "@/lib/types";
 
 /**
@@ -24,6 +24,7 @@ export function FeedFailure({
   status: FeedStatus;
   onRetry: () => void;
 }) {
+  const t = useStrings();
   if (status.state !== "unavailable") return null;
   const message = t.feed.unavailable[status.reason];
   // A season is not something retrying can fix, and a button that cannot work
@@ -49,6 +50,8 @@ export function FeedFailure({
 
 /** How old the figures are. Null while there is nothing to qualify. */
 export function FeedFreshness({ status }: { status: FeedStatus }) {
+  const t = useStrings();
+
   if (status.state === "loading") {
     return (
       <p className="text-xs text-muted" role="status">
@@ -60,7 +63,7 @@ export function FeedFreshness({ status }: { status: FeedStatus }) {
   if (status.state === "unavailable") return null;
 
   // FR-014: availability is a snapshot at a stated moment, never a promise.
-  const time = status.snapshot.observedAt.toLocaleTimeString("fr-CA", {
+  const time = status.snapshot.observedAt.toLocaleTimeString(t.units.locale, {
     hour: "2-digit",
     minute: "2-digit",
   });

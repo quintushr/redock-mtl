@@ -1,7 +1,7 @@
 "use client";
 
+import { useStrings } from "@/components/LocaleProvider";
 import { approximateDuration } from "@/lib/format";
-import { t } from "@/lib/strings";
 import type { Itinerary } from "@/lib/types";
 
 /**
@@ -19,6 +19,7 @@ import type { Itinerary } from "@/lib/types";
  * NoStopComparison answers it.
  */
 export default function TripSummary({ itinerary }: { itinerary: Itinerary }) {
+  const t = useStrings();
   const stops = itinerary.stopCount;
 
   return (
@@ -26,7 +27,7 @@ export default function TripSummary({ itinerary }: { itinerary: Itinerary }) {
       {/* Monospace, because durations are data: they align down the trail and
           the digits must not dance while a value recomputes. */}
       <p className="font-mono text-[30px] leading-none font-medium">
-        {approximateDuration(itinerary.totalDuration)}
+        {approximateDuration(itinerary.totalDuration, t)}
       </p>
 
       <p className="mt-2 text-sm">

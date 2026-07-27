@@ -1,7 +1,7 @@
 "use client";
 
+import { useStrings } from "@/components/LocaleProvider";
 import { roundedMinutes } from "@/lib/format";
-import { t } from "@/lib/strings";
 import type { RemainingStatus, Seconds } from "@/lib/types";
 
 /**
@@ -39,6 +39,7 @@ export default function RemainingGauge({
   /** Present for callers that word the budget alongside; not rendered here. */
   budget?: Seconds;
 }) {
+  const t = useStrings();
   const minutes = roundedMinutes(remaining);
   const label = t.gauge.states[status];
   const spoken = t.gauge.spoken(minutes, label);

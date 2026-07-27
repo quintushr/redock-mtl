@@ -13,7 +13,8 @@ import {
   parseGeocoderResults,
   type GeocodeSuggestion,
 } from "@/lib/geocode";
-import { t } from "@/lib/strings";
+import { useStrings } from "@/components/LocaleProvider";
+import type { Strings } from "@/lib/strings";
 import type { LatLon } from "@/lib/types";
 
 /**
@@ -48,6 +49,7 @@ interface Row {
 function toRows(
   suggestions: GeocodeSuggestion[],
   typed: LatLon | null,
+  t: Strings,
 ): Row[] {
   const rows: Row[] = suggestions.map((suggestion) => ({
     kind: "place",
@@ -97,6 +99,7 @@ export default function SearchField({
   onArm: () => void;
 }) {
   const id = useId();
+  const t = useStrings();
   const [suggestions, setSuggestions] = useState<GeocodeSuggestion[]>([]);
   const [searching, setSearching] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -116,7 +119,7 @@ export default function SearchField({
   const searchable =
     typing && coordinates === null && trimmed.length >= GEOCODER_MIN_QUERY_LENGTH;
 
-  const rows = typing ? toRows(suggestions, coordinates) : [];
+  const rows = typing ? toRows(suggestions, coordinates, t) : [];
   const showFailure = searchable && failed && !searching;
 
   useEffect(() => {

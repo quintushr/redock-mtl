@@ -1,9 +1,10 @@
 "use client";
 
+import { useStrings } from "@/components/LocaleProvider";
 import RemainingGauge from "@/components/RemainingGauge";
 import { approximateDuration, formatDistance } from "@/lib/format";
 import { gaugeFraction } from "@/lib/remaining";
-import { t } from "@/lib/strings";
+import type { Strings } from "@/lib/strings";
 import type {
   Itinerary,
   ItineraryStep,
@@ -117,12 +118,14 @@ function EntryRow({
   last,
   stationName,
   params,
+  t,
 }: {
   entry: Entry;
   first: boolean;
   last: boolean;
   stationName: (id: string) => string;
   params: PlanningParameters;
+  t: Strings;
 }) {
   const marker =
     entry.kind === "start" || entry.kind === "anchor" || entry.kind === "destination"
@@ -151,7 +154,7 @@ function EntryRow({
               {stationName(entry.stationId)}
             </p>
             <p className="text-xs text-muted">
-              {t.trail.anchor(approximateDuration(entry.cooldown))}
+              {t.trail.anchor(approximateDuration(entry.cooldown, t))}
               {/* FR-114: the wait costs time but buys a fresh window. */}
               <span className="ml-1">{t.trail.anchorResets}</span>
             </p>
@@ -169,8 +172,8 @@ function EntryRow({
                 : t.trail.walkToDestination}
             </p>
             <p className="text-xs text-muted">
-              {approximateDuration(entry.step.duration)} ·{" "}
-              {formatDistance(entry.step.distance)}
+              {approximateDuration(entry.step.duration, t)} ·{" "}
+              {formatDistance(entry.step.distance, t)}
               <span className="ml-1">{t.trail.walkFree}</span>
             </p>
           </>
@@ -185,8 +188,8 @@ function EntryRow({
               {t.trail.rideTo(stationName(entry.step.toStationId))}
             </p>
             <p className="text-xs text-muted">
-              {approximateDuration(entry.step.duration)} ·{" "}
-              {formatDistance(entry.step.distance)}
+              {approximateDuration(entry.step.duration, t)} ·{" "}
+              {formatDistance(entry.step.distance, t)}
             </p>
             <RemainingGauge
               remaining={entry.step.remaining}
@@ -209,6 +212,7 @@ export default function ItineraryTrail({
   /** For the gauge's denominator only. No figure is recomputed here. */
   params: PlanningParameters;
 }) {
+  const t = useStrings();
   const names = new Map(stations.map((s) => [s.id, s.name]));
   const stationName = (id: string): string =>
     names.get(id) ?? t.trail.unknownStation(id);
@@ -225,6 +229,7 @@ export default function ItineraryTrail({
           last={index === entries.length - 1}
           stationName={stationName}
           params={params}
+          t={t}
         />
       ))}
     </ol>

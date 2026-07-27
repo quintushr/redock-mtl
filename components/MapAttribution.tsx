@@ -1,7 +1,7 @@
 "use client";
 
+import { useStrings } from "@/components/LocaleProvider";
 import { MAP_ATTRIBUTION } from "@/lib/endpoints";
-import { t } from "@/lib/strings";
 import type { FeedAttribution } from "@/lib/types";
 
 /**
@@ -21,6 +21,8 @@ export default function MapAttribution({
   /** Null until the feed has answered. */
   stations?: FeedAttribution | null;
 }) {
+  const t = useStrings();
+
   return (
     <p className="text-xs leading-relaxed text-muted">
       {t.attribution.map}{" "}

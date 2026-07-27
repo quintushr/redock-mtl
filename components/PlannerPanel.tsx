@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { t } from "@/lib/strings";
+import { useStrings } from "@/components/LocaleProvider";
+import PanelHeader from "@/components/PanelHeader";
 
 /**
  * The single panel (FR-140).
@@ -47,6 +48,7 @@ export default function PlannerPanel({
    */
   footer?: React.ReactNode;
 }) {
+  const t = useStrings();
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -92,6 +94,13 @@ export default function PlannerPanel({
         */}
         <span aria-hidden="true" className="h-1 w-9 rounded-full bg-muted" />
       </button>
+
+      {/*
+        No navigation bar on the planner: docs/ui-guidelines.md merges those
+        entries into this header instead, so they cost panel height rather than
+        map height.
+      */}
+      <PanelHeader />
 
       {/*
         The scroll container is a stable node. Opening the assumptions expands a
