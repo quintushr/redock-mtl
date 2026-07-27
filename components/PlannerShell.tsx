@@ -331,7 +331,7 @@ export default function PlannerShell() {
           <div className="flex justify-end">
             <button
               type="button"
-              className="rounded-control border border-line px-2 py-0.5 text-xs hover:bg-paper disabled:opacity-40"
+              className="rounded-control border border-line px-2 py-0.5 text-xs hover:bg-paper disabled:text-muted"
               disabled={origin === null && destination === null}
               onClick={swapEndpoints}
             >

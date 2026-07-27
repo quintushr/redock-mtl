@@ -28,12 +28,6 @@ const FILL: Record<RemainingStatus, string> = {
   alarming: "bg-warn",
 };
 
-const TEXT: Record<RemainingStatus, string> = {
-  comfortable: "text-ok",
-  neutral: "text-muted",
-  alarming: "text-warn",
-};
-
 export default function RemainingGauge({
   remaining,
   status,
@@ -70,7 +64,14 @@ export default function RemainingGauge({
       <p className="mt-1 text-xs text-muted">
         <span className="font-mono">{t.gauge.remaining(minutes)}</span>{" "}
         {t.gauge.onArrival}
-        <span className={`ml-2 font-medium ${TEXT[status]}`}>{label}</span>
+        {/*
+          The state word is set in --ink, not in the band's own colour.
+          #3e8e5a reaches 4,02:1 on the panel and #c4771a only 3,50:1, both
+          below the 4,5:1 that AA asks of 12px text. Those two values are
+          fixed by docs/ui-guidelines.md, so the colour stays where it clears
+          the bar: the fill, which is a non-text element and only owes 3:1.
+        */}
+        <span className="ml-2 font-medium text-ink">{label}</span>
       </p>
     </div>
   );

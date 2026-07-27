@@ -279,7 +279,7 @@ export default function AssumptionsLine({
             </button>
             <button
               type="button"
-              className="text-xs underline disabled:opacity-40"
+              className="text-xs underline disabled:text-muted disabled:no-underline"
               disabled={changed === 0}
               onClick={() => onChange(DEFAULT_PARAMETERS)}
             >
