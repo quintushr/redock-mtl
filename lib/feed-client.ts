@@ -5,7 +5,12 @@ import {
   REQUIRED_GBFS_FEEDS,
 } from "./endpoints";
 import { parseStationSnapshot } from "./gbfs";
-import type { FeedStatus, StationSnapshot } from "./types";
+import type {
+  FeedStatus,
+  RefreshOutcome,
+  Seconds,
+  StationSnapshot,
+} from "./types";
 
 /**
  * The one impure module under lib/.
@@ -23,11 +28,14 @@ interface CacheEntry {
 
 let cache: CacheEntry | null = null;
 let inFlight: Promise<FeedStatus> | null = null;
+/** A rider-initiated refresh in progress. Distinct from `inFlight`: see below. */
+let refreshing: Promise<RefreshOutcome> | null = null;
 
 /** Exposed for tests; there is no other reason to reach in here. */
 export function clearFeedCache(): void {
   cache = null;
   inFlight = null;
+  refreshing = null;
 }
 
 async function fetchJson(url: string, signal?: AbortSignal): Promise<unknown> {
@@ -64,6 +72,74 @@ function resolveFeedUrls(discovery: unknown): Map<string, string> | null {
     if (REQUIRED_GBFS_FEEDS.every((name) => urls.has(name))) return urls;
   }
   return null;
+}
+
+/**
+ * How long before we are willing to ask the operator again.
+ *
+ * The maximum of the feed's own ttl and our own floor, which is the same
+ * expression the cache branch of loadStationSnapshot uses. Ours is the binding
+ * one in practice: the provider declares `ttl: 10`, permitting six requests a
+ * minute, and taking a courtesy endpoint up on that is how public feeds get
+ * closed (principle V).
+ *
+ * Exported read-only, so the interface can avoid showing a spinner for a
+ * request that will be refused a microtask later. It grants nothing: bypassing
+ * the floor still requires `force`, which no component may pass. The division is
+ * deliberate — the component uses this to look right, requestRefresh uses it to
+ * be right, and only the second one is load-bearing.
+ */
+export function secondsUntilRefreshPermitted(): Seconds {
+  if (cache === null) return 0;
+  const since = (Date.now() - cache.fetchedAtMs) / 1000;
+  const floor = Math.max(cache.snapshot.ttl, MIN_REFRESH_INTERVAL_SECONDS);
+  return Math.max(0, floor - since);
+}
+
+/**
+ * A rider asking for newer availability, on purpose.
+ *
+ * The one entry point the refresh control may use, and deliberately not a thin
+ * wrapper over `loadStationSnapshot({ force: true })`.
+ *
+ * `force` bypasses the floor *entirely*, which is right for a test and wrong
+ * for a button: wired to one, it lets a rider poll the operator as fast as they
+ * can tap. Putting the floor check in the component would work today and break
+ * the first time someone else reaches for the module, with nothing in the type
+ * system objecting. Owning the check here means constitution compliance stops
+ * depending on a caller remembering.
+ *
+ * A refusal is a value rather than an error (FR-421). The rider has done nothing
+ * wrong — the limit is ours, not the operator's — so they are told how long
+ * remains and no request is sent. Distinguishing that from a *failed* attempt is
+ * the point of the return type: a failure comes back as `ok: true` carrying the
+ * previous snapshot, because trying and getting nothing is not the same as not
+ * being allowed to try.
+ *
+ * Never throws.
+ */
+export function requestRefresh(): Promise<RefreshOutcome> {
+  const waitSeconds = secondsUntilRefreshPermitted();
+  if (waitSeconds > 0) return Promise.resolve({ ok: false, waitSeconds });
+
+  /*
+   * Collapse concurrent presses onto one round of requests (FR-423).
+   *
+   * loadStationSnapshot dedupes in-flight callers, but only when `force` is
+   * absent — forcing deliberately skips that, which is correct for its own
+   * purpose and would let a double tap issue two rounds here. The footer does
+   * disable its button while loading, but a constitution guarantee that rests on
+   * a component's disabled attribute is not a guarantee.
+   */
+  if (refreshing !== null) return refreshing;
+
+  refreshing = loadStationSnapshot({ force: true })
+    .then((status): RefreshOutcome => ({ ok: true, status }))
+    .finally(() => {
+      refreshing = null;
+    });
+
+  return refreshing;
 }
 
 function statusFor(entry: CacheEntry): FeedStatus {

@@ -23,7 +23,7 @@ const partial: MessageTree = {
   app: { name: "Redock" },
   fields: { origin: "Salida", destination: "Destino" },
   summary: {
-    noStops: "Sin paradas. Este viaje es gratuito.",
+    noStopNeeded: "Sin paradas: este viaje cabe en la ventana gratuita.",
     stops: {
       one: "{count} parada para no salir de la ventana gratuita.",
       other: "{count} paradas para no salir de la ventana gratuita.",
@@ -53,7 +53,9 @@ describe("a partial translation", () => {
 
   it("uses what it has", () => {
     expect(resolved.fields.origin).toBe("Salida");
-    expect(resolved.summary.noStops).toBe("Sin paradas. Este viaje es gratuito.");
+    expect(resolved.summary.noStopNeeded).toBe(
+      "Sin paradas: este viaje cabe en la ventana gratuita.",
+    );
   });
 
   it("falls back to the reference for what it lacks, entry by entry", () => {

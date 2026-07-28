@@ -24,21 +24,43 @@ import { useStrings } from "@/components/LocaleProvider";
  *
  * The document also lists "À propos" and "Suggérer une idée" here. Neither page
  * exists yet, and a menu entry pointing nowhere is worse than no menu.
+ *
+ * On the second line. It states what the product does and why stopping saves
+ * money, and it never leaves — before any endpoint is entered, and still there
+ * once a plan is on screen (FR-414). That permanence is what removed the need
+ * for a control to recall the explanation: a sentence always in view cannot
+ * need bringing back, and an overlay opened to deliver one sentence is a
+ * mechanism heavier than the thing it serves (FR-417).
+ *
+ * It costs panel height on every screen, permanently, including the collapsed
+ * rest position where the summary has just claimed more room. That trade is
+ * accepted once and only once: this is one line of content and nothing else may
+ * join it. It wraps rather than truncating, because a subtitle ending in an
+ * ellipsis states nothing (FR-419a).
  */
 export default function PanelHeader() {
   const t = useStrings();
 
   return (
-    <div className="flex shrink-0 items-center justify-between gap-2 border-b border-edge px-4 py-1">
-      <p className="flex items-baseline gap-1.5 text-sm">
-        <span
-          aria-hidden="true"
-          className="h-[9px] w-[9px] shrink-0 translate-y-[1px] rounded-[3px] bg-brand"
-        />
-        <span className="font-medium text-brand-deep">{t.app.name}</span>
-        <span className="text-muted">{t.app.city}</span>
-      </p>
-      <LanguageToggle />
+    <div className="shrink-0 border-b border-edge px-4 py-1">
+      <div className="flex items-center justify-between gap-2">
+        <p className="flex items-baseline gap-1.5 text-sm">
+          <span
+            aria-hidden="true"
+            className="h-[9px] w-[9px] shrink-0 translate-y-[1px] rounded-[3px] bg-brand"
+          />
+          <span className="font-medium text-brand-deep">{t.app.name}</span>
+          <span className="text-muted">{t.app.city}</span>
+        </p>
+        <LanguageToggle />
+      </div>
+
+      {/*
+        Full width, under both the wordmark and the toggle, so it has the whole
+        panel to wrap into and competes with nothing for horizontal room.
+        `text-balance` keeps a two-line wrap from leaving one orphan word.
+      */}
+      <p className="pb-0.5 text-xs text-balance text-muted">{t.app.tagline}</p>
     </div>
   );
 }

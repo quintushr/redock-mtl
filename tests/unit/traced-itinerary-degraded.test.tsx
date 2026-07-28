@@ -156,10 +156,46 @@ describe("the source is entirely unreachable", () => {
 
   it("renders the summary", () => {
     const state = everythingFails();
-    const { container } = render(<TripSummary itinerary={state.traced.itinerary} />);
+    const { container } = render(
+      <TripSummary
+        itinerary={state.traced.itinerary}
+        noStop={null}
+        settled={state.traced.settled}
+        params={params}
+      />,
+    );
     // A figure is present. Which figure is TripSummary's own test's business.
     expect(container.textContent?.length).toBeGreaterThan(0);
     expect(container.textContent).not.toMatch(/NaN|undefined/);
+  });
+
+  it("still prices the trip, rather than deferring for ever", () => {
+    /*
+     * FR-408b and SC-009, and the one assertion that ties the deferral to
+     * reality. Amounts wait for `settled`, so the whole design rests on
+     * `settled` being reachable when nothing works — otherwise a rider whose
+     * routing source is down would watch "coût en cours de calcul" until they
+     * gave up, and no other test would notice.
+     *
+     * It is reachable because a failed request is still an answer: fetchPath is
+     * total and hands back null for abort, offline, CORS and a malformed
+     * payload alike, so every step leaves `pending` whether or not a path was
+     * ever obtained.
+     */
+    const state = everythingFails();
+    expect(state.traced.settled).toBe(true);
+
+    render(
+      <TripSummary
+        itinerary={state.traced.itinerary}
+        noStop={null}
+        settled={state.traced.settled}
+        params={params}
+      />,
+    );
+
+    expect(screen.queryByText(fr.summary.pricingPending)).toBeNull();
+    expect(screen.getByText(fr.summary.noStopNeeded)).toBeTruthy();
   });
 
   it("says every part is an approximation, and claims nothing more", () => {

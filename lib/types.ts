@@ -148,6 +148,63 @@ export interface NoStopRide {
   deltaAgainstPlan: Seconds;
 }
 
+/**
+ * The product's argument, in three numbers (FR-401).
+ *
+ * Both amounts are measured against the free window and never against the
+ * segment budget. The safety margin is our own caution; the operator does not
+ * know about it and does not bill for it. Measuring the two figures the same way
+ * is what makes them comparable, which is the entire reason they sit side by
+ * side.
+ */
+export interface TripCostComparison {
+  /**
+   * What the plan itself implies. Zero for any plan as first built, because the
+   * planner only creates edges that fit; non-zero when measured geometry pushed
+   * a segment past the window and correction gave up (FR-404).
+   */
+  planned: number;
+  /** What the same trip costs ridden straight through. */
+  withoutStops: number;
+  /** `withoutStops - planned`. Never negative. */
+  saved: number;
+}
+
+/**
+ * Which of four things the summary is saying.
+ *
+ * A value rather than a chain of conditionals inside the component, so the
+ * decision is a pure function with its own tests (principle III). The order in
+ * which the cases are decided is load-bearing and lives in lib/pricing.ts.
+ *
+ * `pending` is a real state and not a placeholder: an amount that corrects
+ * itself while being read is worse than an amount that arrives a moment late,
+ * which is why nothing is priced until the itinerary stops moving (FR-408a).
+ */
+export type SummaryCase =
+  /** The itinerary is still being revised. No amount may be shown. */
+  | { kind: "pending" }
+  /** No stop at all: one sentence, no figures (FR-406a). */
+  | { kind: "no-stop-needed"; cost: number }
+  /** Stops, but they save nothing: one sentence (FR-406). */
+  | { kind: "nothing-saved"; cost: number }
+  /**
+   * The comparison, with the time it costs alongside the money it saves.
+   *
+   * The two durations are carried here rather than left for the component to
+   * pull off NoStopRide: a figure fetched from a different source than the
+   * amounts beside it is a figure that can eventually disagree with them
+   * (FR-410).
+   */
+  | {
+      kind: "comparison";
+      costs: TripCostComparison;
+      /** How long the direct ride takes. Worded as an approximation. */
+      directDuration: Seconds;
+      /** Negative means the direct ride is faster than the plan. */
+      deltaAgainstPlan: Seconds;
+    };
+
 // ---------------------------------------------------------------------------
 // Itinerary
 // ---------------------------------------------------------------------------
@@ -397,6 +454,19 @@ export const RETRYABLE_FEED_REASONS: readonly FeedUnavailableReason[] = [
   "network",
   "malformed",
 ];
+
+/**
+ * What asking for fresh availability produced.
+ *
+ * A refusal is a value and not an error (FR-421). The refresh floor is our own
+ * courtesy limit rather than anything the operator imposes, so a rider who hits
+ * it has done nothing wrong: they are told how long remains, and no request is
+ * sent. Modelling that as a thrown error, or as a silent no-op, were the two
+ * ways to get this wrong.
+ */
+export type RefreshOutcome =
+  | { ok: true; status: FeedStatus }
+  | { ok: false; waitSeconds: Seconds };
 
 /** Total parse result: validation failures are values, not exceptions. */
 export type ParseResult<T> =
