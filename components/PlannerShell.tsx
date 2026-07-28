@@ -19,6 +19,7 @@ import { DEFAULT_PARAMETERS, validateParameters } from "@/lib/params";
 import { planTrip } from "@/lib/planner";
 import { noStopRide } from "@/lib/pricing";
 import { useStrings } from "@/components/LocaleProvider";
+import { useTracedItinerary } from "@/components/useTracedItinerary";
 import { describeCorrection } from "@/lib/corrections";
 import type {
   FeedStatus,
@@ -230,6 +231,29 @@ export default function PlannerShell() {
   }, [snapshot, origin, destination, settled]);
 
   /**
+   * Real geometry for the plan above, filled in as it arrives.
+   *
+   * Deliberately downstream of `plan`: the itinerary is computed, rendered and
+   * usable before this hook has issued a single request, and it stays usable if
+   * every one of them fails (FR-321, FR-325). Driven off `settled` rather than
+   * `parameters`, so dragging a slider cannot queue requests.
+   */
+  const traced = useTracedItinerary(plan, snapshot, settled, {
+    origin,
+    destination,
+  });
+
+  /**
+   * The itinerary as shown.
+   *
+   * The refined one once any measurement has landed, the estimated one until
+   * then. One variable so the map, the summary and the trail cannot disagree
+   * about which durations they are displaying (FR-314).
+   */
+  const displayed =
+    traced?.itinerary ?? (plan !== null && plan.ok ? plan.itinerary : null);
+
+  /**
    * The no-stop ride, recomputed with the plan.
    *
    * Derived from the same `settled` parameters and behind the same debounce, so
@@ -325,7 +349,8 @@ export default function PlannerShell() {
       <div className="absolute inset-0">
         <MapView
           stations={snapshot?.stations ?? []}
-          itinerary={plan?.ok ? plan.itinerary : null}
+          itinerary={displayed}
+          traced={traced}
           origin={origin}
           destination={destination}
           picking={picking}
@@ -336,7 +361,14 @@ export default function PlannerShell() {
       </div>
 
       <PlannerPanel
-        footer={<MapAttribution stations={snapshot?.attribution ?? null} />}
+        footer={
+          <MapAttribution
+            stations={snapshot?.attribution ?? null}
+            routing={
+              traced?.geometry.some((g) => g.status === "traced") ?? false
+            }
+          />
+        }
       >
         {/*
           Endpoint entry first. It is an input, but it is the one input the
@@ -436,10 +468,12 @@ export default function PlannerShell() {
               <EmptyState freeWindow={parameters.freeWindow} />
             ) : plan.ok ? (
               <>
-                <TripSummary itinerary={plan.itinerary} />
+                <TripSummary itinerary={displayed ?? plan.itinerary} />
                 <div className="mt-4">
                   <ItineraryTrail
-                    itinerary={plan.itinerary}
+                    itinerary={displayed ?? plan.itinerary}
+                    geometry={traced?.geometry ?? null}
+                    corrections={traced?.corrections ?? 0}
                     stations={snapshot?.stations ?? []}
                     params={settled}
                   />

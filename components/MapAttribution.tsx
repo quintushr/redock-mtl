@@ -1,7 +1,7 @@
 "use client";
 
 import { useStrings } from "@/components/LocaleProvider";
-import { MAP_ATTRIBUTION } from "@/lib/endpoints";
+import { MAP_ATTRIBUTION, ROUTING_ATTRIBUTION } from "@/lib/endpoints";
 import type { FeedAttribution } from "@/lib/types";
 
 /**
@@ -17,9 +17,18 @@ import type { FeedAttribution } from "@/lib/types";
  */
 export default function MapAttribution({
   stations,
+  routing = false,
 }: {
   /** Null until the feed has answered. */
   stations?: FeedAttribution | null;
+  /**
+   * Whether a traced path is currently on screen.
+   *
+   * The routing credit appears only when its work does (FR-332). Crediting a
+   * service on a screen that shows nothing of its would be noise, and this
+   * footer is already the densest line in the interface.
+   */
+  routing?: boolean;
 }) {
   const t = useStrings();
 
@@ -56,6 +65,28 @@ export default function MapAttribution({
               </a>
             </>
           )}
+        </>
+      )}
+      {routing && (
+        <>
+          {". "}
+          {t.attribution.routing}{" "}
+          <a
+            className="underline"
+            href={ROUTING_ATTRIBUTION.url}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {ROUTING_ATTRIBUTION.label}
+          </a>
+          {/*
+            What leaves the browser, said plainly (FR-333). The constitution
+            keeps user data in the browser; a pair of coordinates per segment is
+            little enough to be acceptable and enough to be worth stating rather
+            than assuming nobody would mind.
+          */}
+          {". "}
+          <span>{t.attribution.routingPrivacy}</span>
         </>
       )}
     </p>

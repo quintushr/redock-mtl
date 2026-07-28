@@ -1,0 +1,137 @@
+{
+  "_comment": "Hand-written rejection cases for parseRoutePayload (T002). One key per row of the rejection table in specs/004-real-route-geometry/contracts/route-source.md. Every one of these must produce a ParseResult failure, never an exception.",
+
+  "noFeatures": { "type": "FeatureCollection" },
+
+  "emptyFeatures": { "type": "FeatureCollection", "features": [] },
+
+  "featuresNotArray": { "type": "FeatureCollection", "features": {} },
+
+  "notALineString": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "properties": { "track-length": "1909" },
+        "geometry": { "type": "Point", "coordinates": [-73.5673, 45.5017] }
+      }
+    ]
+  },
+
+  "singleCoordinate": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "properties": { "track-length": "1909" },
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [[-73.5673, 45.5017, 41]]
+        }
+      }
+    ]
+  },
+
+  "missingTrackLength": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "properties": { "total-time": "354" },
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [-73.5673, 45.5017, 41],
+            [-73.554, 45.5088, 44]
+          ]
+        }
+      }
+    ]
+  },
+
+  "nonNumericTrackLength": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "properties": { "track-length": "not-a-number" },
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [-73.5673, 45.5017, 41],
+            [-73.554, 45.5088, 44]
+          ]
+        }
+      }
+    ]
+  },
+
+  "zeroTrackLength": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "properties": { "track-length": "0" },
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [-73.5673, 45.5017, 41],
+            [-73.554, 45.5088, 44]
+          ]
+        }
+      }
+    ]
+  },
+
+  "coordinateOutOfRange": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "properties": { "track-length": "1909" },
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [-73.5673, 45.5017, 41],
+            [-273.554, 145.5088, 44]
+          ]
+        }
+      }
+    ]
+  },
+
+  "coordinateNotFinite": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "properties": { "track-length": "1909" },
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [-73.5673, 45.5017, 41],
+            [null, 45.5088, 44]
+          ]
+        }
+      }
+    ]
+  },
+
+  "coordinateTooShort": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "properties": { "track-length": "1909" },
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [[-73.5673, 45.5017, 41], [-73.554]]
+        }
+      }
+    ]
+  },
+
+  "nullPayload": null,
+
+  "stringPayload": "not json at all"
+}

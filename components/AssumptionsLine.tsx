@@ -5,6 +5,7 @@ import { useLanguage, useResolve, useStrings } from "@/components/LocaleProvider
 import { ChevronDown } from "@/components/icons";
 import { approximateDuration, formatDecimal } from "@/lib/format";
 import { DEFAULT_PARAMETERS } from "@/lib/params";
+import { cachedPathCount, purgeCachedPaths } from "@/components/useTracedItinerary";
 import type { PlanningParameters } from "@/lib/types";
 
 /**
@@ -205,6 +206,54 @@ function changedCount(parameters: PlanningParameters): number {
     .length;
 }
 
+/**
+ * The control that empties the stored routes (FR-329a).
+ *
+ * The count is read on mount and after a purge rather than on every render:
+ * localStorage is synchronous, and counting it during a render that a slider
+ * drag triggers sixty times a second is a way to make a smooth control stutter.
+ *
+ * Not a planning parameter, so it influences no figure the rider reads and does
+ * not belong among the sliders. It sits with them because this is where a
+ * person goes looking for the knobs.
+ */
+function PurgePaths() {
+  const t = useStrings();
+  const say = useResolve();
+  /*
+   * Read once, when this mounts, and again after a purge.
+   *
+   * A lazy initializer rather than an effect, and it is safe here specifically
+   * because this component only ever mounts after the rider has opened both
+   * disclosures. Static export prerenders the panel closed, so this never runs
+   * during a server render and there is no hydration mismatch to worry about.
+   * Counting on every render would also mean touching synchronous storage sixty
+   * times a second while a slider is being dragged.
+   */
+  const [count, setCount] = useState<number>(() => cachedPathCount());
+
+  const purge = (): void => {
+    purgeCachedPaths();
+    setCount(cachedPathCount());
+  };
+
+  return (
+    <div className="mt-2 flex items-center justify-between gap-3 border-t border-edge pt-2">
+      <span className="text-xs text-muted">
+        {say(t.settings.purgePathsCount, { count })}
+      </span>
+      <button
+        type="button"
+        className="-mx-2 min-h-11 rounded-control px-2 text-xs underline hover:bg-paper disabled:text-muted disabled:no-underline disabled:hover:bg-transparent"
+        disabled={count === 0}
+        onClick={purge}
+      >
+        {t.settings.purgePaths}
+      </button>
+    </div>
+  );
+}
+
 export default function AssumptionsLine({
   parameters,
   onChange,
@@ -316,6 +365,16 @@ export default function AssumptionsLine({
                   onChange={(next) => set(control.key, next)}
                 />
               ))}
+
+              {/*
+                Emptying the stored routes (FR-329a).
+
+                Geometry between two stations does not change, so it is kept
+                across visits rather than re-requested from a service that gives
+                it away for free. Anything kept without expiring should be
+                erasable by the person whose browser is keeping it.
+              */}
+              <PurgePaths />
             </div>
           )}
         </div>
