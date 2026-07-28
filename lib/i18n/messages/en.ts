@@ -40,7 +40,6 @@ export const messages: Messages = {
     origin: "Start",
     destination: "Destination",
     placeholder: "Address, place, or latitude, longitude",
-    clear: "Clear",
     myLocation: "My location",
     pickOnMap: "Pick on the map",
     picking: "Tap the map",
@@ -72,7 +71,6 @@ export const messages: Messages = {
     hintPickingOrigin: "Tap the map to place your start, or type an address.",
     hintPickingDestination:
       "Tap the map to place your destination, or type an address.",
-    hintPlaced: "Drag a point to adjust it.",
     hintGeolocationDenied:
       "Your location is unavailable. Type an address, or tap the map to place your start.",
   },
@@ -256,7 +254,6 @@ export const messages: Messages = {
   },
 
   attribution: {
-    label: "Attributions",
     map: "Map",
     stations: "Stations",
   },
@@ -298,7 +295,6 @@ export const intentionallyIdentical = [
   "app.city",
   "fields.destination",
   "trail.destination",
-  "attribution.label",
   "attribution.stations",
   "units.metres",
   "units.kilometres",

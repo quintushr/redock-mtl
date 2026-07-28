@@ -59,7 +59,7 @@ describe("a partial translation", () => {
   it("falls back to the reference for what it lacks, entry by entry", () => {
     // FR-203. Not all-or-nothing: a translation that is a tenth done is a tenth
     // useful, and the rest is readable French rather than a blank.
-    expect(resolved.fields.clear).toBe(referenceMessages.fields.clear);
+    expect(resolved.fields.swap).toBe(referenceMessages.fields.swap);
     expect(resolved.trail.label).toBe(referenceMessages.trail.label);
     expect(resolved.settings.controls.freeWindow.label).toBe(
       referenceMessages.settings.controls.freeWindow.label,
@@ -93,7 +93,7 @@ describe("the coverage report for a partial translation", () => {
 
   it("names exactly what is missing, and does not block on anything else", () => {
     expect(passes(coverage)).toBe(false);
-    expect(coverage.missing).toContain("fields.clear");
+    expect(coverage.missing).toContain("fields.swap");
     expect(coverage.missing).toContain("trail.label");
     expect(coverage.missing).not.toContain("fields.origin");
     expect(coverage.translated).toBeLessThan(coverage.total);

@@ -63,7 +63,6 @@ export const messages = {
     origin: "Départ",
     destination: "Destination",
     placeholder: "Adresse, lieu, ou latitude, longitude",
-    clear: "Effacer",
     myLocation: "Ma position",
     pickOnMap: "Choisir sur la carte",
     picking: "Touche la carte",
@@ -98,7 +97,6 @@ export const messages = {
     hintPickingOrigin: "Touche la carte pour placer ton départ, ou tape une adresse.",
     hintPickingDestination:
       "Touche la carte pour placer ta destination, ou tape une adresse.",
-    hintPlaced: "Fais glisser un point pour l'ajuster.",
     hintGeolocationDenied:
       "Ta position n'est pas disponible. Tape une adresse, ou touche la carte pour placer ton départ.",
   },
@@ -299,7 +297,6 @@ export const messages = {
   },
 
   attribution: {
-    label: "Attributions",
     map: "Carte",
     stations: "Stations",
   },

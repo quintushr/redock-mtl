@@ -2,44 +2,8 @@
 
 Frozen provider output. Tests read these and never touch the network.
 
-Everything below describes the GBFS set unless stated otherwise; the two
-non-GBFS files are `photon-housenumber.json`, documented at the end, and
-`i18n-baseline.json`, documented immediately below.
-
-## `i18n-baseline.json` (temporary, delete on completion)
-
-**Not provider output, and not permanent.** It is a capture of every string the
-interface produced from `lib/strings.ts` before feature 003 moved the wording to
-`lib/i18n/`, taken by `scripts/i18n-capture.mjs` with the sample arguments
-committed inside that script.
-
-It exists to prove one thing: that the migration changed nothing a rider reads
-(spec 003, FR-222a). `tests/unit/i18n-parity.test.ts` asserts the new system
-reproduces it character for character.
-
-**Task T037 deletes this file, the capture script, and the parity test**, once
-that test has passed. FR-222b requires it. Keeping it would mean every later
-correction to a sentence became a two-file edit, one of them a fixture, which is
-exactly the friction the feature set out to remove. It is scaffolding, and
-scaffolding that outlives the building is just clutter that fails the build.
-
-Two differences from the baseline are expected and allowed, both defects the
-migration corrects: the French map marker labels, which reached English readers,
-and `summary.stops(0)`, which reads "0 arrêts" where CLDR puts zero in French's
-`one` category. Any other difference is a mistake.
-
-**Captured**: 2026-07-26
-**System**: BIXI Montréal (`Bixi_MTL`), GBFS 2.2
-**Discovery**: <https://gbfs.velobixi.com/gbfs/2-2/gbfs.json>
-**Feeds**: `/en/station_information.json`, `/en/station_status.json`,
-`/en/vehicle_types.json`, `/en/system_information.json`
-**License**: the provider's `system_information` publishes an **empty**
-`license_url` and an **empty** `operator`, so the feed carries no license
-statement of its own. Attribution shown in the app is held in `lib/endpoints.ts`
-and must be revisited if the provider starts publishing these fields.
-
-Do not re-capture on every run. Frozen means frozen: a test that changes when the
-network changes is not a unit test.
+Everything below describes the GBFS set unless stated otherwise; the one
+non-GBFS file is `photon-housenumber.json`, documented at the end.
 
 ## Files
 

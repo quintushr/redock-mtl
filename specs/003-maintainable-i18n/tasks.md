@@ -142,12 +142,12 @@ those, stash it and finish T002 first.
 - [X] T034 Run `npm run i18n:report` and confirm both languages report complete, then review the advisory unreferenced list by hand and delete any entry that is genuinely dead — remembering the list is advice, not a verdict (FR-213). **Must run after T037**: while the parity capture still exists, deleting an entry fails it with "gone from the new wording", because the capture records what the old bundle held
 - [X] T035 [P] Update `docs/ui-guidelines.md` where it describes the FR / EN entry, pointing at `lib/i18n/messages/` as the place wording lives
 - [X] T036 [P] Update `README.md` with a short section on correcting a sentence and adding a language, linking [quickstart.md](./quickstart.md)
-- [ ] T037 Delete `tests/unit/i18n-parity.test.ts`, `tests/fixtures/i18n-baseline.json`, `scripts/i18n-capture.mjs`, and the paragraph added by T003 (FR-222b). **Only after T021 has passed at least once** — the capture has served its purpose and keeping it would make every later copy correction a two-file edit
+- [X] T037 Delete `tests/unit/i18n-parity.test.ts`, `tests/fixtures/i18n-baseline.json`, `scripts/i18n-capture.mjs`, and the paragraph added by T003 (FR-222b). **Only after T021 has passed at least once** — the capture has served its purpose and keeping it would make every later copy correction a two-file edit
 - [X] T038 Verify `npm run build` still produces a working static export in `out/`, and that every language's wording is in the emitted bundle with nothing fetched at runtime (FR-225, Principle I)
 - [X] T039 Verify the app runs after a clean clone with zero environment variables and zero accounts (Principle II)
 - [X] T040 Verify estimate wording in both languages: durations still read as approximations, no clock time or arrival time is expressible, and the rounding boundaries are unchanged (FR-223, Principle IV)
 - [X] T041 Verify attribution and all four feed-failure notices are translated in both languages and covered by the sweep (FR-224, Principle V)
-- [ ] T042 Run `npm run lint` and `npm test` clean, then walk [quickstart.md](./quickstart.md) end to end: correct a sentence, add an entry, register a throwaway language, run the report, and delete the throwaway
+- [X] T042 Run `npm run lint` and `npm test` clean, then walk [quickstart.md](./quickstart.md) end to end: correct a sentence, add an entry, register a throwaway language, run the report, and delete the throwaway
 
 ---
 
