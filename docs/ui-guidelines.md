@@ -57,8 +57,21 @@ entrée modifiée rarement ; l'itinéraire est la sortie consultée à chaque us
 Placer l'entrée avant la sortie fait payer un défilement à chaque consultation
 pour un réglage annuel.
 
+Le résumé porte la durée totale, le nombre d'arrêts, **et la comparaison de
+coût** : ce que le trajet coûte avec les arrêts proposés, ce qu'il coûterait sans
+aucun arrêt, et l'écart. C'est l'argument du produit, et il ne se replie pas.
+Aucune de ces trois figures, ni les hypothèses qui les accompagnent, ne peut être
+placée derrière un dépli, un onglet, un écran secondaire, ou sous le fil
+d'itinéraire.
+
 Contrainte vérifiable : un trajet à deux arrêts est intégralement lisible sans
-défilement sur un écran de 700px de haut.
+défilement sur un écran de 700px de haut, **panneau déplié**.
+
+En position repliée, c'est le résumé entier qui doit être visible sans
+défilement, hypothèses comprises. Le fil d'itinéraire est ce qui passe sous la
+ligne de flottaison. La hiérarchie est délibérée : la position repliée existe
+pour répondre « combien de temps, combien d'arrêts, combien ça coûte », et c'est
+le résumé qui répond.
 
 ---
 
@@ -144,9 +157,16 @@ résultat est visible et ajustable.
 
 | État | Panneau | Carte |
 |---|---|---|
-| Vide | Deux champs de saisie, rien d'autre | Stations environnantes |
+| Vide | Deux champs de saisie, puis l'explication du mécanisme dans la zone de résultat | Stations environnantes |
 | Calculé | Résumé et fil complet | Tracé et stations d'arrêt en évidence |
 | Réglage | Contrôles en surcouche du panneau | Recalcul en direct, cadrage inchangé |
+
+L'état vide portait autrefois « deux champs de saisie, rien d'autre ». C'était un
+constat de vide là où la règle d'écriture demande une invitation, et le mécanisme
+du produit n'est pas évident : personne n'arrive en sachant qu'ancrer un vélo
+remet la fenêtre gratuite à zéro, et sans ce fait le résultat lui-même est
+illisible. L'explication occupe donc la zone que le résultat remplira, et lui
+cède la place sans laisser de blanc dès qu'un trajet est calculé.
 
 La carte ne se réorganise jamais entre deux états. Cette stabilité est ce qui
 donne la sensation de solidité.
@@ -172,6 +192,18 @@ Entrées, identiques dans les deux traitements :
 
 La page à propos porte les attributions de données et de cartographie, la
 mention d'absence d'affiliation avec l'opérateur, et le lien vers le code source.
+
+Sous le nom de l'application, l'en-tête porte **une phrase et une seule** : ce
+que fait le produit et pourquoi s'arrêter fait économiser. Elle est permanente,
+avant la saisie comme une fois le trajet affiché, et c'est cette permanence qui
+dispense d'une entrée « à propos » pour la rappeler. Elle nomme l'opérateur.
+
+Elle passe à la ligne plutôt que de se tronquer, dans toutes les langues et à la
+largeur la plus étroite du panneau : un sous-titre terminé par des points de
+suspension n'énonce rien. Elle coûte de la hauteur de panneau sur tous les
+écrans, y compris en position repliée où le résumé vient d'en réclamer
+davantage ; ce compromis est accepté une fois, pour une ligne de contenu, et
+rien d'autre n'a le droit de la rejoindre.
 
 ---
 

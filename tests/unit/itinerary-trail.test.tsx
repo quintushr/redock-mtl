@@ -192,26 +192,33 @@ describe("Estimate honesty (FR-113, FR-138, SC-010)", () => {
   });
 
   it("never renders a clock time in the summary", () => {
-    const { container } = render(<TripSummary itinerary={oneStop} />);
+    const { container } = render(<TripSummary itinerary={oneStop} noStop={null} settled params={params} />);
     expect(container.textContent).not.toMatch(/\b\d{1,2}:\d{2}\b/);
   });
 
   it("words the total as an estimate and says so out loud", () => {
-    render(<TripSummary itinerary={oneStop} />);
+    render(<TripSummary itinerary={oneStop} noStop={null} settled params={params} />);
     expect(screen.getByText(/environ/i)).toBeTruthy();
     expect(screen.getByText(/durées estimées/i)).toBeTruthy();
   });
 });
 
 describe("TripSummary answers the whole question (FR-105)", () => {
-  it("states the stop count and that the trip is free", () => {
-    render(<TripSummary itinerary={oneStop} />);
+  it("states the stop count", () => {
+    render(<TripSummary itinerary={oneStop} noStop={null} settled params={params} />);
     expect(screen.getByText(/1 arrêt/i)).toBeTruthy();
-    expect(screen.getByText(/gratuit/i)).toBeTruthy();
+  });
+
+  it("no longer claims a planned trip is free on principle", () => {
+    // It used to, reasoning from how the plan was built. Measured geometry can
+    // push a segment past the free window, so the amount is computed now and
+    // the unconditional claim is gone (FR-404).
+    render(<TripSummary itinerary={oneStop} noStop={null} settled params={params} />);
+    expect(screen.queryByText(/ce trajet est gratuit/i)).toBeNull();
   });
 
   it("says no stops are needed rather than reporting a zero", () => {
-    render(<TripSummary itinerary={noStop} />);
+    render(<TripSummary itinerary={noStop} noStop={null} settled params={params} />);
     expect(screen.getByText(/aucun arrêt/i)).toBeTruthy();
     expect(screen.queryByText(/0 stops/)).toBeNull();
   });
@@ -302,7 +309,7 @@ describe("The result region carries no planning control (SC-002)", () => {
   it("renders no form control in the trail or the summary", () => {
     const { container } = render(
       <>
-        <TripSummary itinerary={oneStop} />
+        <TripSummary itinerary={oneStop} noStop={null} settled params={params} />
         <ItineraryTrail
           itinerary={oneStop}
           stations={stations}

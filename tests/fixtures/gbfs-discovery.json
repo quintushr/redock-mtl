@@ -1,0 +1,47 @@
+{
+  "last_updated": 1785312000,
+  "ttl": 10,
+  "version": "2.2",
+  "data": {
+    "en": {
+      "feeds": [
+        {
+          "name": "system_information",
+          "url": "https://gbfs.velobixi.com/gbfs/en/system_information.json"
+        },
+        {
+          "name": "station_information",
+          "url": "https://gbfs.velobixi.com/gbfs/en/station_information.json"
+        },
+        {
+          "name": "station_status",
+          "url": "https://gbfs.velobixi.com/gbfs/en/station_status.json"
+        },
+        {
+          "name": "vehicle_types",
+          "url": "https://gbfs.velobixi.com/gbfs/en/vehicle_types.json"
+        }
+      ]
+    },
+    "fr": {
+      "feeds": [
+        {
+          "name": "system_information",
+          "url": "https://gbfs.velobixi.com/gbfs/fr/system_information.json"
+        },
+        {
+          "name": "station_information",
+          "url": "https://gbfs.velobixi.com/gbfs/fr/station_information.json"
+        },
+        {
+          "name": "station_status",
+          "url": "https://gbfs.velobixi.com/gbfs/fr/station_status.json"
+        },
+        {
+          "name": "vehicle_types",
+          "url": "https://gbfs.velobixi.com/gbfs/fr/vehicle_types.json"
+        }
+      ]
+    }
+  }
+}

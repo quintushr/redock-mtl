@@ -7,16 +7,28 @@ import { FeedFailure, FeedStale } from "@/components/FeedNotice";
 import ItineraryTrail from "@/components/ItineraryTrail";
 import MapAttribution from "@/components/MapAttribution";
 import { SwapVertical } from "@/components/icons";
-import NoStopComparison from "@/components/NoStopComparison";
 import PanelFooter from "@/components/PanelFooter";
 import PlannerPanel from "@/components/PlannerPanel";
 import SettingsOverlay from "@/components/SettingsOverlay";
 import SearchField from "@/components/SearchField";
 import TripSummary from "@/components/TripSummary";
 import type { FocusRequest, PickTarget } from "@/components/MapView";
-import { loadStationSnapshot } from "@/lib/feed-client";
+import {
+  loadStationSnapshot,
+  requestRefresh,
+  secondsUntilRefreshPermitted,
+} from "@/lib/feed-client";
 import { formatCoordinates } from "@/lib/geocode";
-import { DEFAULT_PARAMETERS, validateParameters } from "@/lib/params";
+import {
+  DEFAULT_PARAMETERS,
+  changedCount,
+  validateParameters,
+} from "@/lib/params";
+import {
+  clearStoredParameters,
+  readStoredParameters,
+  writeStoredParameters,
+} from "@/lib/params-store";
 import { planTrip } from "@/lib/planner";
 import { noStopRide } from "@/lib/pricing";
 import { useStrings } from "@/components/LocaleProvider";
@@ -118,16 +130,121 @@ export default function PlannerShell() {
   }, [parameters]);
 
   /**
+   * Whether the reader's stored parameters have been looked for yet.
+   *
+   * Guards the write below. Without it the first render would persist the
+   * defaults over whatever the reader had chosen, before the read that would
+   * have found it — turning a feature meant to remember them into one that
+   * quietly forgets.
+   */
+  const hydrated = useRef(false);
+
+  /**
+   * The reader's own parameters, restored.
+   *
+   * After mount and never during render. The build has no reader, so the
+   * prerendered HTML has to be the documented defaults; reading storage while
+   * rendering would make the first client render disagree with the server's and
+   * produce a hydration mismatch. Same shape as the deferred first `Date.now()`
+   * in PanelFooter, for the same reason.
+   *
+   * The one-frame flash from defaults to stored values is the accepted cost. It
+   * is invisible in practice: no plan exists this early, so there is no figure
+   * on screen to be seen changing.
+   */
+  useEffect(() => {
+    /*
+     * Deferred rather than called in the effect body, for the same reason the
+     * geolocation denial below and PanelFooter's first tick are: a synchronous
+     * setState in an effect body cascades an extra render, and React's lint rule
+     * rightly rejects it.
+     */
+    const timer = setTimeout(() => {
+      const stored = readStoredParameters();
+      hydrated.current = true;
+      if (stored === null) return;
+      setParameters(stored);
+      // Both at once rather than letting the debounce carry it, so the first
+      // plan is computed against the reader's own assumptions instead of being
+      // computed against the defaults and then recomputed 150ms later.
+      setSettled(stored);
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  /**
+   * Remember them, or forget them.
+   *
+   * Hung off the debounced value rather than the live one: dragging a slider
+   * would otherwise write on every frame, for a value nobody reads until the
+   * next visit.
+   *
+   * A set back at its documented defaults *clears* the key rather than storing
+   * a copy of it (FR-412a). Doing it here rather than in the reset control is
+   * what makes it hold: a clear issued by the overlay would be overwritten by
+   * this effect on the very next tick, and the reader who pressed reset would
+   * still be carrying a stored set. It also keeps SettingsOverlay from having
+   * to import a storage module, which is the sort of crack that widens.
+   *
+   * The distinction is not pedantry. A stored copy of today's defaults masks
+   * any future change to them, permanently, on the machine of every reader who
+   * ever pressed reset.
+   */
+  useEffect(() => {
+    if (!hydrated.current) return;
+    if (changedCount(settled) === 0) clearStoredParameters();
+    else writeStoredParameters(settled);
+  }, [settled]);
+
+  /**
+   * How long before another fetch is permitted, or null when nothing was
+   * refused. Transient: cleared the moment a refresh is allowed through.
+   */
+  const [refreshWait, setRefreshWait] = useState<number | null>(null);
+
+  /**
    * Load the snapshot, or load it again.
    *
    * Never during render: static export prerenders this component at build
    * time, and a render-time fetch would bake a stale snapshot into the shipped
    * HTML. Held in a callback rather than inlined in the effect so the failure
    * state can offer a retry that means something.
+   *
+   * This is the *failure* retry, which is a different question from the footer's
+   * refresh: there is nothing in hand to be too soon after, so it goes straight
+   * to the loader.
    */
   const loadFeed = useCallback(() => {
     setFeed({ state: "loading" });
     loadStationSnapshot().then(setFeed);
+  }, []);
+
+  /**
+   * The footer's refresh, which the rider presses on purpose.
+   *
+   * Through requestRefresh rather than the loader, because that is the only
+   * entry point that cannot outrun the courtesy floor. A refusal is not an
+   * error: it is worded in the footer row and no request is sent (FR-420,
+   * FR-421).
+   */
+  const refreshFeed = useCallback(() => {
+    // Asked first only so a refusal does not flash a spinner for the microtask
+    // it takes to come back. requestRefresh remains the authority; if this
+    // disagreed with it, the module would still refuse.
+    const wait = secondsUntilRefreshPermitted();
+    if (wait > 0) {
+      setRefreshWait(Math.ceil(wait));
+      return;
+    }
+
+    setRefreshWait(null);
+    setFeed({ state: "loading" });
+
+    void requestRefresh().then((outcome) => {
+      if (outcome.ok) setFeed(outcome.status);
+      else setRefreshWait(Math.ceil(outcome.waitSeconds));
+    });
   }, []);
 
   useEffect(() => {
@@ -398,7 +515,8 @@ export default function PlannerShell() {
             onToggleSettings={() => setSettingsOpen((open) => !open)}
             settingsPanelId={settingsPanelId}
             status={feed}
-            onRefresh={loadFeed}
+            onRefresh={refreshFeed}
+            refreshWait={refreshWait}
           />
         }
       >
@@ -502,7 +620,26 @@ export default function PlannerShell() {
               <>
                 {/* A caveat on the answer, above the answer it qualifies. */}
                 <FeedStale status={feed} />
-                <TripSummary itinerary={displayed ?? plan.itinerary} />
+                <TripSummary
+                  itinerary={displayed ?? plan.itinerary}
+                  noStop={noStop}
+                  /*
+                    The deferral gate, and the only correct source for it. False
+                    while any path is outstanding or a correction is running;
+                    true once every request has answered, success or failure, so
+                    a plan whose tracing failed entirely is still priced
+                    (FR-408a, FR-408b). A literal `true` here would remove the
+                    deferral silently, with nothing else failing.
+                  */
+                  settled={traced?.settled ?? false}
+                  /*
+                    The debounced set, not the live one, and the same set the
+                    `noStop` memo above was built from. Both figures therefore
+                    rest on one set of assumptions and neither can lag the other
+                    while a slider is still moving (FR-408).
+                  */
+                  params={settled}
+                />
                 <div className="mt-4">
                   <ItineraryTrail
                     itinerary={displayed ?? plan.itinerary}
@@ -512,16 +649,6 @@ export default function PlannerShell() {
                     params={settled}
                   />
                 </div>
-                {/*
-                Keyed on nothing: it must survive a parameter change rather than
-                remount, or it would close under the reader's finger exactly
-                when they are watching the margin move the price (FR-135).
-              */}
-                <NoStopComparison
-                  noStop={noStop}
-                  overageRate={settled.overageRate}
-                  stopCount={plan.itinerary.stopCount}
-                />
               </>
             ) : (
               // FR-028: name the cause and offer something concrete to do.

@@ -96,9 +96,12 @@ function SettingsRow({
 function FreshnessRow({
   status,
   onRefresh,
+  refreshWait,
 }: {
   status: FeedStatus;
   onRefresh: () => void;
+  /** Seconds until another fetch is permitted, or null when nothing was refused. */
+  refreshWait: number | null;
 }) {
   const t = useStrings();
   const say = useResolve();
@@ -161,12 +164,21 @@ function FreshnessRow({
 
   return (
     <div className="flex min-h-10 items-center gap-2 px-4">
+      {/*
+        The refusal replaces the age rather than joining it. The row is one line
+        and docs/ui-guidelines.md closes this footer to a third, so a message
+        that needed its own line would have nowhere to go — and the two never
+        need saying at once: "already up to date" is a statement about the very
+        age it stands in for.
+      */}
       <p className="min-w-0 flex-1 truncate text-xs text-muted" role="status">
         {loading
           ? t.feed.loading
-          : age === null
-            ? ""
-            : say(t.feed.freshness, { age: relativeAge(age, t) })}
+          : refreshWait !== null
+            ? say(t.feed.refreshTooSoon, { seconds: refreshWait })
+            : age === null
+              ? ""
+              : say(t.feed.freshness, { age: relativeAge(age, t) })}
       </p>
 
       {/*
@@ -211,6 +223,7 @@ export default function PanelFooter({
   settingsPanelId,
   status,
   onRefresh,
+  refreshWait,
 }: {
   parameters: PlanningParameters;
   settingsOpen: boolean;
@@ -219,6 +232,8 @@ export default function PanelFooter({
   settingsPanelId: string;
   status: FeedStatus;
   onRefresh: () => void;
+  /** Seconds until another fetch is permitted, or null. See FreshnessRow. */
+  refreshWait?: number | null;
 }) {
   return (
     <div
@@ -238,7 +253,11 @@ export default function PanelFooter({
         controls={settingsPanelId}
       />
       <div className="border-t border-edge">
-        <FreshnessRow status={status} onRefresh={onRefresh} />
+        <FreshnessRow
+          status={status}
+          onRefresh={onRefresh}
+          refreshWait={refreshWait ?? null}
+        />
       </div>
     </div>
   );

@@ -29,6 +29,7 @@ const renderFooter = (
   status: FeedStatus = at(0),
   parameters: PlanningParameters = DEFAULT_PARAMETERS,
   settingsOpen = false,
+  refreshWait: number | null = null,
 ) => {
   const onToggleSettings = vi.fn();
   const onRefresh = vi.fn();
@@ -40,6 +41,7 @@ const renderFooter = (
       settingsPanelId="settings"
       status={status}
       onRefresh={onRefresh}
+      refreshWait={refreshWait}
     />,
   );
   return { onToggleSettings, onRefresh };
@@ -126,6 +128,26 @@ describe("row 2 carries the refresh", () => {
       name: /actualiser les stations/i,
     }) as HTMLButtonElement;
     expect(refresh.disabled).toBe(true);
+  });
+
+  it("says how long remains when the ask was too soon", () => {
+    // The floor is ours, not the operator's, so the rider has done nothing
+    // wrong and the row does not tell them off. It says the data is as new as
+    // it is allowed to be, and when they may look again (FR-421).
+    renderFooter(at(0), DEFAULT_PARAMETERS, false, 42);
+    expect(screen.getByRole("status").textContent).toMatch(/42/);
+    expect(screen.getByRole("status").textContent).toMatch(/à jour/i);
+  });
+
+  it("puts the refusal in row 2 rather than growing a third", () => {
+    renderFooter(at(0), DEFAULT_PARAMETERS, false, 42);
+    expect(screen.getAllByRole("button")).toHaveLength(2);
+    expect(screen.getAllByRole("status")).toHaveLength(1);
+  });
+
+  it("goes back to reporting the age once a refresh is permitted", () => {
+    renderFooter(at(7), DEFAULT_PARAMETERS, false, null);
+    expect(screen.getByRole("status").textContent).not.toMatch(/à jour/i);
   });
 });
 

@@ -30,6 +30,20 @@ export const messages = {
   app: {
     name: "Redock",
     city: "Montréal",
+    /**
+     * Ce que fait le produit, en une phrase, sous son nom (FR-414).
+     *
+     * Permanente : avant la saisie et une fois le trajet calculé. C'est ce qui
+     * dispense d'un contrôle « à propos » — une phrase qui ne part jamais n'a
+     * pas besoin qu'on la rappelle, et une surcouche ouverte pour énoncer une
+     * phrase est un mécanisme plus lourd que ce qu'il sert (FR-417).
+     *
+     * Nomme l'opérateur, ce qui acquitte FR-419 partout dans le parcours. Tient
+     * sur une ligne de contenu et passe à la ligne plutôt que de se tronquer :
+     * un sous-titre terminé par des points de suspension n'énonce rien
+     * (FR-419a).
+     */
+    tagline: "Optimise tes trajets BIXI pour ne payer aucun supplément.",
     title: "Redock, planificateur de trajets à vélo partagé à Montréal",
     description:
       "Découpe un trajet à vélo partagé en segments assez courts pour rester dans la fenêtre gratuite, et indique où ancrer.",
@@ -107,17 +121,76 @@ export const messages = {
     collapse: "Replier sur le résumé",
   },
 
+  /**
+   * Le résumé, où le produit fait désormais son argument.
+   *
+   * Ces entrées ne disent plus qu'un trajet planifié est gratuit. Elles le
+   * disaient, en raisonnant sur la façon dont le plan est construit ; depuis que
+   * les distances mesurées remplacent les estimations, un segment peut dépasser
+   * la fenêtre et le montant est calculé plutôt qu'affirmé (FR-404).
+   */
   summary: {
     label: "Résumé du trajet",
-    noStops: "Aucun arrêt. Ce trajet est gratuit.",
     // {count} is the number of docking stops. French puts zero in the `one`
     // category, which is why this is a plural map and not a comparison.
     stops: {
-      one: "{count} arrêt pour rester dans la fenêtre gratuite. Ce trajet est gratuit.",
-      other:
-        "{count} arrêts pour rester dans la fenêtre gratuite. Ce trajet est gratuit.",
+      one: "{count} arrêt pour rester dans la fenêtre gratuite.",
+      other: "{count} arrêts pour rester dans la fenêtre gratuite.",
     },
     estimate: "Durées estimées, ce ne sont pas des heures d'arrivée.",
+
+    /**
+     * Tant que l'itinéraire bouge encore, aucun montant (FR-408a).
+     *
+     * Un prix qui se corrige tout seul pendant qu'on le lit se lit comme une
+     * erreur, pas comme une estimation. Les durées, elles, continuent de
+     * s'ajuster : elles sont annoncées comme approximatives depuis toujours.
+     */
+    pricingPending: "Coût en cours de calcul.",
+
+    /** Les trois figures. Étiquettes courtes : le montant à côté fait le travail. */
+    withStops: "Avec les arrêts",
+    withoutStops: "Sans arrêt",
+    saved: "Tu économises",
+
+    /** Des arrêts, mais qui ne font rien gagner (FR-406). */
+    savesNothing:
+      "Ces arrêts ne te font rien économiser : tu peux rouler d'une traite.",
+
+    /**
+     * Aucun arrêt du tout (FR-406a).
+     *
+     * Volontairement de la même forme que savesNothing : ce sont deux issues
+     * voisines, et les distinguer par une mise en page obligerait le lecteur à
+     * décoder au lieu de lire.
+     */
+    noStopNeeded:
+      "Aucun arrêt nécessaire : ce trajet tient dans la fenêtre gratuite.",
+    /** Le cas rare : un seul trajet, poussé au-delà de la fenêtre par la mesure. */
+    noStopOverBefore: "Aucun arrêt possible ici. Tu paierais",
+    noStopOverAfter: "au-delà de la fenêtre gratuite.",
+
+    /**
+     * Ce sur quoi les montants reposent (FR-407, FR-411, FR-412).
+     *
+     * À côté du montant et jamais repliée : un chiffre que le lecteur ne peut
+     * pas rapprocher du tarif publié par l'opérateur se lit comme une erreur.
+     * {window} est la fenêtre gratuite, {rate} le tarif à la minute.
+     */
+    assumptions:
+      "Vélo mécanique, {window} inclus, puis {rate} la minute. Avant taxes, hors frais de déverrouillage.",
+
+    /**
+     * La comparaison en temps, à côté de celle en argent (FR-410).
+     *
+     * Séparée autour du chiffre qu'elle encadre : les durées sont en chasse
+     * fixe, ce qui est impossible si la phrase est une seule chaîne.
+     * {delta} vaut faster, slower ou sameTime.
+     */
+    inOneGo: "d'une traite, {delta} qu'avec les arrêts.",
+    faster: "{magnitude} de moins",
+    slower: "{magnitude} de plus",
+    sameTime: "à peu près le même temps",
   },
 
   trail: {
@@ -182,26 +255,6 @@ export const messages = {
       neutral: "correct",
       alarming: "risqué",
     },
-  },
-
-  noStop: {
-    reveal: "Et sans aucun arrêt ?",
-    hide: "Masquer la comparaison sans arrêt",
-    nothingToCompare: "Rien à comparer : ce trajet se fait entièrement à pied.",
-    /**
-     * Split around the figure it frames: durations and amounts are set in the
-     * monospace family, which is impossible if the sentence is one string.
-     * {delta} is noStop.faster, noStop.slower or noStop.sameTime.
-     */
-    inOneGo: "d'une traite, {delta} qu'avec les arrêts.",
-    faster: "{magnitude} de moins",
-    slower: "{magnitude} de plus",
-    sameTime: "à peu près le même temps",
-    stillFree: "Toujours gratuit : le trajet tient dans la fenêtre gratuite.",
-    wouldPayBefore: "Tu paierais",
-    wouldPayAfter: "pour les {overage} au-delà de la fenêtre.",
-    rateNote:
-      "Estimation avant taxes, au tarif de {rate} la minute. Ce tarif se change dans les réglages.",
   },
 
   settings: {
@@ -303,6 +356,20 @@ export const messages = {
     /** Ce que le survol montre quand le relatif ne suffit pas (FR-014). */
     observedAt: "Relevé à {time}. La disponibilité peut changer avant ton arrivée.",
     refresh: "Actualiser les stations",
+    /**
+     * L'actualisation refusée, faute d'avoir attendu assez (FR-421).
+     *
+     * Le plancher est le nôtre, pas celui de l'opérateur : le flux autorise une
+     * requête toutes les dix secondes et nous nous en tenons à une par minute,
+     * parce que marteler un service offert gracieusement est la façon dont les
+     * flux publics finissent par fermer.
+     *
+     * Le lecteur n'a donc rien fait de mal, et la phrase ne le lui reproche pas.
+     * Elle dit que la donnée est aussi récente qu'elle a le droit de l'être, et
+     * combien de temps il reste. {seconds} est un nombre de secondes.
+     */
+    refreshTooSoon:
+      "Données déjà à jour. Nouvelle vérification possible dans {seconds} s.",
     unavailable: {
       network: {
         title: "Les données de stations sont injoignables",

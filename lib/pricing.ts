@@ -5,6 +5,8 @@ import type {
   PlanningParameters,
   Seconds,
   Station,
+  SummaryCase,
+  TripCostComparison,
 } from "./types";
 
 /**
@@ -89,5 +91,89 @@ export function noStopRide(
     overage,
     cost: overageCost(duration, params),
     deltaAgainstPlan: duration + walking - itinerary.totalDuration,
+  };
+}
+
+/**
+ * What the plan itself costs.
+ *
+ * Usually nothing, and the reason is worth stating because it used to be
+ * asserted rather than computed. The planner only builds edges whose ride fits
+ * the segment budget, so every segment it returns is inside the free window,
+ * and a freshly planned trip is free by construction.
+ *
+ * That stopped being the whole story when feature 004 began replacing estimated
+ * durations with measured ones. A measured segment can exceed the window, and
+ * when correction runs out of rounds the rider is left holding a plan that
+ * really would be billed. Saying "free" then is not an approximation, it is a
+ * wrong number (FR-404).
+ *
+ * Summed per ride, never over the total. The meter runs from unlock to dock,
+ * once per ride; costing the whole trip as one ride would charge for the walks
+ * and the cooldowns, and would contradict the product's own thesis that a trip
+ * split into short rides is cheaper than the same trip ridden through.
+ */
+export function plannedCost(
+  itinerary: Itinerary,
+  params: PlanningParameters,
+): number {
+  return itinerary.steps.reduce(
+    (sum, step) =>
+      step.kind === "bike" ? sum + overageCost(step.duration, params) : sum,
+    0,
+  );
+}
+
+/**
+ * Which of four things the summary is saying.
+ *
+ * Here rather than inside the component, because the choice is a function of
+ * its arguments and principle III says such a thing does not belong in a
+ * component. It is also the part most likely to be got subtly wrong, and a
+ * chain of conditionals inside a render body cannot be tested without a
+ * renderer.
+ *
+ * The order below is load-bearing, not stylistic:
+ *
+ *   1. `pending` first, because FR-408a is unconditional. Whatever else is true
+ *      of the plan, an itinerary still being revised may not be priced.
+ *   2. A plan with no stop is answered before anything is compared: it *is* the
+ *      direct ride, so two identical amounts and a zero would be arithmetically
+ *      true and rhetorically useless (FR-406a).
+ *   3. The null check precedes reading `cost`, or a plan whose anchor stations
+ *      left the snapshot would throw here instead of degrading (FR-409).
+ */
+export function summaryCase(
+  itinerary: Itinerary,
+  noStop: NoStopRide | null,
+  settled: boolean,
+  params: PlanningParameters,
+): SummaryCase {
+  if (!settled) return { kind: "pending" };
+
+  const planned = plannedCost(itinerary, params);
+
+  if (itinerary.stopCount === 0) return { kind: "no-stop-needed", cost: planned };
+  // No ride to compare against: a walk-only plan, or stations that have left
+  // the snapshot. Worded as the no-stop case, which is what it amounts to.
+  if (noStop === null) return { kind: "no-stop-needed", cost: planned };
+
+  if (noStop.cost === 0) return { kind: "nothing-saved", cost: planned };
+
+  const costs: TripCostComparison = {
+    planned,
+    withoutStops: noStop.cost,
+    // Floored rather than allowed negative. The direct ride is at least as long
+    // as any one segment of the plan it replaces, so this cannot go below zero
+    // for a plan the planner built; the floor is there so a future caller
+    // cannot make the summary announce a negative saving.
+    saved: Math.max(0, noStop.cost - planned),
+  };
+
+  return {
+    kind: "comparison",
+    costs,
+    directDuration: noStop.duration,
+    deltaAgainstPlan: noStop.deltaAgainstPlan,
   };
 }

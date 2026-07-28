@@ -20,6 +20,7 @@ export const messages: Messages = {
   app: {
     name: "Redock",
     city: "Montréal",
+    tagline: "Plan your BIXI trips so you never pay an overage.",
     title: "Redock, a share-bike trip planner for Montreal",
     description:
       "Splits a share-bike ride into segments short enough to stay inside the free window, and says where to dock.",
@@ -83,14 +84,33 @@ export const messages: Messages = {
 
   summary: {
     label: "Trip summary",
-    noStops: "No stops. This trip is free.",
     // English puts zero in `other`, so "0 stops" is correct here where
     // "0 arrêt" is correct in French. Neither language states the other's rule.
     stops: {
-      one: "{count} stop to stay inside the free window. This trip is free.",
-      other: "{count} stops to stay inside the free window. This trip is free.",
+      one: "{count} stop to stay inside the free window.",
+      other: "{count} stops to stay inside the free window.",
     },
     estimate: "Durations are estimates, not arrival times.",
+
+    pricingPending: "Working out the cost.",
+
+    withStops: "With the stops",
+    withoutStops: "Without stopping",
+    saved: "You save",
+
+    savesNothing: "These stops save you nothing: you can ride it in one go.",
+
+    noStopNeeded: "No stop needed: this trip fits inside the free window.",
+    noStopOverBefore: "No stop is possible here. You would pay",
+    noStopOverAfter: "beyond the free window.",
+
+    assumptions:
+      "Mechanical bike, {window} included, then {rate} per minute. Before tax, unlock fees excluded.",
+
+    inOneGo: "in one go, {delta} than with the stops.",
+    faster: "{magnitude} less",
+    slower: "{magnitude} more",
+    sameTime: "about the same time",
   },
 
   trail: {
@@ -131,21 +151,6 @@ export const messages: Messages = {
       neutral: "some slack",
       alarming: "risky",
     },
-  },
-
-  noStop: {
-    reveal: "And without any stop?",
-    hide: "Hide the no-stop comparison",
-    nothingToCompare: "Nothing to compare: this trip is walked end to end.",
-    inOneGo: "in one go, {delta} than with the stops.",
-    faster: "{magnitude} less",
-    slower: "{magnitude} more",
-    sameTime: "about the same time",
-    stillFree: "Still free: the ride stays inside the free window.",
-    wouldPayBefore: "You would pay",
-    wouldPayAfter: "for the {overage} past the window.",
-    rateNote:
-      "Estimated before taxes, at {rate} per minute. That rate is in the settings.",
   },
 
   settings: {
@@ -222,6 +227,7 @@ export const messages: Messages = {
     ageHoursMinutes: "{hours} h {minutes} ago",
     observedAt: "Read at {time}. Availability can change before you arrive.",
     refresh: "Refresh stations",
+    refreshTooSoon: "Already up to date. You can check again in {seconds}s.",
     unavailable: {
       network: {
         title: "The station data is unreachable",

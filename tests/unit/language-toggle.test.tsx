@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import LanguageToggle from "@/components/LanguageToggle";
 import { DocumentLanguage } from "@/components/LocaleProvider";
 import TripSummary from "@/components/TripSummary";
+import { DEFAULT_PARAMETERS } from "@/lib/params";
 import type { Itinerary } from "@/lib/types";
 
 /**
@@ -27,7 +28,12 @@ const itinerary: Itinerary = {
 const app = (
   <DocumentLanguage>
     <LanguageToggle />
-    <TripSummary itinerary={itinerary} />
+    <TripSummary
+      itinerary={itinerary}
+      noStop={null}
+      settled
+      params={DEFAULT_PARAMETERS}
+    />
   </DocumentLanguage>
 );
 
@@ -58,12 +64,12 @@ describe("the toggle offers both languages", () => {
 describe("switching is immediate", () => {
   it("changes the copy of every component below it", () => {
     render(app);
-    expect(screen.getByText(/ce trajet est gratuit/i)).toBeTruthy();
+    expect(screen.getByText(/aucun arrêt nécessaire/i)).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: /English/i }));
 
-    expect(screen.getByText(/this trip is free/i)).toBeTruthy();
-    expect(screen.queryByText(/ce trajet est gratuit/i)).toBeNull();
+    expect(screen.getByText(/no stop needed/i)).toBeTruthy();
+    expect(screen.queryByText(/aucun arrêt nécessaire/i)).toBeNull();
   });
 
   it("moves the current marker with it", () => {
@@ -94,12 +100,12 @@ describe("the choice is remembered", () => {
   it("reads it back on the next mount", () => {
     window.localStorage.setItem("redock.locale", "en");
     render(app);
-    expect(screen.getByText(/this trip is free/i)).toBeTruthy();
+    expect(screen.getByText(/no stop needed/i)).toBeTruthy();
   });
 
   it("ignores a stored value that is not a language we ship", () => {
     window.localStorage.setItem("redock.locale", "eo");
     render(app);
-    expect(screen.getByText(/ce trajet est gratuit/i)).toBeTruthy();
+    expect(screen.getByText(/aucun arrêt nécessaire/i)).toBeTruthy();
   });
 });
