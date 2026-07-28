@@ -1,10 +1,10 @@
 "use client";
 
-import { useStrings } from "@/components/LocaleProvider";
+import { useLanguage, useResolve, useStrings } from "@/components/LocaleProvider";
 import RemainingGauge from "@/components/RemainingGauge";
 import { approximateDuration, formatDistance } from "@/lib/format";
 import { gaugeFraction } from "@/lib/remaining";
-import type { Strings } from "@/lib/strings";
+import type { Messages } from "@/components/LocaleProvider";
 import type {
   Itinerary,
   ItineraryStep,
@@ -135,8 +135,13 @@ function EntryRow({
   last: boolean;
   stationName: (id: string) => string;
   params: PlanningParameters;
-  t: Strings;
+  t: Messages;
 }) {
+  // Read here rather than threaded down as props: the store is the browser, not
+  // a React tree, so a hook reads the same value at any depth.
+  const say = useResolve();
+  const lang = useLanguage();
+
   const marker =
     entry.kind === "start" || entry.kind === "anchor" || entry.kind === "destination"
       ? entry.kind
@@ -164,7 +169,9 @@ function EntryRow({
               {stationName(entry.stationId)}
             </p>
             <p className="text-xs text-muted">
-              {t.trail.anchor(approximateDuration(entry.cooldown, t))}
+              {say(t.trail.anchor, {
+                wait: approximateDuration(entry.cooldown, t),
+              })}
               {/* FR-114: the wait costs time but buys a fresh window. */}
               <span className="ml-1">{t.trail.anchorResets}</span>
             </p>
@@ -178,12 +185,14 @@ function EntryRow({
           <>
             <p className="text-sm">
               {entry.step.toStationId !== null
-                ? t.trail.walkTo(stationName(entry.step.toStationId))
+                ? say(t.trail.walkTo, {
+                    place: stationName(entry.step.toStationId),
+                  })
                 : t.trail.walkToDestination}
             </p>
             <p className="text-xs text-muted">
               {approximateDuration(entry.step.duration, t)} ·{" "}
-              {formatDistance(entry.step.distance, t)}
+              {formatDistance(entry.step.distance, t, lang)}
               <span className="ml-1">{t.trail.walkFree}</span>
             </p>
           </>
@@ -195,11 +204,13 @@ function EntryRow({
         return (
           <>
             <p className="text-sm">
-              {t.trail.rideTo(stationName(entry.step.toStationId))}
+              {say(t.trail.rideTo, {
+                place: stationName(entry.step.toStationId),
+              })}
             </p>
             <p className="text-xs text-muted">
               {approximateDuration(entry.step.duration, t)} ·{" "}
-              {formatDistance(entry.step.distance, t)}
+              {formatDistance(entry.step.distance, t, lang)}
             </p>
             <RemainingGauge
               remaining={entry.step.remaining}
@@ -223,9 +234,10 @@ export default function ItineraryTrail({
   params: PlanningParameters;
 }) {
   const t = useStrings();
+  const say = useResolve();
   const names = new Map(stations.map((s) => [s.id, s.name]));
   const stationName = (id: string): string =>
-    names.get(id) ?? t.trail.unknownStation(id);
+    names.get(id) ?? say(t.trail.unknownStation, { id });
 
   const entries = toEntries(itinerary.steps);
 

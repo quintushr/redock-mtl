@@ -35,6 +35,7 @@ See the [constitution](.specify/memory/constitution.md).
 | `npm test` | Vitest over the pure modules, against frozen fixtures, no network |
 | `npm run test:watch` | Same, in watch mode |
 | `npm run lint` | ESLint, including the rule keeping React out of `lib/` |
+| `npm run i18n:report` | What each language is missing, and which entries nothing reads |
 
 `next start` does not apply: the build is a static export. To check a production
 build, serve `out/` with any static file server.
@@ -126,6 +127,43 @@ For Cloudflare Pages, the project settings are:
 Needing any of those last three would mean the deployment has drifted away from
 running at zero cost.
 
+## Translating
+
+Every string the interface shows lives in `lib/i18n/messages/`, one file per
+language, grouped by the part of the interface it belongs to. They hold data and
+nothing else: no code, no arithmetic, no conditions.
+
+**To correct a sentence**, open the file for that language, find the entry,
+change the text, leave the key alone. One file, one line. You do not need to read
+any application code, and you do not touch the other language.
+
+**To add a language**, copy `lib/i18n/messages/fr.ts`, translate it, and add a
+descriptor to `LANGUAGES` in `lib/i18n/languages.ts`:
+
+```ts
+{ id: "es", name: "Español", code: "ES", formatting: "es-MX" }
+```
+
+That is the whole procedure. The toggle picks the language up from that list;
+nothing else has a list to update.
+
+`npm test` will tell you what is left: entries you have not translated, entries
+you left identical to the French without saying so, and placeholders you dropped
+or invented. Each names the entry and what to do about it. `npm run i18n:report`
+prints the same thing as a summary whenever you want it.
+
+Two things worth knowing before you start:
+
+- **Counts use plural maps, never a comparison against 1.** French puts zero in
+  the singular and English in the plural, and a language may have four forms
+  where French has two. Write the categories your language actually uses;
+  `Intl.PluralRules` picks between them.
+- **Durations always carry their hedge** — "environ", "about". They are
+  estimates, and the constitution requires them to say so.
+
+The full guide is in
+[specs/003-maintainable-i18n/quickstart.md](specs/003-maintainable-i18n/quickstart.md).
+
 ## Contributing
 
 Read the [constitution](.specify/memory/constitution.md) first. It is short, and
@@ -135,6 +173,8 @@ domain core, honest estimates, and respect for the data sources.
 Practical consequences when you open a pull request:
 
 - Changes under `lib/` ship with their tests in the same change.
+- Interface text goes in `lib/i18n/messages/`, never inline in a component. A
+  test renders every screen in English and fails on any French it finds.
 - No new runtime dependency without a justification in the pull request.
 - `npm run build` must still produce `out/` with nothing expecting a server.
 - A clean clone with no environment variables must still reach a working plan.

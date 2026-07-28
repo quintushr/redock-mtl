@@ -9,7 +9,8 @@
     "build": "next build",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "eslint"
+    "lint": "eslint",
+    "i18n:report": "node scripts/i18n-report.mjs"
   },
   "dependencies": {
     "maplibre-gl": "6.0.0",

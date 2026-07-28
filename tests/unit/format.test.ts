@@ -4,10 +4,12 @@ import {
   formatDistance,
   roundedMinutes,
 } from "@/lib/format";
-import { STRINGS } from "@/lib/strings";
+import { describe as descriptorFor } from "@/lib/i18n/languages";
+import { messages as fr } from "@/lib/i18n/messages/fr";
+import { messages as en } from "@/lib/i18n/messages/en";
 
-const fr = STRINGS.fr;
-const en = STRINGS.en;
+const FR = descriptorFor("fr");
+const EN = descriptorFor("en");
 
 /**
  * Duration wording (FR-113, FR-138, constitution principle IV).
@@ -62,8 +64,8 @@ describe("the same rounding, worded in English", () => {
   });
 
   it("switches the decimal separator with the language", () => {
-    expect(formatDistance(4237, fr)).toBe("4,2 km");
-    expect(formatDistance(4237, en)).toBe("4.2 km");
+    expect(formatDistance(4237, fr, FR)).toBe("4,2 km");
+    expect(formatDistance(4237, en, EN)).toBe("4.2 km");
   });
 });
 
@@ -77,12 +79,12 @@ describe("roundedMinutes", () => {
 
 describe("formatDistance", () => {
   it("uses metres below a kilometre, rounded to ten", () => {
-    expect(formatDistance(0, fr)).toBe("0 m");
-    expect(formatDistance(347, fr)).toBe("350 m");
+    expect(formatDistance(0, fr, FR)).toBe("0 m");
+    expect(formatDistance(347, fr, FR)).toBe("350 m");
   });
 
   it("switches to kilometres at a kilometre", () => {
-    expect(formatDistance(1000, fr)).toBe("1,0 km");
-    expect(formatDistance(4237, fr)).toBe("4,2 km");
+    expect(formatDistance(1000, fr, FR)).toBe("1,0 km");
+    expect(formatDistance(4237, fr, FR)).toBe("4,2 km");
   });
 });

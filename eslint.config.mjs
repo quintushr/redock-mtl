@@ -50,6 +50,48 @@ const eslintConfig = defineConfig([
       ],
     },
   },
+  // Feature 003: nothing may name a language and receive its wording.
+  //
+  // Two modules can, and both are confined to the single file that legitimately
+  // needs them. Without this, FR-202 would be a convention rather than a
+  // guarantee, and a convention is what let the map markers ship French to
+  // English readers in the first place.
+  {
+    files: ["**/*.ts", "**/*.tsx"],
+    ignores: ["components/LocaleProvider.tsx", "lib/i18n/**"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/lib/i18n/registry", "**/i18n/registry"],
+              message:
+                "The registry turns a language id into wording. Use useStrings() so the reader gets the language they chose (FR-202).",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ["**/*.ts", "**/*.tsx"],
+    ignores: ["app/layout.tsx", "lib/i18n/**"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/lib/i18n/static-metadata", "**/i18n/static-metadata"],
+              message:
+                "That module holds fixed-language metadata for the one prerendered document. Anything a rider interacts with must use useStrings() (FR-202a).",
+            },
+          ],
+        },
+      ],
+    },
+  },
   globalIgnores([
     // Default ignores of eslint-config-next:
     ".next/**",

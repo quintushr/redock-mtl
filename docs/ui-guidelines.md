@@ -151,7 +151,7 @@ Entrées, identiques dans les deux traitements :
 | Nom de l'application | Retour à l'accueil |
 | À propos | Page dédiée avec URL propre, jamais une modale |
 | Suggérer une idée | Issues du dépôt, nouvel onglet, gabarit pré-rempli |
-| FR / EN | Bascule immédiate, persistée |
+| FR / EN | Bascule immédiate, persistée. Les textes vivent dans `lib/i18n/messages/`, un fichier par langue |
 
 La page à propos porte les attributions de données et de cartographie, la
 mention d'absence d'affiliation avec l'opérateur, et le lien vers le code source.

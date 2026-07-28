@@ -1,6 +1,6 @@
 "use client";
 
-import { useStrings } from "@/components/LocaleProvider";
+import { useResolve, useStrings } from "@/components/LocaleProvider";
 import { roundedMinutes } from "@/lib/format";
 import type { RemainingStatus, Seconds } from "@/lib/types";
 
@@ -61,9 +61,10 @@ export default function RemainingGauge({
   budget?: Seconds;
 }) {
   const t = useStrings();
+  const say = useResolve();
   const minutes = roundedMinutes(remaining);
   const label = t.gauge.states[status];
-  const spoken = t.gauge.spoken(minutes, label);
+  const spoken = say(t.gauge.spoken, { minutes, state: label });
 
   return (
     <div className="mt-1.5">
@@ -87,7 +88,7 @@ export default function RemainingGauge({
           docs/ui-guidelines.md both forbid leaving this to colour. */}
       <p className="mt-1 text-xs text-muted">
         <span className={`font-mono font-medium ${FIGURE[status]}`}>
-          {t.gauge.remaining(minutes)}
+          {say(t.gauge.remaining, { minutes })}
         </span>{" "}
         {t.gauge.onArrival}
         {/* The qualifier stays secondary: the figure is the datum, this only

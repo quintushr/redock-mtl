@@ -2,12 +2,15 @@
 
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import {
-  DEFAULT_LOCALE,
-  STRINGS,
-  isLocale,
-  type Locale,
-  type Strings,
-} from "@/lib/strings";
+  DEFAULT_LANGUAGE,
+  describe,
+  isLanguageId,
+  type LanguageDescriptor,
+  type LanguageId,
+} from "@/lib/i18n/languages";
+import { type Messages, resolvedMessagesFor } from "@/lib/i18n/registry";
+import { resolve } from "@/lib/i18n/resolve";
+import type { Message, MessageValues } from "@/lib/i18n/types";
 
 /**
  * Which language the interface speaks.
@@ -19,6 +22,12 @@ import {
  * two tabs of the same planner in step, and it gives the prerendered HTML a
  * defined snapshot instead of a hydration mismatch.
  *
+ * This module is the only door to the wording. `lib/i18n/registry` is the only
+ * place that turns a language id into text, and `eslint.config.mjs` confines it
+ * to this file — so no component can ask for French by name, which is what
+ * FR-202 means by making the mistake structurally impossible rather than
+ * forbidden by convention.
+ *
  * No context and no state manager. The guidelines forbid the dependency, and
  * one value read straight from its store needs neither.
  */
@@ -27,6 +36,17 @@ const STORAGE_KEY = "redock.locale";
 
 /** Same-tab notification. The `storage` event only fires in *other* tabs. */
 const CHANGED = "redock:locale";
+
+/**
+ * The choice, when storage will not hold it.
+ *
+ * A browser with storage denied still gets a working switch for the session
+ * (FR-205). Before this existed the write failed, was caught, and every
+ * subsequent read went back to the empty store, so the switch silently did
+ * nothing. Storage stays authoritative when it works, which is what keeps two
+ * tabs in step.
+ */
+let sessionLocale: LanguageId | null = null;
 
 function subscribe(onChange: () => void): () => void {
   window.addEventListener(CHANGED, onChange);
@@ -37,26 +57,27 @@ function subscribe(onChange: () => void): () => void {
   };
 }
 
-function readLocale(): Locale {
+function readLocale(): LanguageId {
   try {
     const saved = window.localStorage.getItem(STORAGE_KEY);
-    return isLocale(saved) ? saved : DEFAULT_LOCALE;
+    if (isLanguageId(saved)) return saved;
   } catch {
-    // A browser with storage denied still gets a working planner in the
-    // default language. Nothing here is worth failing a page load over.
-    return DEFAULT_LOCALE;
+    // A browser with storage denied still gets a working planner. Nothing here
+    // is worth failing a page load over.
   }
+
+  return sessionLocale ?? DEFAULT_LANGUAGE;
 }
 
 /** What the prerendered document was built in. */
-function serverLocale(): Locale {
-  return DEFAULT_LOCALE;
+function serverLocale(): LanguageId {
+  return DEFAULT_LANGUAGE;
 }
 
 interface LocaleValue {
-  locale: Locale;
-  strings: Strings;
-  setLocale: (next: Locale) => void;
+  locale: LanguageId;
+  strings: Messages;
+  setLocale: (next: LanguageId) => void;
 }
 
 /**
@@ -91,20 +112,57 @@ export function DocumentLanguage({ children }: { children: React.ReactNode }) {
 export function useLocale(): LocaleValue {
   const locale = useSyncExternalStore(subscribe, readLocale, serverLocale);
 
-  const setLocale = useCallback((next: Locale) => {
+  const setLocale = useCallback((next: LanguageId) => {
     try {
       window.localStorage.setItem(STORAGE_KEY, next);
+      // Storage holds the choice now, so the in-memory fallback must stop
+      // speaking for it. Leaving it set would let a stale value outlive the
+      // store that superseded it.
+      sessionLocale = null;
     } catch {
-      // The switch still works for this render; it just will not be
-      // remembered.
+      // The switch still works for this session through `sessionLocale`; it
+      // just will not survive a reload.
+      sessionLocale = next;
     }
     window.dispatchEvent(new Event(CHANGED));
   }, []);
 
-  return { locale, strings: STRINGS[locale], setLocale };
+  return { locale, strings: resolvedMessagesFor(locale), setLocale };
 }
 
 /** The common case: a component that reads copy and never changes it. */
-export function useStrings(): Strings {
+export function useStrings(): Messages {
   return useLocale().strings;
 }
+
+/**
+ * The active language's conventions, for the few places that format a figure
+ * rather than word one. Separate from `useStrings` so that the wording call
+ * sites keep reading `t.group.entry` and are untouched by formatting.
+ */
+export function useLanguage(): LanguageDescriptor {
+  return describe(useLocale().locale);
+}
+
+/**
+ * Turns a message into a sentence: substitutes values, and picks the plural
+ * category when the message varies by count.
+ *
+ * One hook for both kinds, so a call site does not have to know which it is
+ * holding — and so that turning a plain entry into a plural one later is a
+ * change to the wording file alone.
+ */
+export function useResolve(): (
+  message: Message,
+  values?: MessageValues,
+) => string {
+  const { formatting } = useLanguage();
+
+  return useCallback(
+    (message: Message, values?: MessageValues) =>
+      resolve(message, formatting, values),
+    [formatting],
+  );
+}
+
+export type { Messages, LanguageId };

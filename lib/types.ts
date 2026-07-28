@@ -253,14 +253,28 @@ export type PlanResult =
  * stale is more useful than no plan, and FR-030 asks for an explicit message
  * rather than an empty screen.
  */
+export type FeedUnavailableReason = "network" | "malformed" | "out-of-season";
+
 export type FeedStatus =
   | { state: "loading" }
   | { state: "ready"; snapshot: StationSnapshot }
   | { state: "stale"; snapshot: StationSnapshot; age: Seconds }
   | {
       state: "unavailable";
-      reason: "network" | "malformed" | "out-of-season";
+      reason: FeedUnavailableReason;
     };
+
+/**
+ * Which failures are worth offering a retry against.
+ *
+ * Policy, not wording, which is why it lives beside the reasons it names rather
+ * than in a language file: there is no point offering a rider a retry button
+ * against a season, and that is equally true in every language.
+ */
+export const RETRYABLE_FEED_REASONS: readonly FeedUnavailableReason[] = [
+  "network",
+  "malformed",
+];
 
 /** Total parse result: validation failures are values, not exceptions. */
 export type ParseResult<T> =

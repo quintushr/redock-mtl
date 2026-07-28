@@ -15,7 +15,7 @@ import {
 } from "@/lib/geocode";
 import { Crosshair } from "@/components/icons";
 import { useStrings } from "@/components/LocaleProvider";
-import type { Strings } from "@/lib/strings";
+import type { Messages } from "@/components/LocaleProvider";
 import type { LatLon } from "@/lib/types";
 
 /**
@@ -50,7 +50,7 @@ interface Row {
 function toRows(
   suggestions: GeocodeSuggestion[],
   typed: LatLon | null,
-  t: Strings,
+  t: Messages,
 ): Row[] {
   const rows: Row[] = suggestions.map((suggestion) => ({
     kind: "place",

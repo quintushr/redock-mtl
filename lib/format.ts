@@ -1,4 +1,6 @@
-import type { Strings } from "./strings";
+import type { LanguageDescriptor } from "./i18n/languages";
+import type { Messages } from "./i18n/messages/fr";
+import { fill } from "./i18n/resolve";
 import type { Metres, Seconds } from "./types";
 
 /**
@@ -9,26 +11,58 @@ import type { Metres, Seconds } from "./types";
  * III also forbids logic expressible as a pure function from living in a
  * component.
  *
- * Every function takes the string bundle rather than reading a global, because
- * "about 5 min" and "environ 5 min" are the same rounding in two languages. The
- * arithmetic lives here, the words live in lib/strings.ts, and neither has to
- * know the other's business.
+ * The arithmetic lives here and the words live in lib/i18n/messages/. That
+ * split is the point: the hours/minutes decomposition used to be written twice,
+ * once inside each language's bundle, in identical form. Which parts of a
+ * duration are non-zero is not a question any language answers differently, so
+ * it is answered once, here, and each shape gets its own entry (FR-207a).
  *
- * Every duration here is an estimate and is worded as one (FR-113, principle
- * IV). Nothing in this module can produce a clock time.
+ * Every function that formats a figure takes the active language's descriptor,
+ * because the separator, the currency position and the plural categories are
+ * conventions of the language rather than of this codebase (FR-220).
+ *
+ * Every duration here is an estimate and is worded as one (FR-113, FR-223,
+ * principle IV). Nothing in this module can produce a clock time.
  */
 
 /**
  * Rounds to a coarse figure and words it as an estimate. Never a precise minute
  * count, because a precise number reads as a promise.
+ *
+ * Takes no descriptor: the three duration entries are plain strings, so nothing
+ * here selects a plural category. If they ever become plural maps — and
+ * "1 minutes" says they should — this gains one.
  */
-export function approximateDuration(seconds: Seconds, t: Strings): string {
+export function approximateDuration(seconds: Seconds, t: Messages): string {
   const minutes = seconds / 60;
   if (minutes < 1) return t.units.underAMinute;
-  if (minutes < 10) return t.units.approximateMinutes(Math.round(minutes));
+
   // Beyond ten minutes, round to five so the figure cannot be mistaken for a
   // measurement.
-  return t.units.approximateMinutes(Math.round(minutes / 5) * 5);
+  const rounded =
+    minutes < 10 ? Math.round(minutes) : Math.round(minutes / 5) * 5;
+
+  return wordDuration(rounded, t);
+}
+
+/**
+ * Words a whole number of minutes, choosing among the three shapes a duration
+ * can take. The choice is arithmetic, so it is made here rather than inside
+ * each language.
+ */
+function wordDuration(totalMinutes: number, t: Messages): string {
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  if (hours === 0) {
+    return fill(t.units.durationMinutes, { minutes });
+  }
+
+  if (minutes === 0) {
+    return fill(t.units.durationHours, { hours });
+  }
+
+  return fill(t.units.durationHoursMinutes, { hours, minutes });
 }
 
 /**
@@ -37,17 +71,23 @@ export function approximateDuration(seconds: Seconds, t: Strings): string {
  * on every row would be noise.
  *
  * Still rounded, so it still cannot be read as a measurement. Language-free: a
- * number is a number.
+ * number is a number, which is why this one keeps its signature.
  */
 export function roundedMinutes(seconds: Seconds): number {
   const minutes = seconds / 60;
   return minutes < 10 ? Math.round(minutes) : Math.round(minutes / 5) * 5;
 }
 
-export function formatDistance(metres: Metres, t: Strings): string {
+export function formatDistance(
+  metres: Metres,
+  t: Messages,
+  lang: LanguageDescriptor,
+): string {
   return metres < 1000
-    ? t.units.metres(Math.round(metres / 10) * 10)
-    : t.units.kilometres(formatDecimal(metres / 1000, 1, t));
+    ? fill(t.units.metres, { metres: Math.round(metres / 10) * 10 })
+    : fill(t.units.kilometres, {
+        value: formatDecimal(metres / 1000, 1, lang),
+      });
 }
 
 /**
@@ -58,9 +98,9 @@ export function formatDistance(metres: Metres, t: Strings): string {
 export function formatDecimal(
   value: number,
   digits: number,
-  t: Strings,
+  lang: LanguageDescriptor,
 ): string {
-  return new Intl.NumberFormat(t.units.locale, {
+  return new Intl.NumberFormat(lang.formatting, {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
   }).format(value);
@@ -72,8 +112,11 @@ export function formatDecimal(
  * Through Intl as well: the position of the sign, and the space before it, are
  * conventions of the locale.
  */
-export function formatMoney(amount: number, t: Strings): string {
-  return new Intl.NumberFormat(t.units.locale, {
+export function formatMoney(
+  amount: number,
+  lang: LanguageDescriptor,
+): string {
+  return new Intl.NumberFormat(lang.formatting, {
     style: "currency",
     currency: "CAD",
   }).format(amount);

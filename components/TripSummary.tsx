@@ -1,6 +1,6 @@
 "use client";
 
-import { useStrings } from "@/components/LocaleProvider";
+import { useResolve, useStrings } from "@/components/LocaleProvider";
 import { approximateDuration } from "@/lib/format";
 import type { Itinerary } from "@/lib/types";
 
@@ -20,6 +20,7 @@ import type { Itinerary } from "@/lib/types";
  */
 export default function TripSummary({ itinerary }: { itinerary: Itinerary }) {
   const t = useStrings();
+  const say = useResolve();
   const stops = itinerary.stopCount;
 
   return (
@@ -31,7 +32,7 @@ export default function TripSummary({ itinerary }: { itinerary: Itinerary }) {
       </p>
 
       <p className="mt-2 text-sm">
-        {stops === 0 ? t.summary.noStops : t.summary.stops(stops)}
+        {stops === 0 ? t.summary.noStops : say(t.summary.stops, { count: stops })}
       </p>
 
       {/* Principle IV: say plainly that these are estimates. */}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
-import { useStrings } from "@/components/LocaleProvider";
+import { useLanguage, useResolve, useStrings } from "@/components/LocaleProvider";
 import { ChevronDown } from "@/components/icons";
 import { approximateDuration, formatDecimal } from "@/lib/format";
 import { DEFAULT_PARAMETERS } from "@/lib/params";
@@ -165,6 +165,7 @@ function Slider({
 }) {
   const id = useId();
   const t = useStrings();
+  const lang = useLanguage();
   const shown = control.toDisplay(value);
   const { label, hint } = t.settings.controls[control.key];
 
@@ -173,7 +174,7 @@ function Slider({
       <label htmlFor={id} className="flex items-baseline justify-between">
         <span className="text-sm font-medium">{label}</span>
         <span className="font-mono text-sm text-muted tabular-nums">
-          {Number.isInteger(shown) ? shown : formatDecimal(shown, 2, t)}{" "}
+          {Number.isInteger(shown) ? shown : formatDecimal(shown, 2, lang)}{" "}
           {control.unit}
         </span>
       </label>
@@ -214,6 +215,7 @@ export default function AssumptionsLine({
   correction: string | null;
 }) {
   const t = useStrings();
+  const say = useResolve();
   const [open, setOpen] = useState(false);
   const [showRest, setShowRest] = useState(false);
 
@@ -254,13 +256,13 @@ export default function AssumptionsLine({
         </span>
         <span className="truncate text-xs text-muted">
           {changed === 0
-            ? t.settings.summaryDefaults(
-                approximateDuration(parameters.safetyMargin, t),
-              )
-            : t.settings.summaryChanged(
-                approximateDuration(parameters.safetyMargin, t),
-                changed,
-              )}
+            ? say(t.settings.summaryDefaults, {
+                margin: approximateDuration(parameters.safetyMargin, t),
+              })
+            : say(t.settings.summaryChanged, {
+                margin: approximateDuration(parameters.safetyMargin, t),
+                count: changed,
+              })}
         </span>
       </button>
 

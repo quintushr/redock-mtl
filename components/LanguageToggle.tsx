@@ -1,7 +1,7 @@
 "use client";
 
-import { useLocale } from "@/components/LocaleProvider";
-import { LOCALES, LOCALE_CODES, LOCALE_NAMES } from "@/lib/strings";
+import { useLocale, useResolve } from "@/components/LocaleProvider";
+import { LANGUAGES } from "@/lib/i18n/languages";
 
 /**
  * FR / EN.
@@ -21,6 +21,7 @@ import { LOCALES, LOCALE_CODES, LOCALE_NAMES } from "@/lib/strings";
  */
 export default function LanguageToggle() {
   const { locale, strings, setLocale } = useLocale();
+  const say = useResolve();
 
   return (
     <div
@@ -28,26 +29,26 @@ export default function LanguageToggle() {
       role="group"
       aria-label={strings.language.label}
     >
-      {LOCALES.map((code) => {
-        const active = code === locale;
+      {LANGUAGES.map(({ id, name, code }) => {
+        const active = id === locale;
         return (
           <button
-            key={code}
+            key={id}
             type="button"
-            lang={code}
+            lang={id}
             aria-current={active ? "true" : undefined}
             // The name says what the control does, not merely what it is
             // labelled: "EN" alone tells a screen-reader user nothing.
-            aria-label={strings.language.switchTo(LOCALE_NAMES[code])}
+            aria-label={say(strings.language.switchTo, { name })}
             className={[
               "min-h-11 min-w-11 rounded-control border px-2 text-xs",
               active
                 ? "border-brand bg-brand-soft font-medium text-brand-deep"
                 : "border-transparent text-muted hover:bg-paper",
             ].join(" ")}
-            onClick={() => setLocale(code)}
+            onClick={() => setLocale(id)}
           >
-            {LOCALE_CODES[code]}
+            {code}
           </button>
         );
       })}

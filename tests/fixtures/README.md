@@ -5,19 +5,6 @@ Frozen provider output. Tests read these and never touch the network.
 Everything below describes the GBFS set unless stated otherwise; the one
 non-GBFS file is `photon-housenumber.json`, documented at the end.
 
-**Captured**: 2026-07-26
-**System**: BIXI Montréal (`Bixi_MTL`), GBFS 2.2
-**Discovery**: <https://gbfs.velobixi.com/gbfs/2-2/gbfs.json>
-**Feeds**: `/en/station_information.json`, `/en/station_status.json`,
-`/en/vehicle_types.json`, `/en/system_information.json`
-**License**: the provider's `system_information` publishes an **empty**
-`license_url` and an **empty** `operator`, so the feed carries no license
-statement of its own. Attribution shown in the app is held in `lib/endpoints.ts`
-and must be revisited if the provider starts publishing these fields.
-
-Do not re-capture on every run. Frozen means frozen: a test that changes when the
-network changes is not a unit test.
-
 ## Files
 
 | File | Contents |

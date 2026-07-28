@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useStrings } from "@/components/LocaleProvider";
+import { useLanguage, useResolve, useStrings } from "@/components/LocaleProvider";
 import { ChevronDown } from "@/components/icons";
 import { approximateDuration, formatMoney } from "@/lib/format";
-import type { Strings } from "@/lib/strings";
+import type { Messages } from "@/components/LocaleProvider";
+import { fill } from "@/lib/i18n/resolve";
 import type { NoStopRide } from "@/lib/types";
 
 /**
@@ -23,12 +24,10 @@ import type { NoStopRide } from "@/lib/types";
  */
 
 /** Signed, and worded rather than signed with a character. */
-function describeDelta(seconds: number, t: Strings): string {
+function describeDelta(seconds: number, t: Messages): string {
   const magnitude = approximateDuration(Math.abs(seconds), t);
   if (Math.abs(seconds) < 60) return t.noStop.sameTime;
-  return seconds < 0
-    ? t.noStop.faster(magnitude)
-    : t.noStop.slower(magnitude);
+  return fill(seconds < 0 ? t.noStop.faster : t.noStop.slower, { magnitude });
 }
 
 export default function NoStopComparison({
@@ -42,6 +41,8 @@ export default function NoStopComparison({
   stopCount: number;
 }) {
   const t = useStrings();
+  const say = useResolve();
+  const lang = useLanguage();
   const [shown, setShown] = useState(false);
 
   // A trip that already needs no stop has nothing to reveal: it is the no-stop
@@ -77,7 +78,9 @@ export default function NoStopComparison({
               <span className="font-mono font-medium">
                 {approximateDuration(noStop.duration, t)}
               </span>{" "}
-              {t.noStop.inOneGo(describeDelta(noStop.deltaAgainstPlan, t))}
+              {say(t.noStop.inOneGo, {
+                delta: describeDelta(noStop.deltaAgainstPlan, t),
+              })}
             </p>
 
             <p className="mt-1 text-sm">
@@ -87,16 +90,18 @@ export default function NoStopComparison({
                 <>
                   {t.noStop.wouldPayBefore}{" "}
                   <span className="font-mono font-medium">
-                    {formatMoney(noStop.cost, t)}
+                    {formatMoney(noStop.cost, lang)}
                   </span>{" "}
-                  {t.noStop.wouldPayAfter(approximateDuration(noStop.overage, t))}
+                  {say(t.noStop.wouldPayAfter, {
+                    overage: approximateDuration(noStop.overage, t),
+                  })}
                 </>
               )}
             </p>
 
             {/* FR-130: the amount states the assumptions it rests on. */}
             <p className="mt-1 text-xs text-muted">
-              {t.noStop.rateNote(formatMoney(overageRate, t))}
+              {say(t.noStop.rateNote, { rate: formatMoney(overageRate, lang) })}
             </p>
           </div>
         ))}

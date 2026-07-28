@@ -1,7 +1,7 @@
 "use client";
 
-import { useStrings } from "@/components/LocaleProvider";
-import type { FeedStatus } from "@/lib/types";
+import { useLanguage, useResolve, useStrings } from "@/components/LocaleProvider";
+import { RETRYABLE_FEED_REASONS, type FeedStatus } from "@/lib/types";
 
 /**
  * What the station feed is doing, in two pieces that belong in two places.
@@ -29,7 +29,7 @@ export function FeedFailure({
   const message = t.feed.unavailable[status.reason];
   // A season is not something retrying can fix, and a button that cannot work
   // is worse than no button.
-  const retryable = t.feed.retryable.includes(status.reason);
+  const retryable = RETRYABLE_FEED_REASONS.includes(status.reason);
 
   return (
     <div role="alert" className="rounded-control border border-edge p-3">
@@ -51,6 +51,8 @@ export function FeedFailure({
 /** How old the figures are. Null while there is nothing to qualify. */
 export function FeedFreshness({ status }: { status: FeedStatus }) {
   const t = useStrings();
+  const say = useResolve();
+  const lang = useLanguage();
 
   if (status.state === "loading") {
     return (
@@ -63,7 +65,7 @@ export function FeedFreshness({ status }: { status: FeedStatus }) {
   if (status.state === "unavailable") return null;
 
   // FR-014: availability is a snapshot at a stated moment, never a promise.
-  const time = status.snapshot.observedAt.toLocaleTimeString(t.units.locale, {
+  const time = status.snapshot.observedAt.toLocaleTimeString(lang.formatting, {
     hour: "2-digit",
     minute: "2-digit",
   });
@@ -73,10 +75,10 @@ export function FeedFreshness({ status }: { status: FeedStatus }) {
       {status.state === "stale" && (
         // A stale plan clearly labelled beats no plan at all.
         <p role="status" className="mb-1 text-xs font-medium">
-          {t.feed.stale(Math.round(status.age / 60))}
+          {say(t.feed.stale, { minutes: Math.round(status.age / 60) })}
         </p>
       )}
-      <p className="text-xs text-muted">{t.feed.freshness(time)}</p>
+      <p className="text-xs text-muted">{say(t.feed.freshness, { time })}</p>
     </div>
   );
 }
