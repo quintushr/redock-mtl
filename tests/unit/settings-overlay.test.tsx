@@ -1,15 +1,16 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import AssumptionsLine from "@/components/AssumptionsLine";
+import SettingsOverlay from "@/components/SettingsOverlay";
 import { DEFAULT_PARAMETERS } from "@/lib/params";
 import type { PlanningParameters } from "@/lib/types";
 
 /**
- * The assumptions: one line at rest, one control when opened.
+ * The assumptions, as the overlay docs/ui-guidelines.md asks for.
  *
  * What is NOT covered here, because jsdom has no layout: that opening this
  * leaves the reading position and the map camera untouched (FR-122, FR-123,
- * FR-124). Those are verified by hand against quickstart.md section 3.
+ * FR-124), and that it covers the trail rather than displacing it. Those are
+ * verified by hand against quickstart.md.
  */
 
 afterEach(cleanup);
@@ -19,100 +20,87 @@ const withParams = (patch: Partial<PlanningParameters>): PlanningParameters => (
   ...patch,
 });
 
-const renderLine = (
+const renderOverlay = (
   parameters: PlanningParameters = DEFAULT_PARAMETERS,
   correction: string | null = null,
+  open = true,
 ) => {
   const onChange = vi.fn();
+  const onClose = vi.fn();
   render(
-    <AssumptionsLine
+    <SettingsOverlay
+      id="settings"
+      open={open}
+      onClose={onClose}
       parameters={parameters}
       onChange={onChange}
       correction={correction}
     />,
   );
-  return { onChange };
+  return { onChange, onClose };
 };
 
-const open = (): void => {
-  fireEvent.click(screen.getByRole("button", { name: /réglages/i }));
-};
-
-const showRest = (): void => {
-  fireEvent.click(
-    screen.getByRole("button", { name: /afficher les autres réglages/i }),
-  );
-};
-
-describe("at rest it is one line (FR-103, FR-125)", () => {
-  it("offers a single control and no slider until opened", () => {
-    renderLine();
-    expect(screen.getAllByRole("button")).toHaveLength(1);
+describe("closed, it is not in the document at all", () => {
+  it("renders nothing, so the trail underneath keeps every pixel", () => {
+    renderOverlay(DEFAULT_PARAMETERS, null, false);
     expect(screen.queryAllByRole("slider")).toHaveLength(0);
-  });
-
-  it("says the assumptions are the defaults when they are", () => {
-    renderLine();
-    expect(screen.getByText(/valeurs par défaut/i)).toBeTruthy();
-  });
-
-  it("says how many were changed when some were", () => {
-    renderLine(withParams({ safetyMargin: 600, cyclingSpeed: 5 }));
-    expect(screen.getByText(/2 valeurs modifiées/i)).toBeTruthy();
-    expect(screen.queryByText(/valeurs par défaut/i)).toBeNull();
-  });
-
-  it("uses the singular for a single change", () => {
-    renderLine(withParams({ safetyMargin: 600 }));
-    expect(screen.getByText(/1 valeur modifiée/i)).toBeTruthy();
+    expect(screen.queryAllByRole("button")).toHaveLength(0);
   });
 });
 
-describe("opened, the safety margin is the only first-level control (FR-120, FR-121)", () => {
-  it("shows exactly one slider, and it is the safety margin", () => {
-    renderLine();
-    open();
+describe("opened, every parameter is on screen at once (FR-120, principle IV)", () => {
+  it("shows one slider per planning parameter, with nothing nested", () => {
+    renderOverlay();
 
-    const sliders = screen.getAllByRole("slider");
-    expect(sliders).toHaveLength(1);
-    expect(screen.getByLabelText(/marge de sécurité/i)).toBe(sliders[0]);
-  });
-
-  it("keeps the other assumptions in a group that starts closed", () => {
-    renderLine();
-    open();
-
-    const disclosure = screen.getByRole("button", {
-      name: /afficher les autres réglages/i,
-    });
-    expect(disclosure.getAttribute("aria-expanded")).toBe("false");
-    expect(screen.queryByLabelText(/vitesse à vélo/i)).toBeNull();
-  });
-
-  it("exposes every remaining parameter once that group is opened", () => {
-    renderLine();
-    open();
-    showRest();
-
-    // One slider per planning parameter, the safety margin included. Nothing
-    // that influences the result may be unreachable (principle IV). This count
-    // is derived from DEFAULT_PARAMETERS, so a parameter added later fails this
-    // test until it is given a control.
+    // Derived from DEFAULT_PARAMETERS, so a parameter added later fails this
+    // test until it is given a control. Nothing that influences the result may
+    // be unreachable, and here nothing is even one click away.
     expect(screen.getAllByRole("slider")).toHaveLength(
       Object.keys(DEFAULT_PARAMETERS).length,
     );
     expect(screen.getByLabelText(/vitesse à vélo/i)).toBeTruthy();
     expect(screen.getByLabelText(/facteur de détour/i)).toBeTruthy();
   });
+
+  it("leads with the safety margin, the one adjusted regularly", () => {
+    renderOverlay();
+    expect(screen.getAllByRole("slider")[0]).toBe(
+      screen.getByLabelText(/marge de sécurité/i),
+    );
+  });
+
+  it("offers no disclosure to open, because there is nothing left behind one", () => {
+    renderOverlay();
+    expect(
+      screen.queryByRole("button", { name: /autres réglages/i }),
+    ).toBeNull();
+    // Close, reset, purge. No fourth control that reveals anything.
+    expect(screen.getAllByRole("button")).toHaveLength(3);
+  });
+});
+
+describe("closing it", () => {
+  it("offers a control that says what it does", () => {
+    const { onClose } = renderOverlay();
+    fireEvent.click(
+      screen.getByRole("button", { name: /fermer les réglages/i }),
+    );
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("closes on Escape, because a cover over the answer must be dismissible", () => {
+    const { onClose } = renderOverlay();
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("reset (FR-127)", () => {
   it("restores every default in one action", () => {
-    const { onChange } = renderLine(
+    const { onChange } = renderOverlay(
       withParams({ safetyMargin: 900, maxWalkDistance: 1500 }),
     );
 
-    open();
     fireEvent.click(screen.getByRole("button", { name: /tout réinitialiser/i }));
 
     expect(onChange).toHaveBeenCalledTimes(1);
@@ -120,8 +108,7 @@ describe("reset (FR-127)", () => {
   });
 
   it("is offered but inert when nothing has been changed", () => {
-    renderLine();
-    open();
+    renderOverlay();
     const reset = screen.getByRole("button", {
       name: /tout réinitialiser/i,
     }) as HTMLButtonElement;
@@ -131,8 +118,7 @@ describe("reset (FR-127)", () => {
 
 describe("changing the safety margin (FR-120)", () => {
   it("reports the new value without touching any other assumption", () => {
-    const { onChange } = renderLine();
-    open();
+    const { onChange } = renderOverlay();
 
     fireEvent.change(screen.getByLabelText(/marge de sécurité/i), {
       target: { value: "8" },
@@ -148,11 +134,10 @@ describe("changing the safety margin (FR-120)", () => {
 
 describe("an unusable value is explained, not swallowed (FR-126)", () => {
   it("surfaces the correction as an alert", () => {
-    renderLine(
+    renderOverlay(
       withParams({ safetyMargin: 4000 }),
       "La marge de sécurité doit être plus courte que la fenêtre gratuite.",
     );
-    open();
     expect(screen.getByRole("alert").textContent).toMatch(
       /plus courte que la fenêtre gratuite/i,
     );

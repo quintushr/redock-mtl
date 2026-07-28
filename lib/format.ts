@@ -78,6 +78,41 @@ export function roundedMinutes(seconds: Seconds): number {
   return minutes < 10 ? Math.round(minutes) : Math.round(minutes / 5) * 5;
 }
 
+/**
+ * How long ago the station snapshot was taken, in words.
+ *
+ * Relative rather than a clock time because docs/ui-guidelines.md asks the
+ * second row of the panel footer for an age, and because the question a rider
+ * has is "is this stale", which "14:32" answers only after they check their own
+ * clock and subtract.
+ *
+ * Floors to the minute, which is the conventional reading of "3 min ago". The
+ * risk of understating age by under a minute is carried by `feed.stale`, which
+ * is a separate and louder statement.
+ *
+ * Deliberately not routed through `approximateDuration`, and this is the whole
+ * reason it is its own function: that one words a duration as "about 7 min",
+ * because a travel time is an estimate and principle IV requires it to say so.
+ * An age is not an estimate. The snapshot arrived at a known instant and it is
+ * exactly that old. Hedging a measurement makes the hedge on the estimates mean
+ * less, which is the opposite of what principle IV is for.
+ *
+ * Pure, and outside the component that shows it, because the component has to
+ * re-run this on a timer and a function called every thirty seconds is one that
+ * had better be testable without a clock.
+ */
+export function relativeAge(ageSeconds: Seconds, t: Messages): string {
+  if (ageSeconds < 60) return t.feed.ageJustNow;
+
+  const total = Math.floor(ageSeconds / 60);
+  const hours = Math.floor(total / 60);
+  const minutes = total % 60;
+
+  if (hours === 0) return fill(t.feed.ageMinutes, { minutes });
+  if (minutes === 0) return fill(t.feed.ageHours, { hours });
+  return fill(t.feed.ageHoursMinutes, { hours, minutes });
+}
+
 export function formatDistance(
   metres: Metres,
   t: Messages,

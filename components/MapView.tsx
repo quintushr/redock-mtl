@@ -193,13 +193,15 @@ export default function MapView({
       center: [MONTREAL.lon, MONTREAL.lat],
       zoom: 12,
       /**
-       * The credits are rendered by the panel, not here.
+       * The credits are ours to place, not MapLibre's.
        *
-       * MapLibre draws them in a corner of the map, and the panel covers the
-       * bottom of the frame below 1024px, so the required OpenStreetMap and
-       * OpenMapTiles credits were hidden for most riders. Displaying them is a
-       * licence obligation, so they moved to the panel footer, which no rest
-       * position and no scroll can hide. See components/MapAttribution.tsx.
+       * They are on the map, where the tile licences want them and where
+       * docs/ui-guidelines.md puts them. What is turned off here is only
+       * MapLibre's own control: it draws in a fixed corner that the sheet
+       * covers below 768px, which is how the required OpenStreetMap and
+       * OpenMapTiles credits came to be hidden from most riders in the first
+       * place. components/MapAttribution.tsx places them against whichever
+       * edge the panel is not on. Leaving both on would credit everyone twice.
        */
       attributionControl: false,
     });

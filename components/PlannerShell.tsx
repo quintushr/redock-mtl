@@ -1,15 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import EmptyState from "@/components/EmptyState";
-import { FeedFailure, FeedFreshness } from "@/components/FeedNotice";
+import { FeedFailure, FeedStale } from "@/components/FeedNotice";
 import ItineraryTrail from "@/components/ItineraryTrail";
 import MapAttribution from "@/components/MapAttribution";
 import { SwapVertical } from "@/components/icons";
-import AssumptionsLine from "@/components/AssumptionsLine";
 import NoStopComparison from "@/components/NoStopComparison";
+import PanelFooter from "@/components/PanelFooter";
 import PlannerPanel from "@/components/PlannerPanel";
+import SettingsOverlay from "@/components/SettingsOverlay";
 import SearchField from "@/components/SearchField";
 import TripSummary from "@/components/TripSummary";
 import type { FocusRequest, PickTarget } from "@/components/MapView";
@@ -92,6 +93,15 @@ export default function PlannerShell() {
   const [focus, setFocus] = useState<FocusRequest | null>(null);
   const focusCount = useRef(0);
   const [geolocationDenied, setGeolocationDenied] = useState(false);
+  /**
+   * Whether the settings cover the panel.
+   *
+   * Held here rather than inside the overlay because the footer row that opens
+   * it is a sibling, not a parent: one owner, so the row's `aria-expanded` and
+   * the overlay's presence cannot disagree.
+   */
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const settingsPanelId = useId();
 
   // Debounce recomputation so dragging a slider does not queue redundant work
   // (FR-022a). The plan itself is fast; the point is to keep the main thread
@@ -358,15 +368,37 @@ export default function PlannerShell() {
           onMapClick={handleMapClick}
           onEndpointMove={handleEndpointMove}
         />
+
+        {/*
+          On the map, and inside its container so it is positioned against the
+          map's own edges. The tile licences require it to be visible here; the
+          panel footer is not where it goes.
+        */}
+        <MapAttribution
+          stations={snapshot?.attribution ?? null}
+          routing={traced?.geometry.some((g) => g.status === "traced") ?? false}
+        />
       </div>
 
       <PlannerPanel
+        overlay={
+          <SettingsOverlay
+            id={settingsPanelId}
+            open={settingsOpen}
+            onClose={() => setSettingsOpen(false)}
+            parameters={parameters}
+            onChange={setParameters}
+            correction={correction}
+          />
+        }
         footer={
-          <MapAttribution
-            stations={snapshot?.attribution ?? null}
-            routing={
-              traced?.geometry.some((g) => g.status === "traced") ?? false
-            }
+          <PanelFooter
+            parameters={parameters}
+            settingsOpen={settingsOpen}
+            onToggleSettings={() => setSettingsOpen((open) => !open)}
+            settingsPanelId={settingsPanelId}
+            status={feed}
+            onRefresh={loadFeed}
           />
         }
       >
@@ -468,6 +500,8 @@ export default function PlannerShell() {
               <EmptyState freeWindow={parameters.freeWindow} />
             ) : plan.ok ? (
               <>
+                {/* A caveat on the answer, above the answer it qualifies. */}
+                <FeedStale status={feed} />
                 <TripSummary itinerary={displayed ?? plan.itinerary} />
                 <div className="mt-4">
                   <ItineraryTrail
@@ -518,25 +552,13 @@ export default function PlannerShell() {
             )}
           </div>
 
-          {/* The settings, last, and one line until opened (FR-101, FR-103). */}
-          <div className="py-4">
-            <AssumptionsLine
-              parameters={parameters}
-              onChange={setParameters}
-              correction={correction}
-            />
-          </div>
-
           {/*
-          How fresh the figures are, after the result rather than before it.
-          It qualifies an answer the reader has already read; between the
-          fields and the itinerary it pushed that answer down the panel on
-          every single consultation, and the guidelines' imposed order has no
-          fifth block above the result.
-        */}
-          <div className="pt-4">
-            <FeedFreshness status={feed} />
-          </div>
+            The settings and the freshness both used to end the scroll here.
+            They are the two rows of the pinned footer now, which is what makes
+            them reachable on a three-stop itinerary without scrolling to the
+            bottom of it. Nothing replaces them: the scroll ends with the
+            result, which is what it is for (FR-101).
+          */}
         </div>
       </PlannerPanel>
     </main>

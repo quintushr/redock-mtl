@@ -206,14 +206,14 @@ export const messages = {
 
   settings: {
     label: "Réglages",
+    /** La surcouche se referme, l'itinéraire est toujours dessous. */
+    close: "Fermer les réglages",
     summaryDefaults: "{margin} de marge, valeurs par défaut",
     // {count} is how many parameters differ from their default.
     summaryChanged: {
       one: "{margin} de marge, {count} valeur modifiée",
       other: "{margin} de marge, {count} valeurs modifiées",
     },
-    showRest: "Afficher les autres réglages",
-    hideRest: "Masquer les autres réglages",
     reset: "Tout réinitialiser",
     /**
      * Vider les tracés gardés en mémoire (FR-329a).
@@ -280,8 +280,29 @@ export const messages = {
     loading: "Chargement des stations",
     stale:
       "Ces données datent de {minutes} min et peuvent ne plus correspondre aux stations.",
-    freshness:
-      "Stations relevées à {time}. La disponibilité peut changer avant ton arrivée.",
+    /**
+     * L'ancienneté du relevé, en relatif, dans la rangée 2 du pied de panneau.
+     *
+     * En relatif parce que « relevées à 14:32 » oblige à regarder l'heure et à
+     * soustraire, et que la question posée est « est-ce que c'est vieux »
+     * (docs/ui-guidelines.md, « Pied de panneau »). L'heure exacte reste
+     * disponible au survol, ce que FR-014 demande.
+     */
+    freshness: "Stations relevées {age}",
+    /*
+     * Sans « environ », contrairement aux durées de trajet.
+     *
+     * Un relevé est arrivé à un instant connu, il a exactement cet âge. Une
+     * estimation se signale comme telle ; une mesure qui se signale comme une
+     * estimation affaiblit la précaution là où elle sert vraiment.
+     */
+    ageJustNow: "à l'instant",
+    ageMinutes: "il y a {minutes} min",
+    ageHours: "il y a {hours} h",
+    ageHoursMinutes: "il y a {hours} h {minutes}",
+    /** Ce que le survol montre quand le relatif ne suffit pas (FR-014). */
+    observedAt: "Relevé à {time}. La disponibilité peut changer avant ton arrivée.",
+    refresh: "Actualiser les stations",
     unavailable: {
       network: {
         title: "Les données de stations sont injoignables",

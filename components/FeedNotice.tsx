@@ -1,16 +1,15 @@
 "use client";
 
-import { useLanguage, useResolve, useStrings } from "@/components/LocaleProvider";
+import { useResolve, useStrings } from "@/components/LocaleProvider";
 import { RETRYABLE_FEED_REASONS, type FeedStatus } from "@/lib/types";
 
 /**
- * What the station feed is doing, in two pieces that belong in two places.
+ * What the station feed is doing, in the two pieces that qualify the result.
  *
- * A feed that failed is the reason there is no plan, so it belongs in the
- * result region, where the reader is already looking for the answer. How fresh
- * a working snapshot is belongs at the bottom: it qualifies a result the reader
- * has already read, and it used to sit between the fields and the itinerary,
- * pushing the answer down the panel on every consultation.
+ * A feed that failed is the reason there is no plan, and a snapshot old enough
+ * to be wrong is a caveat on the plan there is. Both belong in the result
+ * region, where the reader is already looking. The ordinary age — the figure a
+ * rider glances at rather than reacts to — is the panel footer's second row.
  *
  * Every failure gets a specific message. An empty screen or a raw error is
  * forbidden (FR-030).
@@ -48,37 +47,24 @@ export function FeedFailure({
   );
 }
 
-/** How old the figures are. Null while there is nothing to qualify. */
-export function FeedFreshness({ status }: { status: FeedStatus }) {
-  const t = useStrings();
+/**
+ * How stale a working snapshot is, when it is stale enough to say so.
+ *
+ * The ordinary age lives in the panel footer's second row, where
+ * docs/ui-guidelines.md puts it. This is the louder statement, and it stays in
+ * the result region: a snapshot old enough to disagree with the stations
+ * qualifies the answer rather than the interface, and a rider must not have to
+ * look at a footer to learn that the plan they are reading may not hold.
+ */
+export function FeedStale({ status }: { status: FeedStatus }) {
   const say = useResolve();
-  const lang = useLanguage();
+  const t = useStrings();
+  if (status.state !== "stale") return null;
 
-  if (status.state === "loading") {
-    return (
-      <p className="text-xs text-muted" role="status">
-        {t.feed.loading}
-      </p>
-    );
-  }
-
-  if (status.state === "unavailable") return null;
-
-  // FR-014: availability is a snapshot at a stated moment, never a promise.
-  const time = status.snapshot.observedAt.toLocaleTimeString(lang.formatting, {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-
+  // A stale plan clearly labelled beats no plan at all.
   return (
-    <div>
-      {status.state === "stale" && (
-        // A stale plan clearly labelled beats no plan at all.
-        <p role="status" className="mb-1 text-xs font-medium">
-          {say(t.feed.stale, { minutes: Math.round(status.age / 60) })}
-        </p>
-      )}
-      <p className="text-xs text-muted">{say(t.feed.freshness, { time })}</p>
-    </div>
+    <p role="status" className="mb-3 text-xs font-medium">
+      {say(t.feed.stale, { minutes: Math.round(status.age / 60) })}
+    </p>
   );
 }

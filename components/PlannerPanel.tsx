@@ -38,15 +38,25 @@ const EXPANDED = "max-h-[65dvh]";
 export default function PlannerPanel({
   children,
   footer,
+  overlay,
 }: {
   children: React.ReactNode;
   /**
-   * Pinned below the scroll container, so it is visible at either rest
-   * position and whatever the reader has scrolled to. This is where the map
-   * credits live, and displaying those is a licence obligation rather than a
-   * courtesy, which is why they are not simply the last thing in the scroll.
+   * Pinned below the scroll container, so it is reachable at either rest
+   * position and whatever the reader has scrolled to. Two rows and no more:
+   * docs/ui-guidelines.md fixes what may sit here, because every line added to
+   * a footer pushes the settings and the refresh a little further out of reach.
    */
   footer?: React.ReactNode;
+  /**
+   * Drawn over the scroll area, never in it.
+   *
+   * The settings live here. An expanding region inside the scroll would push
+   * the itinerary down under the reader's finger and drop them somewhere they
+   * did not choose when it closed; an overlay covers the trail and gives it
+   * back untouched, still mounted and still at its own scroll offset (FR-122).
+   */
+  overlay?: React.ReactNode;
 }) {
   const t = useStrings();
   const [expanded, setExpanded] = useState(false);
@@ -112,17 +122,18 @@ export default function PlannerPanel({
       <PanelHeader />
 
       {/*
-        The scroll container is a stable node. Opening the assumptions expands a
-        region inside it; it never swaps this element out, because a swap loses
-        the reading position (FR-122).
+        The only thing that scrolls, and a stable node. The settings overlay is
+        its sibling rather than its content, so opening them never swaps this
+        element out and never moves what is inside it (FR-122).
       */}
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pt-2 pb-5 md:pt-4">
-        {children}
+      <div className="relative min-h-0 flex-1">
+        <div className="h-full overflow-y-auto overscroll-contain px-4 pt-2 pb-5 md:pt-4">
+          {children}
+        </div>
+        {overlay}
       </div>
 
-      {footer !== undefined && (
-        <div className="shrink-0 border-t border-edge px-4 py-2">{footer}</div>
-      )}
+      {footer}
     </section>
   );
 }

@@ -52,6 +52,31 @@ export function Crosshair({ className }: { className?: string }) {
   );
 }
 
+/**
+ * Opens the settings. Three tracks with a handle each, which is what the
+ * controls behind it actually are.
+ */
+export function Sliders({ className }: { className?: string }) {
+  return (
+    <svg {...COMMON} className={className}>
+      <path d="M3 5.5h14M3 10h14M3 14.5h14" />
+      <circle cx="7" cy="5.5" r="1.75" fill="currentColor" stroke="none" />
+      <circle cx="13" cy="10" r="1.75" fill="currentColor" stroke="none" />
+      <circle cx="8.5" cy="14.5" r="1.75" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+/** Asks the station feed again. */
+export function Refresh({ className }: { className?: string }) {
+  return (
+    <svg {...COMMON} className={className}>
+      <path d="M16.5 10a6.5 6.5 0 1 1-1.9-4.6" />
+      <path d="M16.5 3v3.5H13" />
+    </svg>
+  );
+}
+
 /** Two arrows trading places: the start and the destination swap. */
 export function SwapVertical({ className }: { className?: string }) {
   return (

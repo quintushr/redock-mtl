@@ -42,10 +42,15 @@ Utiliser `dvh` et jamais `vh` : la barre d'URL mobile fausse `vh`.
 
 ## Ordre imposé du panneau
 
+Ce que contient la zone défilante, dans cet ordre :
+
 1. Saisie du départ et de la destination
 2. Résumé : durée totale, nombre d'arrêts, coût
 3. Fil d'itinéraire complet
-4. Ligne de réglages repliée
+
+Le défilement s'arrête là. Les réglages et la fraîcheur des données sont les deux
+rangées du pied collant, décrit plus bas, et ne font partie ni de cet ordre ni de
+ce défilement.
 
 **Aucun réglage n'apparaît au-dessus du résultat.** Les paramètres sont une
 entrée modifiée rarement ; l'itinéraire est la sortie consultée à chaque usage.
@@ -109,17 +114,29 @@ valeur du produit.
 
 ## Réglages
 
-Un seul réglage est visible par défaut : la marge de sécurité. C'est le seul que
-l'utilisateur a une raison légitime d'ajuster régulièrement.
+Les réglages s'ouvrent depuis la rangée 1 du pied de panneau, en surcouche du
+panneau. Ils couvrent le fil d'itinéraire, ne le poussent pas et ne l'effacent
+pas : il reste monté dessous, à sa position de lecture, et revient intact.
 
-Vitesse, distance de marche maximale, durée d'ancrage et limite de gratuité vont
-dans une zone repliée, fermée par défaut, ouverte explicitement.
+**Tous les paramètres sont visibles d'un coup.** Aucun n'est derrière un repli.
+La marge de sécurité vient en tête, parce que c'est celle qu'on ajuste
+réellement, mais rien ne coûte un clic de plus que les autres.
 
-Au repos, l'ensemble des réglages occupe une seule ligne de résumé cliquable,
-placée après le fil d'itinéraire.
+Une seule action remet toutes les valeurs par défaut.
 
 Ouvrir les réglages ne fait perdre ni la position de lecture, ni le centrage, ni
 le zoom de la carte.
+
+*Amendé le 2026-07-28.* Ce document demandait auparavant un seul réglage visible,
+les autres dans une zone repliée fermée par défaut, et l'ensemble tenant sur une
+ligne de résumé placée après le fil d'itinéraire. Cette règle décrivait
+correctement une ligne posée dans le défilement, où onze curseurs auraient
+enterré la réponse : le repli était ce qui gardait la ligne à une ligne. Depuis
+que les réglages sont une surcouche pleine hauteur avec son propre défilement, il
+n'y a plus d'itinéraire à enterrer, et le repli n'ajoutait qu'un clic entre le
+lecteur et la valeur qu'il vient chercher. La contrainte qui demeure est celle du
+principe IV, et elle est mieux servie qu'avant : tout paramètre qui influence un
+résultat est visible et ajustable.
 
 ---
 
@@ -229,6 +246,45 @@ Aucune épingle. Aucun code à trois couleurs. Aucune grappe colorée.
 
 ---
 
+## Pied de panneau
+
+Zone collante en bas du panneau, séparée du fil d'itinéraire par un filet et
+un fond légèrement distinct. Elle ne défile jamais avec le contenu: sur un
+itinéraire long, les réglages et l'actualisation restent atteignables sans
+dérouler.
+
+Exactement deux rangées, dans cet ordre, et rien d'autre ne peut s'y ajouter.
+
+Rangée 1 — Réglages, hauteur 46px.
+Icône, libellé "Réglages", résumé des valeurs actives aligné à droite, chevron.
+La rangée entière est cliquable, pas seulement le libellé. C'est un bouton,
+jamais une liste de sélection. Elle ouvre et referme la surcouche décrite plus
+haut, et reste visible pendant que celle-ci est ouverte : la rangée qui a ouvert
+les réglages est le chemin du retour.
+
+Rangée 2 — Fraîcheur des données, hauteur 40px.
+Ancienneté exprimée en relatif et mise à jour d'elle-même, bouton
+d'actualisation aligné à droite. Zone tactile de 44px minimum malgré la
+hauteur de rangée.
+
+L'attribution cartographique n'appartient pas au pied de panneau. Elle reste
+sur la carte, où l'obligation légale l'exige.
+
+Elle se place contre le bord que le panneau n'occupe pas, et cela dépend de
+l'ancrage : en haut à gauche tant que le panneau est une feuille en bas, en bas à
+droite dès qu'il devient une carte à gauche. Elle est intégralement lisible, sur
+un fond opaque, et passe à la ligne plutôt que de se tronquer. Une attribution
+avec des points de suspension n'est pas une attribution.
+
+Le contrôle d'attribution natif de la bibliothèque cartographique reste
+désactivé : il dessine dans un coin fixe que la feuille recouvre, ce qui est
+précisément comment les crédits obligatoires ont fini par disparaître une
+première fois.
+
+Sur mobile, ajouter env(safe-area-inset-bottom) au rembourrage inférieur.
+
+---
+
 ## Écriture
 
 Les mots sont du matériau de conception, pas de la décoration.
@@ -269,3 +325,5 @@ Non négociable, jamais annoncé dans l'interface.
 - Des ombres portées, des dégradés, une troisième graisse typographique
 - Une bibliothèque de composants tierce
 - Un affichage du temps consommé plutôt que du temps restant
+
+

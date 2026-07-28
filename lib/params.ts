@@ -131,6 +131,23 @@ export function segmentBudget(params: PlanningParameters): Seconds {
   return params.freeWindow - params.safetyMargin;
 }
 
+/**
+ * How many parameters differ from their documented default.
+ *
+ * Drives the summary the settings row carries, which is the whole reason that
+ * row can be one line: it says whether the plan above rests on the defaults or
+ * on something the reader changed, without listing anything.
+ *
+ * Here rather than in a component because two places now read it — the footer
+ * row and the overlay's reset control — and a count computed twice is a count
+ * that eventually disagrees with itself.
+ */
+export function changedCount(params: PlanningParameters): number {
+  return (Object.keys(DEFAULT_PARAMETERS) as (keyof PlanningParameters)[])
+    .filter((key) => params[key] !== DEFAULT_PARAMETERS[key])
+    .length;
+}
+
 export type ParameterValidation =
   | { ok: true }
   | { ok: false; reason: string; corrected: PlanningParameters };

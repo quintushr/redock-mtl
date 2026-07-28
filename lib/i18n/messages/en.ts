@@ -150,13 +150,12 @@ export const messages: Messages = {
 
   settings: {
     label: "Settings",
+    close: "Close settings",
     summaryDefaults: "{margin} of margin, default values",
     summaryChanged: {
       one: "{margin} of margin, {count} value changed",
       other: "{margin} of margin, {count} values changed",
     },
-    showRest: "Show the other settings",
-    hideRest: "Hide the other settings",
     reset: "Reset everything",
     purgePaths: "Clear cached routes",
     purgePathsCount: {
@@ -216,8 +215,13 @@ export const messages: Messages = {
     loading: "Loading stations",
     stale:
       "This data is {minutes} min old and may no longer match the stations.",
-    freshness:
-      "Stations as of {time}. Availability can change before you arrive.",
+    freshness: "Stations read {age}",
+    ageJustNow: "just now",
+    ageMinutes: "{minutes} min ago",
+    ageHours: "{hours} h ago",
+    ageHoursMinutes: "{hours} h {minutes} ago",
+    observedAt: "Read at {time}. Availability can change before you arrive.",
+    refresh: "Refresh stations",
     unavailable: {
       network: {
         title: "The station data is unreachable",

@@ -177,11 +177,11 @@ describe("5. no arrival time anywhere", () => {
   /**
    * The prohibition is on arrival times, not on clocks.
    *
-   * FeedNotice shows the moment the station snapshot was taken, which FR-014
-   * positively requires: availability is a snapshot and the rider has to know
-   * how old it is. What principle IV forbids is telling someone they will get
-   * there at 14:32. So this looks for a time derived from a duration, which is
-   * the only way an arrival time can be constructed here.
+   * The panel footer states the moment the station snapshot was taken, which
+   * FR-014 positively requires: availability is a snapshot and the rider has to
+   * know how old it is. What principle IV forbids is telling someone they will
+   * get there at 14:32. So this looks for a time derived from a duration, which
+   * is the only way an arrival time can be constructed here.
    */
   const arrivalShaped = [
     /Date\.now\(\)\s*\+/,
@@ -198,11 +198,30 @@ describe("5. no arrival time anywhere", () => {
     });
   }
 
-  it("FeedNotice's clock is the snapshot's own timestamp, not a projection", () => {
-    // The one place a clock time is rendered. Guarded rather than exempted, so
-    // an arrival time cannot be smuggled in beside it.
-    const source = read("components/FeedNotice.tsx");
+  it("the footer's clock is the snapshot's own timestamp, not a projection", () => {
+    // The one place a clock time is rendered, and it moved here when
+    // docs/ui-guidelines.md put the freshness in the footer's second row.
+    // Guarded rather than exempted, so an arrival time cannot be smuggled in
+    // beside it.
+    const source = read("components/PanelFooter.tsx");
     expect(source).toMatch(/observedAt\.toLocaleTimeString/);
+    // Visibly relative, per the guidelines; the clock is the detail underneath.
+    expect(source).toMatch(/relativeAge/);
+  });
+
+  it("the age is measured against now, so it grows while the tab is open", () => {
+    // The feed's own `status.age` was measured when the snapshot arrived and
+    // does not move. A footer row that says "3 min ago" for a quarter of an
+    // hour is a clock time that lies, which is worse than the clock time it
+    // replaced. So: a clock read on a timer, and never that frozen field.
+    const source = read("components/PanelFooter.tsx");
+    expect(source).toMatch(/Date\.now\(\)/);
+    expect(source).toMatch(/setInterval/);
+    // The load-bearing half. The other two can be satisfied by a clock that is
+    // read once; this one cannot be satisfied at all by the frozen field, which
+    // is the mistake worth guarding. tests/unit/panel-footer.test.tsx asserts
+    // the behaviour; this asserts the shortcut was not taken.
+    expect(source).not.toMatch(/status\.age/);
   });
 });
 

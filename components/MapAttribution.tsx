@@ -7,13 +7,25 @@ import type { FeedAttribution } from "@/lib/types";
 /**
  * The credits: the map's, and the operator whose station feed this reads.
  *
- * Displaying both is an obligation rather than a courtesy, the first by the
- * tile licences and the second by constitution principle V. This is therefore
- * the one piece of the interface that may never be scrolled away, collapsed or
- * covered, which is why it is rendered in the panel's pinned footer and not by
- * MapLibre's own control, which the panel covered below 1024px.
+ * Displaying both is an obligation rather than a courtesy, the first by the tile
+ * licences and the second by constitution principle V. It may never be scrolled
+ * away, collapsed, truncated or covered. If something has to give for want of
+ * room, it is not this.
  *
- * If something has to give for want of room, it is not this.
+ * On the map, which docs/ui-guidelines.md is explicit about: it does not belong
+ * to the panel footer, and the footer has exactly two rows that are not these.
+ * It spent a while in that footer because MapLibre's own control sat behind the
+ * sheet below 1024px. The fix for a covered credit is to put it where nothing
+ * covers it, not to move it into the one part of the panel that never scrolls.
+ *
+ * So it is placed against whichever edge the panel is not on, and that differs
+ * by breakpoint because the panel's anchoring does:
+ *
+ *   < 768px   the panel is a bottom sheet, up to 65dvh   → top of the map
+ *   >= 768px  the panel is a 380px card on the left      → bottom right
+ *
+ * It wraps rather than truncating. A credit with an ellipsis in it is not a
+ * credit.
  */
 export default function MapAttribution({
   stations,
@@ -33,7 +45,19 @@ export default function MapAttribution({
   const t = useStrings();
 
   return (
-    <p className="text-xs leading-relaxed text-muted">
+    <p
+      className={[
+        "absolute z-20 max-w-[calc(100%-1rem)] rounded-control border border-edge",
+        // Opaque rather than tinted: this sits on satellite tiles and street
+        // tiles and has to stay legible on both.
+        "bg-panel/95 px-2 py-1 text-xs leading-relaxed text-muted",
+        // Below 768px: the top edge, clear of the sheet at either rest position
+        // and of a notch.
+        "top-[calc(env(safe-area-inset-top)+0.5rem)] left-2",
+        // From 768px: the bottom right, clear of the panel's 380px card.
+        "md:top-auto md:right-2 md:bottom-2 md:left-auto md:max-w-[min(28rem,calc(100%-396px-1.5rem))]",
+      ].join(" ")}
+    >
       {t.attribution.map}{" "}
       {MAP_ATTRIBUTION.map((credit, index) => (
         <span key={credit.url}>
