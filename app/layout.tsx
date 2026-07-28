@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { DocumentLanguage } from "@/components/LocaleProvider";
-import { t } from "@/lib/strings";
+import { STATIC_METADATA } from "@/lib/i18n/static-metadata";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -23,8 +23,8 @@ const geistMono = Geist_Mono({
  * stays in the product's default language.
  */
 export const metadata: Metadata = {
-  title: t.app.title,
-  description: t.app.description,
+  title: STATIC_METADATA.title,
+  description: STATIC_METADATA.description,
 };
 
 export default function RootLayout({

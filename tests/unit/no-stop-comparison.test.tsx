@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import NoStopComparison from "@/components/NoStopComparison";
 import { formatMoney } from "@/lib/format";
-import { STRINGS } from "@/lib/strings";
+import { describe as descriptorFor } from "@/lib/i18n/languages";
 import { DEFAULT_PARAMETERS } from "@/lib/params";
 import type { NoStopRide } from "@/lib/types";
 
@@ -26,7 +26,7 @@ const rate = DEFAULT_PARAMETERS.overageRate;
  * against the raw output would fail on that invisible difference alone.
  */
 const money = (amount: number): string =>
-  formatMoney(amount, STRINGS.fr).replace(/\s/g, " ");
+  formatMoney(amount, descriptorFor("fr")).replace(/\s/g, " ");
 
 const billed: NoStopRide = {
   fromStationId: "a",
@@ -82,7 +82,9 @@ describe("what it reports (FR-129, FR-129a, FR-130)", () => {
     );
     reveal();
 
-    expect(screen.getByText(/environ 65 min/i)).toBeTruthy();
+    // 65 minutes reads as "1 h 5 min": past an hour the duration is split,
+    // and it still says "environ", because it is still an estimate.
+    expect(screen.getByText(/environ 1 h 5 min/i)).toBeTruthy();
     expect(screen.getByText(money(20 * rate))).toBeTruthy();
     expect(screen.getByText(/de moins/i)).toBeTruthy();
   });

@@ -19,12 +19,7 @@ import { DEFAULT_PARAMETERS, validateParameters } from "@/lib/params";
 import { planTrip } from "@/lib/planner";
 import { noStopRide } from "@/lib/pricing";
 import { useStrings } from "@/components/LocaleProvider";
-import {
-  DEFAULT_LOCALE,
-  LOCALES,
-  STRINGS,
-  describeCorrection,
-} from "@/lib/strings";
+import { describeCorrection } from "@/lib/corrections";
 import type {
   FeedStatus,
   LatLon,
@@ -55,19 +50,21 @@ const MONTREAL: LatLon = { lat: 45.5088, lon: -73.5878 };
  * A field filled from an address holds what the reader chose, and translating
  * that would be rewriting their input. A field filled from the browser's
  * geolocation holds a label we wrote, so it has to follow the interface's
- * language. It is stored in the default language and translated on the way to
- * the field, which keeps the geolocation effect free of any dependency on the
- * current one: making that effect re-run on a language change would ask the
+ * language. It is stored as a sentinel and worded on the way to the field,
+ * which keeps the geolocation effect free of any dependency on the current
+ * language: making that effect re-run on a language change would ask the
  * browser for the position again.
+ *
+ * The sentinel is deliberately not a word. It used to be the French label,
+ * compared against every language's version of it, which meant this file had to
+ * read wording by language name — the thing FR-202 exists to make impossible.
+ * It also meant a rider who typed "Ma position" into the field had their text
+ * silently replaced. A value no keyboard produces has neither problem.
  */
-const MY_LOCATION = STRINGS[DEFAULT_LOCALE].fields.myLocation;
-
-const MY_LOCATION_IN_ANY_LANGUAGE: readonly string[] = LOCALES.map(
-  (code) => STRINGS[code].fields.myLocation,
-);
+const MY_LOCATION = "\u0000geolocated";
 
 function displayLabel(text: string, myLocation: string): string {
-  return MY_LOCATION_IN_ANY_LANGUAGE.includes(text) ? myLocation : text;
+  return text === MY_LOCATION ? myLocation : text;
 }
 
 export default function PlannerShell() {
@@ -419,9 +416,11 @@ export default function PlannerShell() {
           */}
             {(picking !== null || geolocationDenied) && (
               <p className="text-xs text-muted">
-                {picking !== null
-                  ? t.map.hintPicking(picking)
-                  : t.map.hintGeolocationDenied}
+                {picking === "origin"
+                  ? t.map.hintPickingOrigin
+                  : picking === "destination"
+                    ? t.map.hintPickingDestination
+                    : t.map.hintGeolocationDenied}
               </p>
             )}
           </div>

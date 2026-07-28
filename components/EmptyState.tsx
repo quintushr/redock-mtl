@@ -1,6 +1,6 @@
 "use client";
 
-import { useStrings } from "@/components/LocaleProvider";
+import { useResolve, useStrings } from "@/components/LocaleProvider";
 import { approximateDuration } from "@/lib/format";
 import type { Seconds } from "@/lib/types";
 
@@ -71,12 +71,13 @@ function Row({
 
 export default function EmptyState({ freeWindow }: { freeWindow: Seconds }) {
   const t = useStrings();
+  const say = useResolve();
 
   return (
     <section aria-label={t.empty.label}>
       <p className="text-base font-medium">{t.empty.title}</p>
       <p className="mt-1 text-sm text-muted">
-        {t.empty.lead(approximateDuration(freeWindow, t))}
+        {say(t.empty.lead, { window: approximateDuration(freeWindow, t) })}
       </p>
 
       <ol className="mt-4">

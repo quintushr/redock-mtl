@@ -23,7 +23,7 @@ import {
   type MapTokens,
 } from "@/components/map-symbols";
 import { MAP_STYLE_URL } from "@/lib/endpoints";
-import { t } from "@/lib/strings";
+import { useStrings } from "@/components/LocaleProvider";
 import type { Itinerary, LatLon, Station } from "@/lib/types";
 
 /**
@@ -61,11 +61,6 @@ export interface FocusRequest {
   points: LatLon[];
   id: number;
 }
-
-const ENDPOINT_LABEL: Record<PickTarget, string> = {
-  origin: t.map.originPin,
-  destination: t.map.destinationPin,
-};
 
 /**
  * MapLibre must be told where its worker is.
@@ -142,6 +137,17 @@ export default function MapView({
   onMapClick: (point: LatLon) => void;
   onEndpointMove: (target: PickTarget, point: LatLon) => void;
 }) {
+  const strings = useStrings();
+
+  /**
+   * Held in a ref as well as read directly: the marker-creating effect runs
+   * outside React's render and must not re-run on a language change, or it
+   * would rebuild the pins and move the camera.
+   */
+  const endpointLabels = useRef<Record<PickTarget, string>>({
+    origin: strings.map.originPin,
+    destination: strings.map.destinationPin,
+  });
   const container = useRef<HTMLDivElement | null>(null);
   const map = useRef<MapLibreMap | null>(null);
   const ready = useRef(false);
@@ -305,8 +311,8 @@ export default function MapView({
         draggable: true,
       });
       const element = marker.getElement();
-      element.setAttribute("aria-label", ENDPOINT_LABEL[target]);
-      element.title = ENDPOINT_LABEL[target];
+      element.setAttribute("aria-label", endpointLabels.current[target]);
+      element.title = endpointLabels.current[target];
       // A pointer landing on a pin must not also count as a click on the map,
       // or grabbing a pin would drop a second point underneath it.
       element.addEventListener("click", (event) => event.stopPropagation());
@@ -322,6 +328,32 @@ export default function MapView({
     sync("origin", origin);
     sync("destination", destination);
   }, [origin, destination]);
+
+  /**
+   * Keeps the pins' names in the reader's language.
+   *
+   * These labels used to come from a module-level constant built from the
+   * always-French bundle, so an English rider's screen reader announced
+   * "Départ, fais glisser pour déplacer" over a map they had asked for in
+   * English. Nothing on screen showed it, which is how it survived.
+   *
+   * Updated in place rather than by rebuilding the markers: rebuilding would
+   * move the camera, which is the bug the note at the top of this file warns
+   * against.
+   */
+  useEffect(() => {
+    endpointLabels.current = {
+      origin: strings.map.originPin,
+      destination: strings.map.destinationPin,
+    };
+
+    for (const target of ["origin", "destination"] as PickTarget[]) {
+      const element = markers.current[target]?.getElement();
+      if (element === undefined || element === null) continue;
+      element.setAttribute("aria-label", endpointLabels.current[target]);
+      element.title = endpointLabels.current[target];
+    }
+  }, [strings]);
 
   // Arming a point turns the whole map into a target, so the cursor says so.
   // On a touch screen there is no cursor to say it, which is why the panel
