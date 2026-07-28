@@ -8,8 +8,10 @@ import type { Messages } from "@/components/LocaleProvider";
 import type {
   Itinerary,
   ItineraryStep,
+  PathStatus,
   PlanningParameters,
   Station,
+  StepGeometry,
 } from "@/lib/types";
 
 /**
@@ -36,8 +38,35 @@ type Entry =
   | { kind: "start" }
   | { kind: "destination" }
   | { kind: "anchor"; stationId: string; cooldown: number }
-  | { kind: "walk"; step: Extract<ItineraryStep, { kind: "walk" }> }
-  | { kind: "ride"; step: Extract<ItineraryStep, { kind: "bike" }> };
+  | {
+      kind: "walk";
+      step: Extract<ItineraryStep, { kind: "walk" }>;
+      status: PathStatus;
+    }
+  | {
+      kind: "ride";
+      step: Extract<ItineraryStep, { kind: "bike" }>;
+      status: PathStatus;
+    };
+
+/**
+ * The status word for one leg (FR-307, FR-308, FR-309).
+ *
+ * Rendered as text rather than as a colour or an icon, and placed in the flow
+ * rather than in a title attribute, so a screen reader announces it with the
+ * leg it belongs to. A rider who cannot see the dash pattern on the map has no
+ * other way to know whether this part of their journey was checked.
+ */
+function statusWord(status: PathStatus, t: Messages): string {
+  switch (status) {
+    case "traced":
+      return t.trail.pathTraced;
+    case "approximate":
+      return t.trail.pathApproximate;
+    case "pending":
+      return t.trail.pathPending;
+  }
+}
 
 /**
  * Flattens the domain's step list into the trail's entry list.
@@ -45,18 +74,26 @@ type Entry =
  * The planner emits a docking stop immediately before the ride that leaves it,
  * so the anchor node lands between its two rides without any reordering here.
  */
-function toEntries(steps: ItineraryStep[]): Entry[] {
+function toEntries(
+  steps: ItineraryStep[],
+  geometry: StepGeometry[] | null,
+): Entry[] {
   const entries: Entry[] = [{ kind: "start" }];
 
-  for (const step of steps) {
+  // Geometry is index-aligned with steps. Absent entirely before a refinement
+  // has opened, which reads as "not asked yet" rather than as "no path".
+  const statusAt = (index: number): PathStatus =>
+    geometry?.[index]?.status ?? "pending";
+
+  steps.forEach((step, index) => {
     // Exhaustive switch on the discriminant: a new step type becomes a compile
     // error rather than a silently skipped row.
     switch (step.kind) {
       case "walk":
-        entries.push({ kind: "walk", step });
+        entries.push({ kind: "walk", step, status: statusAt(index) });
         break;
       case "bike":
-        entries.push({ kind: "ride", step });
+        entries.push({ kind: "ride", step, status: statusAt(index) });
         break;
       case "dock":
         entries.push({
@@ -66,7 +103,7 @@ function toEntries(steps: ItineraryStep[]): Entry[] {
         });
         break;
     }
-  }
+  });
 
   entries.push({ kind: "destination" });
   return entries;
@@ -194,6 +231,8 @@ function EntryRow({
               {approximateDuration(entry.step.duration, t)} ·{" "}
               {formatDistance(entry.step.distance, t, lang)}
               <span className="ml-1">{t.trail.walkFree}</span>
+              {" · "}
+              <span>{statusWord(entry.status, t)}</span>
             </p>
           </>
         );
@@ -211,6 +250,8 @@ function EntryRow({
             <p className="text-xs text-muted">
               {approximateDuration(entry.step.duration, t)} ·{" "}
               {formatDistance(entry.step.distance, t, lang)}
+              {" · "}
+              <span>{statusWord(entry.status, t)}</span>
             </p>
             <RemainingGauge
               remaining={entry.step.remaining}
@@ -223,12 +264,42 @@ function EntryRow({
   }
 }
 
+/**
+ * The note under the list, chosen by what is actually traced (FR-311).
+ *
+ * One sentence for the whole itinerary would be false the moment one leg
+ * differs from the rest, which is exactly the claim FR-311 forbids. So: every
+ * leg traced gets the confident sentence, none traced keeps the old
+ * straight-line caveat, and anything in between says that *some* parts are
+ * approximate without pretending to say which. Which ones is on each leg.
+ */
+function traceNote(geometry: StepGeometry[] | null, t: Messages): string {
+  if (geometry === null || geometry.length === 0) return t.trail.traceIsIndicative;
+
+  const traced = geometry.filter((g) => g.status === "traced").length;
+  if (traced === 0) return t.trail.traceIsIndicative;
+  if (traced === geometry.length) return t.trail.traceAllReal;
+  return t.trail.traceMixed;
+}
+
 export default function ItineraryTrail({
   itinerary,
+  geometry = null,
+  corrections = 0,
   stations,
   params,
 }: {
   itinerary: Itinerary;
+  /**
+   * Path status per step, index-aligned with `itinerary.steps`.
+   *
+   * Optional, defaulting to null, which reads as "no refinement has opened".
+   * That is the honest default: every leg shows as still being traced rather
+   * than as verified.
+   */
+  geometry?: StepGeometry[] | null;
+  /** Correction rounds behind this itinerary. Above zero, the rider is told why. */
+  corrections?: number;
   stations: Station[];
   /** For the gauge's denominator only. No figure is recomputed here. */
   params: PlanningParameters;
@@ -239,10 +310,22 @@ export default function ItineraryTrail({
   const stationName = (id: string): string =>
     names.get(id) ?? say(t.trail.unknownStation, { id });
 
-  const entries = toEntries(itinerary.steps);
+  const entries = toEntries(itinerary.steps, geometry);
 
   return (
     <>
+      {corrections > 0 && (
+        /*
+          The plan changed under the reader, so it says so and why (FR-316).
+          `role="status"` rather than `alert`: this is worth announcing, but it
+          is not an emergency and it must not interrupt what a screen reader is
+          already reading.
+        */
+        <p role="status" className="mb-3 text-xs font-medium">
+          {t.trail.corrected}
+        </p>
+      )}
+
       <ol aria-label={t.trail.label}>
         {entries.map((entry, index) => (
           <EntryRow
@@ -262,7 +345,7 @@ export default function ItineraryTrail({
         cannot carry it: docs/ui-guidelines.md allows no second container over
         the map, and a dashed line alone does not say why it is dashed.
       */}
-      <p className="text-xs text-muted">{t.trail.traceIsIndicative}</p>
+      <p className="text-xs text-muted">{traceNote(geometry, t)}</p>
     </>
   );
 }

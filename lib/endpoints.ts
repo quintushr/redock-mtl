@@ -135,3 +135,210 @@ export const GEOCODER_RESULT_LIMIT = 5;
 
 /** Minimum query length before we bother the endpoint at all. */
 export const GEOCODER_MIN_QUERY_LENGTH = 3;
+
+// ---------------------------------------------------------------------------
+// Route geometry (optional: the planner works without it)
+// ---------------------------------------------------------------------------
+
+/**
+ * BRouter, the public instance run by Arndt Brenschede. Verified 2026-07-28 by
+ * direct request, not written from memory:
+ *
+ *   GET https://brouter.de/brouter?lonlats=-73.5673,45.5017|-73.5540,45.5088
+ *         &profile=trekking&alternativeidx=0&format=geojson
+ *   -> 200, Content-Type: application/vnd.geo+json
+ *   -> Access-Control-Allow-Origin: *
+ *   -> creator "BRouter-1.7.9"
+ *
+ * No account, no API key, no token, so principle II holds. The wildcard CORS
+ * header is what makes a proxy unnecessary, and a proxy is a server, which
+ * principle I forbids.
+ *
+ * The engine is MIT licensed; the data is OpenStreetMap under ODbL, which we
+ * already credit for the map tiles.
+ *
+ * No rate limit is published. That is not permission (principle V). See
+ * MAX_REQUESTS_PER_USER_REQUEST below and lib/routing.ts for the discipline we
+ * impose on ourselves instead.
+ */
+const ROUTING_BASE_URL_DEFAULT = "https://brouter.de/brouter";
+
+/**
+ * Optional override, for someone self-hosting BRouter or pointing at another
+ * provider.
+ *
+ * Build-time only. Verified in
+ * node_modules/next/dist/docs/01-app/02-guides/environment-variables.md:
+ * NEXT_PUBLIC_ values are inlined at `next build`, and "after being built, your
+ * app will no longer respond to changes to these environment variables". This
+ * is not a deploy-time toggle and must not be documented as one.
+ *
+ * Optional by construction (principle II): unset, empty, or unparseable falls
+ * back to the default and everything works. Nothing about the build or the core
+ * function requires it.
+ */
+function resolveRoutingBaseUrl(): string {
+  const override = process.env.NEXT_PUBLIC_ROUTING_BASE_URL;
+  if (override === undefined || override.trim() === "") {
+    return ROUTING_BASE_URL_DEFAULT;
+  }
+  try {
+    // Throws on anything that is not an absolute URL, which is the only
+    // validation that matters here.
+    new URL(override);
+    return override;
+  } catch {
+    return ROUTING_BASE_URL_DEFAULT;
+  }
+}
+
+export const ROUTING_BASE_URL = resolveRoutingBaseUrl();
+
+/**
+ * Our vocabulary to the provider's. The domain speaks "bike" and "foot"; only
+ * this map knows what BRouter calls them, so changing provider does not ripple
+ * into the domain.
+ *
+ * Measured 2026-07-28 on the same 1.7-1.9 km pair in central Montreal:
+ *
+ *   trekking      1909 m / 354 s   -> 19.4 km/h   bike, BRouter's balanced default
+ *   fastbike      1889 m / 357 s   -> 19.0 km/h   bike, road-biased
+ *   safety        1861 m / 367 s   -> 18.2 km/h   bike, infrastructure-biased
+ *   hiking-beta   1697 m / 1210 s  ->  5.1 km/h   foot
+ *   shortest      1684 m / 1229 s  ->  4.9 km/h   not a usable bike profile
+ *
+ * `walking`, `foot`, `trekking-fast`, `hiking-mountain-beta` and
+ * `hiking-low-networks-beta` all return HTTP 500 on this instance. They do not
+ * exist; do not "fix" a failure by reaching for one.
+ *
+ * `trekking` over `safety` for bikes: the three bike profiles agree within 2.5%
+ * on distance here, so the choice decides which streets get drawn rather than
+ * the budget. `trekking` is the balanced default and is the profile the detour
+ * factor will be calibrated against. `safety` leans harder on separated
+ * infrastructure and lengthens routes outside the dense core, which would add
+ * stops to trips that do not need them.
+ */
+export const ROUTING_PROFILES = {
+  bike: "trekking",
+  foot: "hiking-beta",
+} as const;
+
+/**
+ * Sent as `trackname` on every request so the operator can identify us in their
+ * logs and get in touch. The README carries contact details.
+ *
+ * This is deliberately not a request header, and that is not a style choice.
+ * Verified 2026-07-28: the instance does not implement CORS preflight. It
+ * answers OPTIONS with the route body and returns neither
+ * Access-Control-Allow-Headers nor Access-Control-Allow-Methods. A custom header
+ * would make the request non-simple, the browser would preflight it, and the
+ * request would fail. Adding a header would not identify us, it would disable
+ * the feature. `User-Agent` cannot be set from fetch at all.
+ */
+export const ROUTING_TRACKNAME = "redock-mtl";
+
+/**
+ * Credits shown whenever a traced path is displayed (principle V).
+ *
+ * OpenStreetMap is already credited for the tiles and is not duplicated; only
+ * the routing engine is added here.
+ */
+export const ROUTING_ATTRIBUTION = {
+  label: "BRouter",
+  url: "https://brouter.de",
+} as const;
+
+/**
+ * How far a returned path's end may sit from a *station* we asked about before
+ * we stop believing it (FR-326).
+ *
+ * BRouter snaps to the nearest routable way, and a station on a plaza or set
+ * back in a park can legitimately snap 100 m to the nearest street. Past 150 m
+ * this stops being a snap and starts being a path between two other places.
+ */
+export const PATH_ENDPOINT_TOLERANCE = 150;
+
+/**
+ * The same, for an end that is an arbitrary point rather than a station.
+ *
+ * Deliberately looser, because the two cases are not alike. A station is placed
+ * on a street by an operator. A rider's origin is wherever they tapped, which
+ * may be the middle of a park, a campus, or a building footprint, and the
+ * nearest way a person can actually walk on can be a few hundred metres off
+ * without anything being wrong. Holding both to the station figure rejects
+ * perfectly good walking routes.
+ */
+export const PATH_ENDPOINT_TOLERANCE_POINT = 500;
+
+/**
+ * How much longer than the crow flies a path may be before we reject it
+ * (FR-326).
+ *
+ * The detour factor's own measurement, recorded in lib/params.ts, put the
+ * observed maximum at 1.96 over 30 real station pairs between 700 m and 7 km.
+ * Four times straight-line is far outside that distribution and means the router
+ * went around something we should not silently draw as a route.
+ */
+export const PATH_LENGTH_SANITY_FACTOR = 4.0;
+
+/**
+ * Slack added to that bound, in metres, before the ratio is applied.
+ *
+ * A ratio alone is the wrong instrument at short range, and using one on its own
+ * was a real defect: a 40 m walk whose footpath goes around a building is 200 m,
+ * which is five times the crow-flies distance and entirely correct. Two stations
+ * 80 m apart on opposite sides of a divided boulevard are a 500 m ride. Both were
+ * being rejected as implausible, so the shorter legs of a trip silently fell back
+ * to a straight line while the longer ones traced.
+ *
+ * 400 m is about one Montreal block plus a crossing: enough to absorb a detour
+ * around an obstacle at close range, small enough that it disappears into the
+ * ratio on any leg long enough for the ratio to mean something.
+ */
+export const PATH_LENGTH_ABSOLUTE_SLACK = 400;
+
+/**
+ * Per-request timeout. Matches the geolocation timeout in PlannerShell: past
+ * eight seconds the rider has read their plan and moved on.
+ */
+export const PATH_REQUEST_TIMEOUT_MS = 8000;
+
+/**
+ * How many times a plan may be corrected before we stop and say so (FR-319).
+ *
+ * Termination is already structural: each round measures at least one more pair,
+ * and a measured pair either keeps its edge or loses it permanently, so the edge
+ * set shrinks monotonically over a finite graph. This cap is not there for the
+ * theory. It is there because a rider watching their itinerary rearrange four
+ * times has lost the plot regardless of what the theory says.
+ */
+export const MAX_CORRECTION_ROUNDS = 3;
+
+/**
+ * Ceiling on requests across one user request, correction rounds included
+ * (FR-330a).
+ *
+ * A per-plan bound is not enough, and the reason is worth spelling out: each
+ * correction produces a *new* plan, so a per-plan counter resets. Three rounds
+ * of five steps would satisfy every other rule we impose while issuing twenty
+ * requests to a service that has never asked us for anything. Twenty is that
+ * worst case made explicit rather than reached by accident. The cache means the
+ * realistic number is far lower.
+ *
+ * Reset when the rider changes an endpoint or a parameter, never when a
+ * corrected plan is computed.
+ */
+export const MAX_REQUESTS_PER_USER_REQUEST = 20;
+
+/**
+ * Entries kept in the persistent path store.
+ *
+ * Measured ~1.8 KB per entry in the reduced form (about 90 points at 5 decimals
+ * plus a length), so 500 entries is roughly 1 MB against a typical 5 MB
+ * localStorage quota. 500 station pairs is far more than one rider's habitual
+ * trips.
+ */
+export const PATH_CACHE_MAX_ENTRIES = 500;
+
+/** Bump to discard every stored path. */
+export const PATH_CACHE_SCHEMA_VERSION = 1;

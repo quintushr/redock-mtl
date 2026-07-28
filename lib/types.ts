@@ -212,6 +212,128 @@ export interface Itinerary {
 }
 
 // ---------------------------------------------------------------------------
+// Route geometry
+// ---------------------------------------------------------------------------
+
+/**
+ * The travel modes we ask the path source about.
+ *
+ * Our vocabulary, never the provider's: lib/endpoints.ts maps these to whatever
+ * the current source calls them, so changing provider does not ripple into the
+ * domain.
+ */
+export type RouteProfile = "bike" | "foot";
+
+/** What we want a path for. `stations` is present only for station-to-station steps. */
+export interface RoutingRequest {
+  from: LatLon;
+  to: LatLon;
+  profile: RouteProfile;
+  /** Drives the persistent key. Absent for walk legs, whose ends are arbitrary. */
+  stations?: { fromId: string; toId: string };
+}
+
+/**
+ * A real path between two points, as returned by the source and validated by us.
+ *
+ * Carries the length and not the duration. The source reports its own time, and
+ * we discard it: BRouter's trekking profile implies 19.4 km/h against this
+ * application's conservative 15 km/h default, and principle IV requires every
+ * value influencing a displayed duration to be adjustable by the rider. A
+ * provider's internal speed model is not something they can see or change, so
+ * the measured *distance* is what crosses into the domain and duration stays
+ * derived from `cyclingSpeed` and `segmentOverhead`.
+ */
+export interface TracedPath {
+  /** Ordered positions, first at the origin end. At least two entries. */
+  coordinates: LatLon[];
+  length: Metres;
+  profile: RouteProfile;
+}
+
+/**
+ * Where one step stands with respect to tracing (FR-307).
+ *
+ * `pending` is a real state and not a synonym for `approximate`. The map draws
+ * both the same way, but the itinerary must not tell a rider that a path was
+ * checked and found missing while the request is still in flight.
+ */
+export type PathStatus = "pending" | "traced" | "approximate";
+
+/** What the map and the trail read for one step. */
+export interface StepGeometry {
+  status: PathStatus;
+  /** Non-null exactly when status is "traced". */
+  path: TracedPath | null;
+}
+
+/**
+ * An itinerary plus the geometry known about it so far.
+ *
+ * Geometry sits beside the itinerary rather than inside its steps, and that is
+ * deliberate: planTrip is pure and builds an Itinerary from station data alone.
+ * A network-derived field on BikeSegment would make the planner's output type
+ * describe something the planner cannot produce, and every existing planner test
+ * would have to assert a field the domain has no business owning.
+ */
+export interface TracedItinerary {
+  itinerary: Itinerary;
+  /** One entry per step of `itinerary.steps`, same order, same length. */
+  geometry: StepGeometry[];
+  /** True once no step is still `pending`. */
+  settled: boolean;
+  /** Correction rounds that produced this itinerary. Zero on first display. */
+  corrections: number;
+}
+
+/**
+ * Measured street distance for a station pair, in metres. Sparse: `undefined`
+ * means "no measurement, use the estimate".
+ *
+ * Declared here rather than in planner.ts because route-refinement.ts returns
+ * one and must not import the planner. A shared type is not a reason to couple a
+ * pure state machine to the thing it hands work to.
+ */
+export type MeasuredDistance = (
+  fromStationId: string,
+  toStationId: string,
+) => Metres | undefined;
+
+/** Reuse identity for a path. Ordered: A->B and B->A are different paths. */
+export type PathKey = string;
+
+/**
+ * The value the refinement state machine threads through its pure functions.
+ *
+ * Held by the hook in useState; owned by no module. Every function over it is a
+ * function of its arguments alone, which is what makes "the source returned a
+ * length that breaks the plan" a plain unit test instead of a rendering
+ * exercise.
+ */
+export interface RefinementState {
+  traced: TracedItinerary;
+  /** Steps still wanted, in request order. Empty when nothing is outstanding. */
+  outstanding: RoutingRequest[];
+  /** Measurements gathered so far, carried across correction rounds. */
+  measured: Map<string, Metres>;
+  rounds: number;
+}
+
+/**
+ * What the caller must do next.
+ *
+ * `exhausted` is distinct from `settled` on purpose: one means every step
+ * resolved and the plan holds, the other means correction hit its cap with a
+ * plan that still does not. They are worded differently to the rider (FR-319),
+ * so collapsing them would make that impossible.
+ */
+export type NextAction =
+  | { kind: "fetch"; requests: RoutingRequest[] }
+  | { kind: "replan"; measured: MeasuredDistance; reason: "over-budget" }
+  | { kind: "settled" }
+  | { kind: "exhausted" };
+
+// ---------------------------------------------------------------------------
 // Failure
 // ---------------------------------------------------------------------------
 

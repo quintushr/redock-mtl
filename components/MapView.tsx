@@ -13,6 +13,7 @@ import {
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import {
+  LINE_STYLE,
   RING_LEVELS,
   RING_PIXEL_RATIO,
   endpointElement,
@@ -23,8 +24,9 @@ import {
   type MapTokens,
 } from "@/components/map-symbols";
 import { MAP_STYLE_URL } from "@/lib/endpoints";
+import { anchorPath } from "@/lib/route-geometry";
 import { useStrings } from "@/components/LocaleProvider";
-import type { Itinerary, LatLon, Station } from "@/lib/types";
+import type { Itinerary, LatLon, Station, TracedItinerary } from "@/lib/types";
 
 /**
  * The map.
@@ -121,6 +123,7 @@ function framePadding(): {
 export default function MapView({
   stations,
   itinerary,
+  traced,
   origin,
   destination,
   picking,
@@ -130,6 +133,16 @@ export default function MapView({
 }: {
   stations: Station[];
   itinerary: Itinerary | null;
+  /**
+   * Geometry for the itinerary above, as far as it is known.
+   *
+   * Null before any refinement has opened. This component performs no I/O of
+   * any kind: it receives geometry and draws it. A request fired from here
+   * would put retrieval and the replan decision inside a component that needs
+   * WebGL to instantiate, and tests/unit/routing-boundaries.test.ts fails the
+   * build if that ever happens.
+   */
+  traced: TracedItinerary | null;
   origin: LatLon | null;
   destination: LatLon | null;
   picking: PickTarget | null;
@@ -457,56 +470,87 @@ export default function MapView({
       const lines: GeoJSON.Feature[] = [];
       const stopPoints: GeoJSON.Feature[] = [];
 
-      for (const step of itinerary?.steps ?? []) {
+      const steps = itinerary?.steps ?? [];
+
+      /**
+       * The path to draw for one step, and how to draw it.
+       *
+       * A traced step is drawn from the geometry the router returned, anchored
+       * so it meets its markers (FR-305). Everything else, including a step
+       * still waiting on an answer, keeps the straight line it has always had:
+       * `pending` and `approximate` look identical on the map on purpose, since
+       * neither is a path anybody has checked. The itinerary tells them apart in
+       * words, where the difference between "not yet" and "no" actually matters.
+       */
+      const drawn = (
+        index: number,
+        from: LatLon,
+        to: LatLon,
+      ): { coordinates: [number, number][]; isTraced: boolean } => {
+        const geometry = traced?.geometry[index];
+        if (geometry?.status === "traced" && geometry.path !== null) {
+          return {
+            coordinates: anchorPath(geometry.path, from, to).map(
+              (p) => [p.lon, p.lat] as [number, number],
+            ),
+            isTraced: true,
+          };
+        }
+        return {
+          coordinates: [
+            [from.lon, from.lat],
+            [to.lon, to.lat],
+          ],
+          isTraced: false,
+        };
+      };
+
+      steps.forEach((step, index) => {
         if (step.kind === "walk") {
+          const { coordinates, isTraced } = drawn(index, step.from, step.to);
+          const style = isTraced
+            ? LINE_STYLE.walk.traced
+            : LINE_STYLE.walk.approximate;
           lines.push({
             type: "Feature",
-            geometry: {
-              type: "LineString",
-              coordinates: [
-                [step.from.lon, step.from.lat],
-                [step.to.lon, step.to.lat],
-              ],
-            },
+            geometry: { type: "LineString", coordinates },
             // Walking: the finer dotted pattern. Same accent, because it is
             // part of the same journey, and it does not spend the free window.
-            properties: { width: 2, dash: [1, 2] },
+            properties: { width: style.width, dash: style.dash },
           });
         } else if (step.kind === "bike") {
           const from = byId.get(step.fromStationId);
           const to = byId.get(step.toStationId);
-          if (from === undefined || to === undefined) continue;
+          if (from === undefined || to === undefined) return;
+          const { coordinates, isTraced } = drawn(index, from, to);
+          const style = isTraced
+            ? LINE_STYLE.bike.traced
+            : LINE_STYLE.bike.approximate;
           lines.push({
             type: "Feature",
-            geometry: {
-              type: "LineString",
-              coordinates: [
-                [from.lon, from.lat],
-                [to.lon, to.lat],
-              ],
-            },
+            geometry: { type: "LineString", coordinates },
             /**
-             * Dashed, and thin.
+             * Solid and full weight once traced; dashed and thin until then.
              *
-             * This is a straight line between two stations with a detour
-             * factor applied to its length, not a route: it crosses the river
-             * and the rail yards because it has never heard of either. A solid
-             * 4px line promised a path somebody could follow. A dashed 3px one
-             * says what this actually is, an estimate, and the trail carries
-             * the same caveat in words.
+             * The dashed line is a straight segment between two stations with a
+             * detour factor applied to its length, not a route: it crosses the
+             * river and the rail yards because it has never heard of either. A
+             * solid 4px line promises a path somebody could follow, which is
+             * exactly what the traced geometry is and exactly what the estimate
+             * is not.
              */
-            properties: { width: 3, dash: [3, 2] },
+            properties: { width: style.width, dash: style.dash },
           });
         } else {
           const at = byId.get(step.stationId);
-          if (at === undefined) continue;
+          if (at === undefined) return;
           stopPoints.push({
             type: "Feature",
             geometry: { type: "Point", coordinates: [at.lon, at.lat] },
             properties: {},
           });
         }
-      }
+      });
 
       (route as GeoJSONSource).setData({
         type: "FeatureCollection",
@@ -520,7 +564,10 @@ export default function MapView({
 
     if (ready.current) apply();
     else instance.once("load", apply);
-  }, [itinerary, stations]);
+    // `traced` is in the dependency list, so a path arriving redraws the route
+    // source and nothing else. No camera call here, so centre and zoom survive
+    // every arrival (FR-323).
+  }, [itinerary, traced, stations]);
 
   return (
     <div

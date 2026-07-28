@@ -20,6 +20,36 @@ import type { Station } from "@/lib/types";
  * constitution principle III keeps lib/ free of the DOM.
  */
 
+/**
+ * How a route step is drawn, by whether its real path is known (FR-310).
+ *
+ * Traced is solid and full weight; approximate stays dashed and thin. The
+ * bike segment used to be dashed unconditionally, and the comment explaining
+ * why was right: a solid 4px line promises a path somebody could follow, and a
+ * straight line between two stations is not one. This feature is what earns the
+ * solid line, and it is drawn only for geometry the router returned and we
+ * checked.
+ *
+ * The two differ by weight and dash pattern, never by hue. docs/ui-guidelines.md
+ * allows the accent exactly three uses on the map, and a second colour here
+ * would be a colour code. It also means the distinction survives a greyscale
+ * render, which FR-308 requires.
+ *
+ * `pending` draws as `approximate`: neither is a path anybody has checked. The
+ * itinerary tells them apart in words, where the difference between "not yet"
+ * and "no" is what a rider actually needs.
+ */
+export const LINE_STYLE = {
+  bike: {
+    traced: { width: 4, dash: [1, 0] },
+    approximate: { width: 3, dash: [3, 2] },
+  },
+  walk: {
+    traced: { width: 2.5, dash: [1, 0] },
+    approximate: { width: 2, dash: [1, 2] },
+  },
+} as const;
+
 /** How many mechanical bikes fill the ring completely. */
 const FULL_AT = 4;
 

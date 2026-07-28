@@ -52,8 +52,13 @@ lib/            pure core: no React, no DOM, no global state
   planner.ts      graph construction and Dijkstra; entry point planTrip
   params.ts       defaults and validation
   budget.ts       free-window share and status thresholds
+  route-geometry.ts   parsing, plausibility, keys, duration from a real path
+  route-refinement.ts the refinement state machine: what to fetch, whether to
+                      replan, when to stop. Pure and synchronous on purpose.
   endpoints.ts    every external URL, isolated on purpose
-  feed-client.ts  fetching and ttl-aware caching (the one impure module)
+  feed-client.ts  fetching and ttl-aware caching (impure)
+  routing.ts      route geometry: fetch, session cache, request ceiling (impure)
+  path-store.ts   browser-local store of station-to-station geometry (impure)
 tests/
   unit/         Vitest specs mirroring lib/
   fixtures/     frozen station JSON, committed, never fetched at test time
@@ -95,13 +100,14 @@ timestamp shown, never a reservation.
 
 ## Data sources
 
-All three are keyless, and all three are used on their operators' terms.
+All four are keyless, and all four are used on their operators' terms.
 
 | Source | Used for | Required |
 |---|---|---|
 | The network's public GBFS feeds | Station positions and live availability | Yes |
 | OpenFreeMap vector tiles | The map | No, the planner works without it |
 | Photon (komoot) | Address search | No, map click and manual entry always work |
+| BRouter | The real path between two points | No, the plan falls back to a straight-line estimate |
 
 Feeds are cached client-side and never polled faster than their declared `ttl`,
 nor faster than the app's own slower floor. Operator attribution and licence are
@@ -109,6 +115,47 @@ shown in the interface. Only public, documented endpoints are called.
 
 If the station feed is unavailable, stale, or out of season, the app says so
 explicitly and keeps working. It never shows a blank screen or a raw error.
+
+### Route geometry
+
+The itinerary is drawn along the streets and cycle paths a rider can actually
+use, and each segment's duration comes from that measured length rather than
+from a straight line. Paths come from the public [BRouter](https://brouter.de)
+instance: no account, no API key, MIT-licensed engine over OpenStreetMap data.
+
+The discipline this places on us, since BRouter publishes no rate limit and the
+absence of one is not permission:
+
+- Requests are made only for the segments of an itinerary actually on screen,
+  never for candidate stations, and never on hover, keystroke or map movement.
+- Station-to-station geometry does not change, so it is stored in the browser
+  and a repeated trip costs the service nothing. The store is bounded and can be
+  emptied from the planning assumptions.
+- At most one request per segment per plan, and a hard ceiling across a whole
+  user request including any correction rounds.
+- Failures are never retried automatically.
+- Every request carries `trackname=redock-mtl` so the operator can identify this
+  application in their logs. It is not sent as a header: the instance does not
+  answer CORS preflight, so a custom header would fail the request rather than
+  identify us. To reach the maintainers, open an issue on this repository.
+
+Requesting a path sends the two ends of that segment to BRouter. That is stated
+in the interface rather than left for someone to discover.
+
+If BRouter is unreachable, the plan is still computed, displayed and usable. Every
+segment falls back to the straight-line estimate and says so, in the shape of the
+line on the map and in words in the itinerary. No essential capability depends on
+it.
+
+To point at a self-hosted instance or another provider:
+
+```bash
+NEXT_PUBLIC_ROUTING_BASE_URL=https://my-brouter.example/brouter npm run build
+```
+
+This is build-time only: Next.js inlines `NEXT_PUBLIC_` values at build, so the
+built app does not respond to later changes. It is optional in the sense that
+matters, which is that nothing needs setting for the application to work.
 
 ## Deploying
 

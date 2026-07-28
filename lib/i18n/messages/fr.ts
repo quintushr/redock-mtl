@@ -133,9 +133,39 @@ export const messages = {
     walkFree: "n'entame pas la fenêtre gratuite",
     rideTo: "Roule jusqu'à {place}",
     unknownStation: "station {id}",
-    /** The trace on the map is a straight line, and says so. */
+
+    /**
+     * Per-étape, jamais pour l'itinéraire entier (FR-307, FR-311).
+     *
+     * « en cours » et « approximatif » se dessinent pareil sur la carte, parce
+     * que ni l'un ni l'autre n'est un chemin vérifié. Ici la distinction compte:
+     * « pas encore » et « non » ne se valent pas pour qui lit son trajet.
+     */
+    pathTraced: "tracé réel",
+    pathApproximate: "tracé approximatif",
+    pathPending: "tracé en cours",
+
+    /**
+     * Note de bas de liste, choisie selon ce qui est réellement tracé.
+     *
+     * Une seule phrase pour tout l'itinéraire serait fausse dès qu'une portion
+     * diffère des autres, ce que FR-311 interdit.
+     */
+    traceAllReal:
+      "Sur la carte, le tracé suit les rues et les voies cyclables praticables.",
+    traceMixed:
+      "Sur la carte, les portions en pointillé sont approximatives: elles relient deux points en ligne droite et ne suivent aucune rue.",
     traceIsIndicative:
       "Sur la carte, le tracé relie les stations en ligne droite. Il est indicatif, pas un itinéraire cyclable.",
+
+    /**
+     * Le plan a été refait parce qu'une distance réelle a dépassé le budget
+     * (FR-316). L'utilisateur est informé, pas consulté.
+     */
+    corrected:
+      "Un segment dépassait la fenêtre gratuite une fois sa distance réelle connue. Cet itinéraire a été recalculé.",
+    correctionExhausted:
+      "Les distances réelles ne permettent pas de tenir la fenêtre gratuite sur ce trajet. Augmente ta vitesse ou baisse ta marge de sécurité.",
   },
 
   gauge: {
@@ -185,6 +215,19 @@ export const messages = {
     showRest: "Afficher les autres réglages",
     hideRest: "Masquer les autres réglages",
     reset: "Tout réinitialiser",
+    /**
+     * Vider les tracés gardés en mémoire (FR-329a).
+     *
+     * La géométrie entre deux stations ne change pas, donc elle est conservée
+     * d'une visite à l'autre. Ce qui est gardé sans expirer doit pouvoir être
+     * effacé par qui le garde.
+     */
+    purgePaths: "Vider les tracés en cache",
+    purgePathsCount: {
+      zero: "Aucun tracé en cache",
+      one: "{count} tracé en cache",
+      other: "{count} tracés en cache",
+    },
     controls: {
       safetyMargin: {
         label: "Marge de sécurité",
@@ -299,6 +342,17 @@ export const messages = {
   attribution: {
     map: "Carte",
     stations: "Stations",
+    /** Affiché seulement quand un tracé réel est à l'écran (FR-332). */
+    routing: "Tracés",
+    /**
+     * Ce qui sort du navigateur quand on demande un tracé (FR-333).
+     *
+     * La constitution veut que rien des données de l'utilisateur ne quitte le
+     * navigateur. Demander un chemin envoie deux coordonnées à un tiers: assez
+     * peu pour être acceptable, assez pour être dit.
+     */
+    routingPrivacy:
+      "Obtenir un tracé envoie les deux extrémités du segment au service de calcul d'itinéraire.",
   },
 
   /**

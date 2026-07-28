@@ -104,8 +104,22 @@ export const messages: Messages = {
     walkFree: "does not use the free window",
     rideTo: "Ride to {place}",
     unknownStation: "station {id}",
+
+    pathTraced: "real route",
+    pathApproximate: "approximate trace",
+    pathPending: "tracing",
+
+    traceAllReal:
+      "On the map, the trace follows the streets and cycle paths you can actually ride.",
+    traceMixed:
+      "On the map, the dashed parts are approximate: they join two points in a straight line and follow no street.",
     traceIsIndicative:
       "On the map, the trace joins the stations in a straight line. It is indicative, not a cycling route.",
+
+    corrected:
+      "One segment ran past the free window once its real distance was known. This itinerary has been recalculated.",
+    correctionExhausted:
+      "Real distances cannot keep this trip inside the free window. Raise your speed or lower your safety margin.",
   },
 
   gauge: {
@@ -144,6 +158,12 @@ export const messages: Messages = {
     showRest: "Show the other settings",
     hideRest: "Hide the other settings",
     reset: "Reset everything",
+    purgePaths: "Clear cached routes",
+    purgePathsCount: {
+      zero: "No cached routes",
+      one: "{count} cached route",
+      other: "{count} cached routes",
+    },
     controls: {
       safetyMargin: {
         label: "Safety margin",
@@ -256,6 +276,9 @@ export const messages: Messages = {
   attribution: {
     map: "Map",
     stations: "Stations",
+    routing: "Routing",
+    routingPrivacy:
+      "Getting a route sends the two ends of the segment to the routing service.",
   },
 
   corrections: {
