@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useLanguage, useResolve, useStrings } from "@/components/LocaleProvider";
 import { ChevronDown, Refresh, Sliders } from "@/components/icons";
+import ThemeToggle from "@/components/ThemeToggle";
 import { approximateDuration, relativeAge } from "@/lib/format";
 import { changedCount } from "@/lib/params";
 import type { FeedStatus, PlanningParameters } from "@/lib/types";
@@ -52,7 +53,7 @@ function SettingsRow({
   return (
     <button
       type="button"
-      className="flex min-h-[46px] w-full items-center gap-2 px-4 text-left hover:bg-paper"
+      className="state-layer flex min-h-[46px] w-full items-center gap-2 px-4 text-left"
       aria-expanded={open}
       aria-controls={controls}
       onClick={onToggle}
@@ -197,10 +198,30 @@ function FreshnessRow({
         </time>
       )}
 
+      {/*
+        The theme, at the very bottom of the panel.
+
+        docs/ui-guidelines.md closes this footer to two rows and says nothing
+        else may be added, so this joins row 2 rather than becoming a row 3 —
+        which is also the only reading of "at the very bottom" that survives
+        that rule. It sits before the refresh because the refresh belongs to
+        this row's own subject and should stay the last thing on it.
+
+        The two are 44px targets side by side with no gap between their boxes;
+        they are distinguishable by icon and by name, and the row has no third
+        control to crowd them.
+      */}
+      <ThemeToggle />
+
       <button
         type="button"
         // 44px of target inside a 40px row, and -my-0.5 keeps the row's height.
-        className="-my-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-control hover:bg-paper disabled:text-muted"
+        // Same class list as the theme control beside it, deliberately.
+        //
+        // Disabled is opacity rather than a colour: the icon is already --muted
+        // at rest, so dimming it *to* muted was a no-op and a load in flight
+        // looked exactly like one that was not.
+        className="state-layer -my-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-control text-muted enabled:hover:text-ink disabled:opacity-40"
         aria-label={t.feed.refresh}
         title={t.feed.refresh}
         disabled={loading}

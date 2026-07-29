@@ -56,26 +56,47 @@ export const messages = {
    */
   units: {
     underAMinute: "moins d'une minute",
-    // The three shapes a duration can take. lib/format.ts does the division
-    // and picks; no language repeats it (FR-207a).
-    //
-    // Every one carries "environ". Principle IV requires explicit uncertainty,
-    // not merely a rounded number: a bare "45 minutes" reads as a measurement,
-    // and a rider who reads it as one is a rider standing at a dock in the rain.
-    //
-    // The unit is abbreviated because "min" and "h" are invariable symbols in
-    // French. That is also why these need no plural map: there is no plural to
-    // get wrong. The full words did have one, and got it wrong at 1.
-    durationMinutes: "environ {minutes} min",
-    durationHours: "environ {hours} h",
-    durationHoursMinutes: "environ {hours} h {minutes} min",
+    /*
+     * The three shapes a duration can take. lib/format.ts does the division,
+     * the rounding and the zero-padding, and picks; no language repeats it
+     * (FR-207a).
+     *
+     * The unit is abbreviated because "min" and "h" are invariable symbols in
+     * French. That is also why these need no plural map: there is no plural to
+     * get wrong. The full words did have one, and got it wrong at 1.
+     *
+     * These used to open with "environ", which is the hedge principle IV and
+     * FR-113 ask a travel time to carry. Removed on request. The figures are
+     * still rounded to five minutes past ten, so nothing here is precise; what
+     * is gone is the interface saying so, and a bare "45 min" now reads as a
+     * measurement to anyone who does not already know it is not one.
+     *
+     * The hours-and-minutes shape carries no "min" any more either. Padding the
+     * minutes to two digits is the clock convention, and "1 h 05 min" is not a
+     * thing anyone writes in French; "1 h 05" is.
+     */
+    durationMinutes: "{minutes} min",
+    durationHours: "{hours} h",
+    durationHoursMinutes: "{hours} h {minutes}",
     metres: "{metres} m",
     kilometres: "{value} km",
   },
 
   fields: {
+    /**
+     * Les deux extrémités du trajet.
+     *
+     * Ce ne sont plus des libellés dessinés au-dessus des champs : le rail et
+     * l'épingle du bloc de saisie disent laquelle est laquelle, et deux titres
+     * au-dessus de deux boîtes identiques coûtaient de la hauteur pour répéter
+     * ce qu'une marque énonce déjà. Ils restent le nom accessible de chaque
+     * champ, c'est-à-dire là où un lecteur d'écran les cherche.
+     */
     origin: "Départ",
     destination: "Destination",
+    /** La croix dans la rangée. Nomme l'extrémité : deux croix, deux noms. */
+    clearOrigin: "Effacer le départ",
+    clearDestination: "Effacer la destination",
     placeholder: "Adresse, lieu, ou latitude, longitude",
     myLocation: "Ma position",
     pickOnMap: "Choisir sur la carte",
@@ -115,6 +136,18 @@ export const messages = {
       "Ta position n'est pas disponible. Tape une adresse, ou touche la carte pour placer ton départ.",
   },
 
+  /**
+   * Le thème, dans la rangée 2 du pied de panneau.
+   *
+   * Les deux entrées nomment l'action, pas l'état : le bouton est une icône
+   * seule, donc son nom accessible est tout ce qu'un lecteur d'écran reçoit, et
+   * « Thème sombre » ne dit pas si c'est un libellé ou un interrupteur.
+   */
+  theme: {
+    toDark: "Passer au thème sombre",
+    toLight: "Passer au thème clair",
+  },
+
   panel: {
     label: "Planificateur de trajet",
     expand: "Afficher l'itinéraire complet",
@@ -137,8 +170,6 @@ export const messages = {
       one: "{count} arrêt pour rester dans la fenêtre gratuite.",
       other: "{count} arrêts pour rester dans la fenêtre gratuite.",
     },
-    estimate: "Durées estimées, ce ne sont pas des heures d'arrivée.",
-
     /**
      * Tant que l'itinéraire bouge encore, aucun montant (FR-408a).
      *
@@ -148,10 +179,17 @@ export const messages = {
      */
     pricingPending: "Coût en cours de calcul.",
 
-    /** Les trois figures. Étiquettes courtes : le montant à côté fait le travail. */
+    /**
+     * Les deux cellules de la comparaison.
+     *
+     * Étiquettes courtes : le montant en dessous fait le travail, et la cellule
+     * gagnante porte une icône de validation plutôt qu'un mot. Il y avait une
+     * troisième figure, « Tu économises », qui énonçait la différence entre les
+     * deux autres ; l'écart se lit maintenant sur le montant barré, ce qui est
+     * la forme que la section « Comparaison de coût » impose.
+     */
     withStops: "Avec les arrêts",
     withoutStops: "Sans arrêt",
-    saved: "Tu économises",
 
     /** Des arrêts, mais qui ne font rien gagner (FR-406). */
     savesNothing:
@@ -170,41 +208,21 @@ export const messages = {
     noStopOverBefore: "Aucun arrêt possible ici. Tu paierais",
     noStopOverAfter: "au-delà de la fenêtre gratuite.",
 
-    /**
-     * Ce sur quoi les montants reposent (FR-407, FR-411, FR-412).
-     *
-     * À côté du montant et jamais repliée : un chiffre que le lecteur ne peut
-     * pas rapprocher du tarif publié par l'opérateur se lit comme une erreur.
-     * {window} est la fenêtre gratuite, {rate} le tarif à la minute.
-     */
-    assumptions:
-      "Vélo mécanique, {window} inclus, puis {rate} la minute. Avant taxes, hors frais de déverrouillage.",
-
-    /**
-     * La comparaison en temps, à côté de celle en argent (FR-410).
-     *
-     * Séparée autour du chiffre qu'elle encadre : les durées sont en chasse
-     * fixe, ce qui est impossible si la phrase est une seule chaîne.
-     * {delta} vaut faster, slower ou sameTime.
-     */
-    inOneGo: "d'une traite, {delta} qu'avec les arrêts.",
-    faster: "{magnitude} de moins",
-    slower: "{magnitude} de plus",
-    sameTime: "à peu près le même temps",
   },
 
   trail: {
     label: "Itinéraire",
+    /**
+     * Les noms de rangée.
+     *
+     * Une rangée du fil ne porte qu'une icône, un nom et une durée. Les phrases
+     * qui ouvraient chaque rangée — « Marche jusqu'à », « Roule jusqu'à »,
+     * « Ancre le vélo ici et reprends-en un après » — sont devenues l'icône du
+     * rail, et les règles qu'elles traînaient derrière elles sont dans la
+     * légende ci-dessous, énoncées une fois.
+     */
     start: "Départ",
     destination: "Destination",
-    // {wait} is the cooldown before the same bike can be taken again.
-    anchor: "Ancre le vélo ici et reprends-en un après {wait}",
-    anchorResets: "remet la fenêtre gratuite à zéro",
-    // {place} is a station name, or the fallback below when it is unknown.
-    walkTo: "Marche jusqu'à {place}",
-    walkToDestination: "Marche jusqu'à ta destination",
-    walkFree: "n'entame pas la fenêtre gratuite",
-    rideTo: "Roule jusqu'à {place}",
     unknownStation: "station {id}",
 
     /**
@@ -213,23 +231,23 @@ export const messages = {
      * « en cours » et « approximatif » se dessinent pareil sur la carte, parce
      * que ni l'un ni l'autre n'est un chemin vérifié. Ici la distinction compte:
      * « pas encore » et « non » ne se valent pas pour qui lit son trajet.
+     *
+     * Ces trois-là ne sont plus dessinés : la rangée porte un trait discontinu
+     * quand le chemin n'a pas été mesuré, et ces mots sont ce qu'un lecteur
+     * d'écran entend à sa place. Un adjectif en fin de rangée est exactement ce
+     * que la section « Densité verbale » interdit ; le supprimer sans rien
+     * donner à la synthèse vocale l'aurait été aussi.
      */
     pathTraced: "tracé réel",
     pathApproximate: "tracé approximatif",
     pathPending: "tracé en cours",
 
     /**
-     * Note de bas de liste, choisie selon ce qui est réellement tracé.
+     * Note sous la liste, choisie selon ce qui est réellement tracé.
      *
      * Une seule phrase pour tout l'itinéraire serait fausse dès qu'une portion
      * diffère des autres, ce que FR-311 interdit.
      */
-    traceAllReal:
-      "Sur la carte, le tracé suit les rues et les voies cyclables praticables.",
-    traceMixed:
-      "Sur la carte, les portions en pointillé sont approximatives: elles relient deux points en ligne droite et ne suivent aucune rue.",
-    traceIsIndicative:
-      "Sur la carte, le tracé relie les stations en ligne droite. Il est indicatif, pas un itinéraire cyclable.",
 
     /**
      * Le plan a été refait parce qu'une distance réelle a dépassé le budget
@@ -246,9 +264,17 @@ export const messages = {
      * Read by assistive technology, which sees neither the colour nor the bar.
      * If the state is not in the words, it does not exist for that user.
      * {state} is one of gauge.states below.
+     *
+     * C'est désormais le seul endroit où l'adjectif d'état apparaît : la ligne
+     * dessinée porte le chiffre, la barre et, sur la bande alarmante, une
+     * icône.
+     *
+     * Sans « environ » depuis qu'il a été retiré partout ailleurs : le garder
+     * ici aurait fait entendre à la synthèse vocale une prudence que l'écran
+     * n'affiche plus.
      */
-    spoken: "environ {minutes} min d'avance à l'arrivée, {state}",
-    remaining: "environ {minutes} min",
+    spoken: "{minutes} min d'avance à l'arrivée, {state}",
+    remaining: "{minutes} min",
     onArrival: "d'avance à l'arrivée",
     states: {
       comfortable: "confortable",
@@ -331,8 +357,6 @@ export const messages = {
 
   feed: {
     loading: "Chargement des stations",
-    stale:
-      "Ces données datent de {minutes} min et peuvent ne plus correspondre aux stations.",
     /**
      * L'ancienneté du relevé, en relatif, dans la rangée 2 du pied de panneau.
      *

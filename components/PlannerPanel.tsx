@@ -127,7 +127,10 @@ export default function PlannerPanel({
         element out and never moves what is inside it (FR-122).
       */}
       <div className="relative min-h-0 flex-1">
-        <div className="h-full overflow-y-auto overscroll-contain px-4 pt-2 pb-5 md:pt-4">
+        {/* `panel-scroll` draws the bar itself; see app/globals.css. The
+            platform default is an overlay that fades, which left a full panel
+            looking like a panel with nothing below it. */}
+        <div className="panel-scroll h-full overflow-y-auto overscroll-contain px-4 pt-2 pb-5 md:pt-4">
           {children}
         </div>
         {overlay}

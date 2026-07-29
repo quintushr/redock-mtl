@@ -1,5 +1,6 @@
 "use client";
 
+import { Alert } from "@/components/icons";
 import { useResolve, useStrings } from "@/components/LocaleProvider";
 import { roundedMinutes } from "@/lib/format";
 import type { RemainingStatus, Seconds } from "@/lib/types";
@@ -84,16 +85,30 @@ export default function RemainingGauge({
         />
       </div>
 
-      {/* The figure is always present. FR-112 and the quality floor in
-          docs/ui-guidelines.md both forbid leaving this to colour. */}
-      <p className="mt-1 text-xs text-muted">
-        <span className={`font-mono font-medium ${FIGURE[status]}`}>
-          {say(t.gauge.remaining, { minutes })}
-        </span>{" "}
-        {t.gauge.onArrival}
-        {/* The qualifier stays secondary: the figure is the datum, this only
-            says how to feel about it. */}
-        <span className="ml-2">{label}</span>
+      {/*
+        The figure is always present. FR-112 and the quality floor in
+        docs/ui-guidelines.md both forbid leaving this to colour.
+
+        The band used to end in an adjective — "confortable", "correct",
+        "risqué" — once per ride, which is the pattern the "Densité verbale"
+        section rules out: a state told in a word at the end of a line rather
+        than shown. Three things carry it now. The bar's fill, its colour, and,
+        on the alarming band only, a mark. The word itself survives in the
+        gauge's accessible name above, which is where a reader who sees neither
+        the bar nor the colour was always going to find it.
+      */}
+      <p className="mt-1 flex items-center gap-1 text-xs text-muted">
+        {status === "alarming" && (
+          <span aria-hidden="true" className={`shrink-0 ${FIGURE[status]}`}>
+            <Alert />
+          </span>
+        )}
+        <span>
+          <span className={`font-mono font-medium ${FIGURE[status]}`}>
+            {say(t.gauge.remaining, { minutes })}
+          </span>{" "}
+          {t.gauge.onArrival}
+        </span>
       </p>
     </div>
   );

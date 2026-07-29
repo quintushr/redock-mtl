@@ -13,13 +13,24 @@ import {
   parseGeocoderResults,
   type GeocodeSuggestion,
 } from "@/lib/geocode";
-import { Crosshair } from "@/components/icons";
+import { Crosshair, Cross } from "@/components/icons";
 import { useStrings } from "@/components/LocaleProvider";
 import type { Messages } from "@/components/LocaleProvider";
 import type { LatLon } from "@/lib/types";
 
 /**
- * Address and place search for one end of the trip.
+ * Address and place search for one end of the trip: one 38px row, no more.
+ *
+ * The row has no visible label. docs/ui-guidelines.md, "Saisie du départ et de
+ * la destination", gives that job to the rail and the pin drawn beside it in
+ * the parent: a hollow ring for the start, a pin for the destination, the same
+ * two marks the itinerary trail uses. Two headings reading "Départ" and
+ * "Destination" above two identical boxes cost 180px of panel to repeat what
+ * the marks already say. The names survive as the inputs' accessible names,
+ * which is where a screen reader looks for them anyway.
+ *
+ * The clear control is a cross inside the row, shown only when there is
+ * something to clear, and never a text button.
  *
  * Optional by construction (constitution principle II). The endpoint is a free
  * public instance whose operator states plainly that availability is not
@@ -75,7 +86,7 @@ function toRows(
 
 export default function SearchField({
   label,
-  kind,
+  clearLabel,
   placeholder,
   value,
   point,
@@ -86,9 +97,10 @@ export default function SearchField({
   onClear,
   onArm,
 }: {
+  /** The accessible name of the input. Not drawn: the rail says which end. */
   label: string;
-  /** Which end of the trip, for the marker that opens the row. */
-  kind: "origin" | "destination";
+  /** The accessible name of the cross. Names the end, so two rows differ. */
+  clearLabel: string;
   placeholder: string;
   /** The text shown in the input. Owned by the parent (see the note above). */
   value: string;
@@ -209,137 +221,139 @@ export default function SearchField({
   };
 
   return (
-    <div>
-      <label htmlFor={id} className="text-sm font-medium">
-        {label}
-      </label>
+    <div className="relative flex h-[38px] items-center">
+      {/*
+        The address, the cross that clears it, and the way to place the point
+        on the map instead. Nothing else fits in 38px and nothing else needs to:
+        which end this is has already been said by the rail beside it.
+
+        Truncated by ellipsis and never wrapped — an input cannot wrap anyway,
+        and `truncate` is what puts the ellipsis on the overflow rather than
+        cutting a street name mid-word.
+      */}
+      <input
+        id={id}
+        type="text"
+        role="combobox"
+        autoComplete="off"
+        aria-label={label}
+        aria-expanded={rows.length > 0}
+        aria-controls={`${id}-list`}
+        aria-activedescendant={active >= 0 ? `${id}-row-${active}` : undefined}
+        className={[
+          "h-full min-w-0 flex-1 truncate bg-transparent pl-2 text-sm",
+          // The ring is drawn inside the row: the entry block is 78px with two
+          // rows against its own border, and an outward offset would be clipped
+          // by the container it sits in.
+          "outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand",
+        ].join(" ")}
+        placeholder={placeholder}
+        value={value}
+        onChange={(event) => {
+          const next = event.target.value;
+          onValueChange(next);
+          setDraft(next);
+          setActive(-1);
+          // Emptying the text clears the point too. Without this the pin would
+          // stay on the map and the plan would stay computed under a field
+          // that reads as empty.
+          if (next.trim() === "" && point !== null) onClear();
+        }}
+        onKeyDown={onKeyDown}
+        onBlur={() => {
+          // Let a click on a row land before the list disappears.
+          setTimeout(dismiss, 150);
+        }}
+      />
 
       {/*
-        One row: what this end is, where it is, and the way to place it on the
-        map. The marker is the trail's own grammar, hollow to start from and
-        filled to arrive at, so a reader learns it once and reads it everywhere.
-
-        There is no "clear" button. `type="search"` gives the field its own,
-        and emptying the text now clears the point as well, so the two cannot
-        disagree.
+        Only when the row holds something. A cross on an empty field is a
+        control that does nothing, drawn next to a control that does.
       */}
-      <div
-        className={[
-          "relative mt-1 flex items-center gap-2 rounded-control border bg-panel pr-1 pl-3",
-          // The input's own outline is suppressed because its border now lives
-          // on this wrapper; the focus ring has to move here with it, or the
-          // field becomes the one control with no visible focus.
-          "focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-brand",
-          armed ? "border-brand" : "border-edge",
-        ].join(" ")}
-      >
-        <span
-          aria-hidden="true"
-          className={[
-            "shrink-0 rounded-full",
-            kind === "destination"
-              ? "h-[9px] w-[9px] bg-ink"
-              : "h-[9px] w-[9px] border-[1.5px] border-muted bg-panel",
-          ].join(" ")}
-        />
-
-        <input
-          id={id}
-          type="search"
-          role="combobox"
-          autoComplete="off"
-          aria-expanded={rows.length > 0}
-          aria-controls={`${id}-list`}
-          aria-activedescendant={active >= 0 ? `${id}-row-${active}` : undefined}
-          className="min-h-11 min-w-0 flex-1 bg-transparent py-0 text-sm outline-none"
-          placeholder={placeholder}
-          value={value}
-          onChange={(event) => {
-            const next = event.target.value;
-            onValueChange(next);
-            setDraft(next);
-            setActive(-1);
-            // The field's own clear control only empties the text. Without
-            // this the pin would stay on the map and the plan would stay
-            // computed under a field that reads as empty.
-            if (next.trim() === "" && point !== null) onClear();
-          }}
-          onKeyDown={onKeyDown}
-          onBlur={() => {
-            // Let a click on a row land before the list disappears.
-            setTimeout(dismiss, 150);
-          }}
-        />
-
+      {value !== "" && (
         <button
           type="button"
-          aria-pressed={armed}
-          // Icon only, so the name carries the whole meaning. This is the
-          // guaranteed input path when the geocoder is down, which its
-          // operator does not promise it will not be, so it stays reachable.
-          aria-label={armed ? t.fields.picking : t.fields.pickOnMap}
-          title={armed ? t.fields.picking : t.fields.pickOnMap}
-          className={[
-            "flex h-9 w-9 shrink-0 items-center justify-center rounded-control",
-            // The third and last use docs/ui-guidelines.md allows the accent:
-            // the active state of a control.
-            armed
-              ? "bg-brand-soft text-brand-deep"
-              : "text-muted hover:bg-paper hover:text-ink",
-          ].join(" ")}
-          onClick={onArm}
+          aria-label={clearLabel}
+          className="flex h-[38px] w-7 shrink-0 items-center justify-center text-muted hover:text-ink"
+          onClick={onClear}
         >
-          <Crosshair />
+          <Cross />
         </button>
-
-        {rows.length > 0 && (
-          <ul
-            id={`${id}-list`}
-            role="listbox"
-            className="absolute top-full right-0 left-0 z-10 mt-1 overflow-hidden rounded-control border border-edge bg-panel"
-          >
-            {rows.map((row, index) => (
-              <li key={`${row.kind}-${index}`} role="presentation">
-                <button
-                  id={`${id}-row-${index}`}
-                  type="button"
-                  role="option"
-                  aria-selected={index === active}
-                  className={`flex min-h-11 w-full items-center gap-2 border-b border-line px-3 py-2 text-left last:border-b-0 ${
-                    index === active ? "bg-paper" : "hover:bg-paper"
-                  }`}
-                  // Keep the focus in the input so the field does not blur the
-                  // list away between pressing and releasing the pointer.
-                  onMouseDown={(event) => event.preventDefault()}
-                  onMouseEnter={() => setActive(index)}
-                  onClick={() => commit(row)}
-                >
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm">{row.primary}</span>
-                    {row.secondary !== "" && (
-                      <span className="block truncate text-xs text-muted">
-                        {row.secondary}
-                      </span>
-                    )}
-                  </span>
-                  {/* Sentence case at the type scale's floor. Ten pixels in
-                      decorative capitals was two rules broken at once. */}
-                  <span className="shrink-0 rounded-control bg-paper px-1.5 py-0.5 text-xs text-muted">
-                    {row.badge}
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      {searching && rows.length === 0 && (
-        <p className="mt-1 text-xs text-muted">{t.fields.searching}</p>
       )}
 
-      {showFailure && (
-        <p className="mt-1 text-xs text-muted">{t.fields.searchUnavailable}</p>
+      <button
+        type="button"
+        aria-pressed={armed}
+        // Icon only, so the name carries the whole meaning. This is the
+        // guaranteed input path when the geocoder is down, which its
+        // operator does not promise it will not be, so it stays reachable.
+        aria-label={armed ? t.fields.picking : t.fields.pickOnMap}
+        className={[
+          "flex h-[38px] w-8 shrink-0 items-center justify-center",
+          // The third and last use docs/ui-guidelines.md allows the accent:
+          // the active state of a control.
+          armed ? "text-brand" : "text-muted hover:text-ink",
+        ].join(" ")}
+        onClick={onArm}
+      >
+        <Crosshair />
+      </button>
+
+      {rows.length > 0 && (
+        <ul
+          id={`${id}-list`}
+          role="listbox"
+          className="absolute top-full right-0 left-0 z-20 mt-1 overflow-hidden rounded-control border border-edge bg-panel"
+        >
+          {rows.map((row, index) => (
+            <li key={`${row.kind}-${index}`} role="presentation">
+              <button
+                id={`${id}-row-${index}`}
+                type="button"
+                role="option"
+                aria-selected={index === active}
+                className={`flex min-h-11 w-full items-center gap-2 border-b border-line px-3 py-2 text-left last:border-b-0 ${
+                  index === active ? "bg-state-hover" : "state-layer"
+                }`}
+                // Keep the focus in the input so the field does not blur the
+                // list away between pressing and releasing the pointer.
+                onMouseDown={(event) => event.preventDefault()}
+                onMouseEnter={() => setActive(index)}
+                onClick={() => commit(row)}
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm">{row.primary}</span>
+                  {row.secondary !== "" && (
+                    <span className="block truncate text-xs text-muted">
+                      {row.secondary}
+                    </span>
+                  )}
+                </span>
+                {/* Sentence case at the type scale's floor. Ten pixels in
+                    decorative capitals was two rules broken at once. */}
+                <span className="shrink-0 rounded-control bg-paper px-1.5 py-0.5 text-xs text-muted">
+                  {row.badge}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {/*
+        Under the row rather than in it, on the same footing as the suggestion
+        list and for the same reason: the entry block is a fixed 78px, and a
+        line of status text inside it would either burst that or shrink the
+        field it is reporting on. Not a hover affordance — it answers the
+        reader's own typing, and it stays until the typing changes.
+      */}
+      {(searching || showFailure) && rows.length === 0 && (
+        <p
+          role="status"
+          className="absolute top-full right-0 left-0 z-20 mt-1 rounded-control border border-edge bg-panel px-3 py-2 text-xs text-muted"
+        >
+          {searching ? t.fields.searching : t.fields.searchUnavailable}
+        </p>
       )}
     </div>
   );

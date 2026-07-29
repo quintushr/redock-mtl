@@ -317,6 +317,50 @@ Sur mobile, ajouter env(safe-area-inset-bottom) au rembourrage inférieur.
 
 ---
 
+## Densité verbale
+
+Une information ne s'écrit que si aucune icône, aucune position et aucune
+couleur ne peut la porter. Le texte est le dernier recours, pas le premier.
+
+- Une règle qui vaut pour tout le fil s'explique une fois, dans une légende
+  discrète, jamais répétée à chaque ligne.
+- Un état se signale par une couleur et une icône, pas par un adjectif en fin
+  de phrase.
+- Une ligne du fil comporte au maximum: une icône, un nom, une durée.
+- Aucune phrase complète dans le fil d'itinéraire.
+- Les avertissements généraux sur la nature estimative des durées apparaissent
+  une seule fois, près du total.
+
+## Comparaison de coût
+
+Bloc obligatoire, placé immédiatement après les champs de saisie, avant le
+total de durée. C'est l'argument principal du produit et il ne doit jamais
+prendre la forme d'une phrase.
+
+Deux cellules côte à côte de largeur égale.
+- Cellule gagnante: fond teinté translucide, bordure de la même teinte, icône
+  de validation, montant en grand et en couleur.
+- Cellule perdante: sans fond, bordure neutre, montant barré et atténué.
+- Lorsque les arrêts ne font rien économiser, les deux cellules deviennent
+  neutres et un libellé unique l'indique.
+
+Les teintes sont produites par superposition translucide de la couleur d'état,
+jamais par une couleur opaque codée en dur.
+
+## Saisie du départ et de la destination
+
+Un conteneur unique, jamais deux blocs séparés avec leurs propres libellés.
+- Rail vertical à gauche: pastille creuse pour le départ, épingle accentuée
+  pour la destination.
+- Deux rangées de 38px séparées par un filet.
+- Effacement par une croix discrète à l'intérieur de la rangée, visible
+  seulement quand la rangée est remplie. Jamais un bouton texte "Effacer".
+- Inversion par un bouton d'icône unique sur le bord droit, à cheval sur les
+  deux rangées.
+- Le choix sur la carte est une icône, pas un bouton texte.
+- Les adresses longues sont tronquées par ellipse, jamais renvoyées à la ligne.
+- Hauteur totale du bloc: 78px maximum.
+
 ## Écriture
 
 Les mots sont du matériau de conception, pas de la décoration.

@@ -12,11 +12,11 @@
  */
 :root {
   /**
-   * One scheme, declared to the browser.
+   * Declared to the browser, and switched with the theme below.
    *
-   * Without this the user agent paints its own dark defaults into form
-   * controls when the operating system asks for a dark theme, which is how an
-   * input whose text colour is --ink ended up drawn on a near-black canvas.
+   * Without this the user agent paints its own defaults into form controls,
+   * which is how an input whose text colour is --ink ended up drawn on a
+   * near-black canvas.
    */
   color-scheme: light;
 
@@ -68,6 +68,189 @@
   --warn-text: #a76516;
   --alarm: #d64530;
   --alarm-text: #d4402a;
+
+  /**
+   * The winning cell of the cost comparison, and nowhere else.
+   *
+   * docs/ui-guidelines.md, "Comparaison de coût": the tints are produced by
+   * laying the state colour over what is beneath at low opacity, never by a
+   * hardcoded opaque colour. So they are mixed from --ok here rather than
+   * typed, and they are declared here rather than in the component, which is
+   * what keeps a raw hex out of the markup.
+   *
+   * The literals below are the fallback, and the @supports block underneath is
+   * the real value. Both are needed and the guard has to be written out: the
+   * two-declarations-in-a-row idiom gets collapsed by the build's CSS
+   * minifier, which rewrites the discarded first value to the *unmixed*
+   * colour — a solid green field behind the amount rather than a wash, and
+   * 1,4:1 under text that is supposed to read.
+   *
+   * The literals are those mixes computed against --panel, so an engine
+   * without `color-mix` sees the same surface rather than a different design.
+   *
+   * This is a two-state emphasis on one figure, not a third colour code: the
+   * ban in that document is on a three-level code away from the gauge, and
+   * there are two cells here, one of them neutral.
+   */
+  --ok-wash: #ecf4ef;
+  --ok-wash-line: #a8ccb5;
+
+  /**
+   * The amount inside that cell.
+   *
+   * --ok-text clears 4,5:1 against the panel and only 4,13:1 against the wash,
+   * so it cannot be the figure that sits *on* the wash. Same hue, same
+   * saturation, lightness removed until it passes: 5,45:1 on the wash, 6,11:1
+   * on the panel.
+   */
+  --ok-deep: #2f6e45;
+
+  /**
+   * The map's own palette, and the one set on this page that never changes
+   * with the theme.
+   *
+   * The basemap is external raster tiles drawn by someone else, and they are
+   * light whatever this interface is doing. Markers drawn against them must be
+   * light-mode markers or they stop being legible: the route stations carry a
+   * --panel ring to lift them off the streets underneath, and in dark mode that
+   * ring would be painted #1b1d21 on a pale map — a dark halo, which is exactly
+   * backwards.
+   *
+   * So these are declared once, never overridden, and read by
+   * components/map-symbols.ts instead of the themed tokens. A dark panel over a
+   * light map is a deliberate arrangement and a common one; a dark panel over a
+   * light map with dark-mode markers on it is a bug.
+   */
+  --map-ink: #17171a;
+  --map-brand: #e0402b;
+  --map-panel: #ffffff;
+  --map-muted: #6e6e6b;
+  --map-line: #e4e4e0;
+
+  /**
+   * Hover and press, as a lay of the foreground colour rather than a surface.
+   *
+   * These controls used to hover to --paper, and that was wrong in both themes
+   * for two different reasons. --paper sits *below* --panel by design — it is
+   * the page behind the card — so in light mode it made a 44px slab of
+   * near-identical off-white (1,03:1 against the panel: a smudge, not a
+   * highlight), and in dark mode, where --paper is genuinely darker than
+   * --panel, it punched the button into a hole. A control that recedes when you
+   * point at it is backwards.
+   *
+   * A translucent lay of --ink fixes both at once and needs no per-theme
+   * thinking: --ink is dark on a light panel and light on a dark one, so the
+   * same recipe darkens in one theme and lightens in the other, always *toward*
+   * the reader. This is the state-layer idea Material names, and it is the only
+   * mechanism here that cannot invert when a palette does.
+   *
+   * The dark theme carries slightly more of it below, because the same delta
+   * reads weaker against a dark surface.
+   */
+  --state-hover: #f1f1f1;
+  --state-press: #e3e3e4;
+}
+
+/* The real thing, everywhere that can mix a colour — which is every engine
+   shipped since 2023. See the note on --ok-wash for why this is a separate
+   block rather than a second declaration beside the literal. */
+@supports (color: color-mix(in srgb, red 10%, transparent)) {
+  :root {
+    --ok-wash: color-mix(in srgb, var(--ok) 10%, transparent);
+    --ok-wash-line: color-mix(in srgb, var(--ok) 45%, transparent);
+    /* Translucent, so the same two values are correct over the panel, over the
+       page, and over a row that already carries a tint. The literals above are
+       those mixes flattened onto --panel, for engines that cannot mix. */
+    --state-hover: color-mix(in srgb, var(--ink) 6%, transparent);
+    --state-press: color-mix(in srgb, var(--ink) 12%, transparent);
+  }
+}
+
+/**
+ * The dark theme.
+ *
+ * docs/ui-guidelines.md defines one palette and says so ("One palette,
+ * deliberately"). This is a second, added on request, and it is a *derivation*
+ * rather than a new design: every token below is the same role at the same
+ * intent, re-anchored against a dark surface. Nothing here introduces a hue the
+ * light theme does not have, and the accent stays reserved for the same three
+ * uses.
+ *
+ * Set by the attribute alone, never by `prefers-color-scheme` on its own. The
+ * inline script in app/layout.tsx stamps `data-theme` before first paint from
+ * storage or, absent that, from the system preference — so the system is still
+ * honoured, but a reader who has chosen a theme keeps it even when it disagrees
+ * with the OS. Doing it in CSS with a media query as well would mean writing
+ * this block twice, and two copies of a palette is how the copies diverge.
+ *
+ * Every value below was checked against its own background rather than
+ * inherited from the light theme's ratios, because a ratio does not survive an
+ * inversion. Measured contrasts are noted per group.
+ */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  /*
+   * Never #000. The light theme refuses pure black for text and this refuses it
+   * for surfaces, for the same reason: a pure black panel against a pure black
+   * page has no edge, and on OLED the smear on scroll is worse than the ink
+   * saving is worth. Two greys, the panel lifted off the page.
+   */
+  --paper: #121316; /* page */
+  --panel: #1b1d21; /* panel surface, one step up */
+
+  --ink: #ececea; /* 14,3:1 on --panel */
+  --muted: #a3a39f; /* 6,7:1 on --panel, clears 4,5:1 at 12px */
+  --line: #2a2d32; /* 1,22:1 — as discreet as the light theme's 1,27:1 */
+  --edge: #43474e; /* 1,81:1 — matches the light theme's 1,89:1 */
+
+  /*
+   * The accent inverts its two text roles. --brand stays the vivid red because
+   * it is a non-text mark (the trace, the stop stations, an active control) and
+   * clears the 3:1 those owe at 3,97:1. --brand-deep is text, and a *darker*
+   * red on a dark panel is unreadable, so in this theme it is lighter: 6,2:1
+   * on --panel and 5,6:1 on --brand-soft.
+   */
+  --brand: #e0402b;
+  --brand-soft: #3a1d18;
+  --brand-deep: #f07a62;
+
+  /*
+   * The gauge. The three fills are unchanged — they are non-text marks and all
+   * three clear 3:1 against --panel (4,2 / 4,8 / 3,8). The three text twins are
+   * not: the light theme darkens them to pass on white, and the same values
+   * measure 3,7:1 here. Lightened until they pass, same hue, same saturation.
+   */
+  --ok: #3e8e5a;
+  --ok-text: #6fcb8e; /* 8,5:1 */
+  --warn: #c4771a;
+  --warn-text: #e8a54a; /* 8,0:1 */
+  --alarm: #d64530;
+  --alarm-text: #f58371; /* 6,7:1 */
+
+  /*
+   * The winning comparison cell. The wash is the same 10% lay of --ok, which
+   * over a dark panel resolves to a dark green-grey rather than a pale one, so
+   * the literals differ even though the recipe does not. --ok-deep is the
+   * lightened green again: 7,5:1 on the wash.
+   */
+  --ok-wash: #1f2827;
+  --ok-wash-line: #2b503b;
+  --ok-deep: #6fcb8e;
+
+  /* 8 and 14 rather than 6 and 12: the same delta reads weaker against a dark
+     surface, so it takes a little more of it to register as the same nudge. */
+  --state-hover: #2c2e31;
+  --state-press: #383a3d;
+}
+
+@supports (color: color-mix(in srgb, red 10%, transparent)) {
+  :root[data-theme="dark"] {
+    --ok-wash: color-mix(in srgb, var(--ok) 10%, transparent);
+    --ok-wash-line: color-mix(in srgb, var(--ok) 45%, transparent);
+    --state-hover: color-mix(in srgb, var(--ink) 8%, transparent);
+    --state-press: color-mix(in srgb, var(--ink) 14%, transparent);
+  }
 }
 
 @theme inline {
@@ -80,8 +263,13 @@
   --color-line: var(--line);
   --color-edge: var(--edge);
   --color-muted: var(--muted);
+  --color-state-hover: var(--state-hover);
+  --color-state-press: var(--state-press);
   --color-ok: var(--ok);
   --color-ok-text: var(--ok-text);
+  --color-ok-wash: var(--ok-wash);
+  --color-ok-wash-line: var(--ok-wash-line);
+  --color-ok-deep: var(--ok-deep);
   --color-warn: var(--warn);
   --color-warn-text: var(--warn-text);
   --color-alarm: var(--alarm);
@@ -104,6 +292,50 @@ body {
   font-family: var(--font-sans), system-ui, sans-serif;
 }
 
+@layer components {
+  /**
+   * Hover and press for every control that has no surface of its own.
+   *
+   * One class rather than three utilities repeated at ten call sites, because
+   * the thing being kept consistent is a *rhythm*: every control in this
+   * interface should take the same time to acknowledge a pointer, and a
+   * duration copied by hand is a duration that ends up at 100ms in one place
+   * and 300ms in another.
+   *
+   * 150ms and ease-out. Fast enough to feel like a response rather than an
+   * animation, and ease-out because the state is arriving.
+   *
+   * Press is a distinct step and not merely "hover, still". Without it a tap on
+   * a touch screen — which has no hover at all — gets no acknowledgement
+   * whatsoever between the finger landing and whatever the button does.
+   *
+   * `:not(:disabled)` on both: a control that lights up under the pointer and
+   * then does nothing is worse than one that stays inert and looks it.
+   */
+  .state-layer {
+    transition:
+      background-color 150ms ease-out,
+      color 150ms ease-out;
+  }
+
+  .state-layer:hover:not(:disabled) {
+    background-color: var(--state-hover);
+  }
+
+  .state-layer:active:not(:disabled) {
+    background-color: var(--state-press);
+  }
+
+  /* The colour still changes; only the animating of it stops. Removing the
+     feedback along with the motion would be reading the request as "show me
+     less", which is not what it says. */
+  @media (prefers-reduced-motion: reduce) {
+    .state-layer {
+      transition: none;
+    }
+  }
+}
+
 @layer base {
   /**
    * One focus ring, everywhere.
@@ -118,6 +350,53 @@ body {
   :focus-visible {
     outline: 2px solid var(--brand);
     outline-offset: 2px;
+  }
+
+  /**
+   * The panel's scrollbar, drawn rather than left to the platform.
+   *
+   * The panel scrolls in both rest positions and on desktop: a two-stop
+   * itinerary does not fit a 45dvh sheet, and it is not meant to — the summary
+   * answers the collapsed question and the trail is what goes below the fold.
+   * What was missing is any sign that it does. Every current platform default
+   * is an overlay scrollbar that fades out when the finger or pointer stops, so
+   * a reader arriving at a full panel sees a block of content that appears to
+   * end where the panel ends, and stops reading.
+   *
+   * So the bar is permanent and it has a colour. --edge is the token that
+   * exists precisely because --line was invisible against the panel; at 8px
+   * wide it reads as an affordance without becoming furniture.
+   *
+   * `scrollbar-gutter: stable` reserves the channel whether or not there is
+   * anything to scroll, so the trail does not jump sideways by 8px the moment
+   * a fifth step arrives.
+   *
+   * Both syntaxes are needed and neither is redundant: the standard properties
+   * are what Firefox reads, the -webkit- pseudo-elements are what Chrome and
+   * Safari read, and Safari in particular keeps its overlay bar unless the
+   * pseudo-element is styled.
+   */
+  .panel-scroll {
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scrollbar-color: var(--edge) transparent;
+  }
+
+  .panel-scroll::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .panel-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .panel-scroll::-webkit-scrollbar-thumb {
+    background: var(--edge);
+    border-radius: 4px;
+  }
+
+  .panel-scroll::-webkit-scrollbar-thumb:hover {
+    background: var(--muted);
   }
 
   /**

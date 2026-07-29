@@ -28,11 +28,11 @@ export const messages: Messages = {
 
   units: {
     underAMinute: "under a minute",
-    // "about" carries the same uncertainty "environ" does in French, and the
-    // unit symbols are invariable here too.
-    durationMinutes: "about {minutes} min",
-    durationHours: "about {hours} h",
-    durationHoursMinutes: "about {hours} h {minutes} min",
+    // The unit symbols are invariable here too. "about" is gone from all three,
+    // matching the French; see the note there on what that costs.
+    durationMinutes: "{minutes} min",
+    durationHours: "{hours} h",
+    durationHoursMinutes: "{hours} h {minutes}",
     metres: "{metres} m",
     kilometres: "{value} km",
   },
@@ -40,6 +40,8 @@ export const messages: Messages = {
   fields: {
     origin: "Start",
     destination: "Destination",
+    clearOrigin: "Clear the start",
+    clearDestination: "Clear the destination",
     placeholder: "Address, place, or latitude, longitude",
     myLocation: "My location",
     pickOnMap: "Pick on the map",
@@ -76,6 +78,11 @@ export const messages: Messages = {
       "Your location is unavailable. Type an address, or tap the map to place your start.",
   },
 
+  theme: {
+    toDark: "Switch to the dark theme",
+    toLight: "Switch to the light theme",
+  },
+
   panel: {
     label: "Trip planner",
     expand: "Show the full itinerary",
@@ -90,51 +97,27 @@ export const messages: Messages = {
       one: "{count} stop to stay inside the free window.",
       other: "{count} stops to stay inside the free window.",
     },
-    estimate: "Durations are estimates, not arrival times.",
-
     pricingPending: "Working out the cost.",
 
     withStops: "With the stops",
     withoutStops: "Without stopping",
-    saved: "You save",
 
     savesNothing: "These stops save you nothing: you can ride it in one go.",
 
     noStopNeeded: "No stop needed: this trip fits inside the free window.",
     noStopOverBefore: "No stop is possible here. You would pay",
     noStopOverAfter: "beyond the free window.",
-
-    assumptions:
-      "Mechanical bike, {window} included, then {rate} per minute. Before tax, unlock fees excluded.",
-
-    inOneGo: "in one go, {delta} than with the stops.",
-    faster: "{magnitude} less",
-    slower: "{magnitude} more",
-    sameTime: "about the same time",
   },
 
   trail: {
     label: "Itinerary",
     start: "Start",
     destination: "Destination",
-    anchor: "Dock the bike here and take another after {wait}",
-    anchorResets: "resets the free window",
-    walkTo: "Walk to {place}",
-    walkToDestination: "Walk to your destination",
-    walkFree: "does not use the free window",
-    rideTo: "Ride to {place}",
     unknownStation: "station {id}",
 
     pathTraced: "real route",
     pathApproximate: "approximate trace",
     pathPending: "tracing",
-
-    traceAllReal:
-      "On the map, the trace follows the streets and cycle paths you can actually ride.",
-    traceMixed:
-      "On the map, the dashed parts are approximate: they join two points in a straight line and follow no street.",
-    traceIsIndicative:
-      "On the map, the trace joins the stations in a straight line. It is indicative, not a cycling route.",
 
     corrected:
       "One segment ran past the free window once its real distance was known. This itinerary has been recalculated.",
@@ -143,8 +126,8 @@ export const messages: Messages = {
   },
 
   gauge: {
-    spoken: "about {minutes} min of free window left on arrival, {state}",
-    remaining: "about {minutes} min",
+    spoken: "{minutes} min of free window left on arrival, {state}",
+    remaining: "{minutes} min",
     onArrival: "left on arrival",
     states: {
       comfortable: "comfortable",
@@ -218,8 +201,6 @@ export const messages: Messages = {
 
   feed: {
     loading: "Loading stations",
-    stale:
-      "This data is {minutes} min old and may no longer match the stations.",
     freshness: "Stations read {age}",
     ageJustNow: "just now",
     ageMinutes: "{minutes} min ago",
@@ -332,4 +313,17 @@ export const intentionallyIdentical = [
   "units.metres",
   "units.kilometres",
   "trail.unknownStation",
+  /*
+   * Identical since "environ" and "about" were removed from the durations.
+   *
+   * What is left of those entries is a number and a unit symbol, and "min" and
+   * "h" are the same invariable symbols in both languages — there is nothing to
+   * translate. Declared rather than worked around: the coverage check exists to
+   * catch a forgotten translation, and an entry that is genuinely the same in
+   * both languages is exactly what this list is for.
+   */
+  "units.durationMinutes",
+  "units.durationHours",
+  "units.durationHoursMinutes",
+  "gauge.remaining",
 ] as const;

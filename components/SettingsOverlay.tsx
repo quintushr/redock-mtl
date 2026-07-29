@@ -241,7 +241,7 @@ function PurgePaths() {
       </span>
       <button
         type="button"
-        className="-mx-2 min-h-11 rounded-control px-2 text-xs underline hover:bg-paper disabled:text-muted disabled:no-underline disabled:hover:bg-transparent"
+        className="state-layer -mx-2 min-h-11 rounded-control px-2 text-xs underline disabled:text-muted disabled:no-underline"
         disabled={count === 0}
         onClick={purge}
       >
@@ -311,13 +311,19 @@ export default function SettingsOverlay({
         is underneath, still mounted and still scrolled where it was: this
         covers the answer, it does not discard it.
       */
-      className="absolute inset-0 z-10 overflow-y-auto overscroll-contain bg-panel px-4 pt-2 pb-4"
+      /*
+        Same drawn scrollbar as the trail underneath. Every parameter is
+        visible by mandate and none is behind a fold, which means this list is
+        always taller than the panel — so it is the one surface that must never
+        look like it ends where the panel does.
+      */
+      className="panel-scroll absolute inset-0 z-10 overflow-y-auto overscroll-contain bg-panel px-4 pt-2 pb-4"
     >
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-base font-medium">{t.settings.label}</h2>
         <button
           type="button"
-          className="-mr-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-control hover:bg-paper"
+          className="state-layer -mr-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-control text-muted enabled:hover:text-ink"
           aria-label={t.settings.close}
           title={t.settings.close}
           onClick={onClose}
@@ -348,7 +354,7 @@ export default function SettingsOverlay({
       <div className="mt-1 flex items-center justify-end border-t border-edge pt-2">
         <button
           type="button"
-          className="-mx-2 min-h-11 rounded-control px-2 text-xs underline hover:bg-paper disabled:text-muted disabled:no-underline disabled:hover:bg-transparent"
+          className="state-layer -mx-2 min-h-11 rounded-control px-2 text-xs underline disabled:text-muted disabled:no-underline"
           disabled={changed === 0}
           onClick={() => onChange(DEFAULT_PARAMETERS)}
         >

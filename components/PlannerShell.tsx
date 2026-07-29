@@ -3,10 +3,10 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import EmptyState from "@/components/EmptyState";
-import { FeedFailure, FeedStale } from "@/components/FeedNotice";
+import { FeedFailure } from "@/components/FeedNotice";
 import ItineraryTrail from "@/components/ItineraryTrail";
 import MapAttribution from "@/components/MapAttribution";
-import { SwapVertical } from "@/components/icons";
+import { Destination, Origin, SwapVertical } from "@/components/icons";
 import PanelFooter from "@/components/PanelFooter";
 import PlannerPanel from "@/components/PlannerPanel";
 import SettingsOverlay from "@/components/SettingsOverlay";
@@ -530,40 +530,89 @@ export default function PlannerShell() {
           (FR-146).
         */}
         <div className="divide-y divide-edge">
-          <div className="space-y-3 pb-4">
-            <SearchField
-              label={t.fields.origin}
-            kind="origin"
-              placeholder={t.fields.placeholder}
-              value={displayLabel(originText, t.fields.myLocation)}
-              point={origin}
-              bias={MONTREAL}
-              armed={picking === "origin"}
-              onValueChange={setOriginText}
-              onPick={(position, label) =>
-                pickFromSearch("origin", position, label)
-              }
-              onClear={() => clearEndpoint("origin")}
-              onArm={() => arm("origin")}
-            />
-
+          <div className="pb-3">
             {/*
-            On the seam between the two fields, which is where the gesture it
-            performs actually happens, and 44px square. It used to be a
-            full-width run of text off to one side, and it went inert without
-            ever saying why; the reason is now in its accessible name.
-          */}
-            <div className="flex justify-center">
+              One container, two rows, 78px in total (FR-146a, and the "Saisie
+              du départ et de la destination" section of
+              docs/ui-guidelines.md).
+
+              It was six stacked elements and about 180px: two headings, two
+              bordered fields, a full-width swap button between them and a hint.
+              Below 1024px that put the answer the panel exists to give past the
+              fold before a single station had been read. The arithmetic now:
+              1px border, a 38px row carrying its own 1px rule, a 38px row, 1px
+              border.
+
+              The rail is the labelling. A hollow ring is the start and a pin is
+              the destination, which is the same grammar the itinerary trail
+              uses further down, so it is learned once and read everywhere.
+            */}
+            <div className="flex rounded-control border border-edge bg-panel">
+              <div
+                className="relative flex w-7 shrink-0 flex-col items-center"
+                aria-hidden="true"
+              >
+                {/* Between the two marks and behind neither: the segment runs
+                    from one icon's edge to the other's, so it joins them
+                    rather than striking through them. */}
+                <span className="absolute top-[29px] bottom-[29px] w-[1.5px] bg-edge" />
+                <span className="flex h-[38px] items-center text-muted">
+                  <Origin />
+                </span>
+                <span className="flex h-[38px] items-center text-brand">
+                  <Destination />
+                </span>
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <div className="h-[38px] border-b border-edge">
+                  <SearchField
+                    label={t.fields.origin}
+                    clearLabel={t.fields.clearOrigin}
+                    placeholder={t.fields.placeholder}
+                    value={displayLabel(originText, t.fields.myLocation)}
+                    point={origin}
+                    bias={MONTREAL}
+                    armed={picking === "origin"}
+                    onValueChange={setOriginText}
+                    onPick={(position, label) =>
+                      pickFromSearch("origin", position, label)
+                    }
+                    onClear={() => clearEndpoint("origin")}
+                    onArm={() => arm("origin")}
+                  />
+                </div>
+
+                <div className="h-[38px]">
+                  <SearchField
+                    label={t.fields.destination}
+                    clearLabel={t.fields.clearDestination}
+                    placeholder={t.fields.placeholder}
+                    value={displayLabel(destinationText, t.fields.myLocation)}
+                    point={destination}
+                    bias={MONTREAL}
+                    armed={picking === "destination"}
+                    onValueChange={setDestinationText}
+                    onPick={(position, label) =>
+                      pickFromSearch("destination", position, label)
+                    }
+                    onClear={() => clearEndpoint("destination")}
+                    onArm={() => arm("destination")}
+                  />
+                </div>
+              </div>
+
+              {/*
+                On the right edge and astride both rows, which is where the
+                gesture it performs actually happens. 36px wide by the block's
+                full 76px, so it clears the touch minimum on its long axis even
+                though a row does not.
+              */}
               <button
                 type="button"
-                className="flex h-11 w-11 items-center justify-center rounded-control border border-edge hover:bg-paper disabled:text-muted"
+                className="state-layer flex w-9 shrink-0 items-center justify-center self-stretch rounded-r-[7px] border-l border-edge text-muted enabled:hover:text-ink disabled:opacity-40"
                 disabled={origin === null && destination === null}
                 aria-label={
-                  origin === null && destination === null
-                    ? t.fields.swapUnavailable
-                    : t.fields.swap
-                }
-                title={
                   origin === null && destination === null
                     ? t.fields.swapUnavailable
                     : t.fields.swap
@@ -574,30 +623,21 @@ export default function PlannerShell() {
               </button>
             </div>
 
-            <SearchField
-              label={t.fields.destination}
-            kind="destination"
-              placeholder={t.fields.placeholder}
-              value={displayLabel(destinationText, t.fields.myLocation)}
-              point={destination}
-              bias={MONTREAL}
-              armed={picking === "destination"}
-              onValueChange={setDestinationText}
-              onPick={(position, label) =>
-                pickFromSearch("destination", position, label)
-              }
-              onClear={() => clearEndpoint("destination")}
-              onArm={() => arm("destination")}
-            />
-
             {/*
             One line, and only when it has something to say. It used to be
             printed unconditionally, and stacked with the feed notice and the
             empty state into three grey paragraphs of equal weight where
             nothing told the reader what to do first.
+
+            The denial line is now tied to the start still being empty.
+            `geolocationDenied` never clears, so it used to keep offering "type
+            an address, or tap the map to place your start" above a start that
+            had been placed several minutes earlier — advice for something
+            already done, and two lines of it between the entry block and the
+            answer.
           */}
-            {(picking !== null || geolocationDenied) && (
-              <p className="text-xs text-muted">
+            {(picking !== null || (geolocationDenied && origin === null)) && (
+              <p className="mt-2 text-xs text-muted">
                 {picking === "origin"
                   ? t.map.hintPickingOrigin
                   : picking === "destination"
@@ -609,7 +649,7 @@ export default function PlannerShell() {
 
           {/* The result region. Nothing that sets a planning parameter may appear
             above this point (FR-101). */}
-          <div className="py-4">
+          <div className="pt-3 pb-4">
             {feed.state === "unavailable" ? (
               // Without stations there is no plan, so the feed failure *is* the
               // result. It belongs where the reader is already looking.
@@ -618,8 +658,6 @@ export default function PlannerShell() {
               <EmptyState freeWindow={parameters.freeWindow} />
             ) : plan.ok ? (
               <>
-                {/* A caveat on the answer, above the answer it qualifies. */}
-                <FeedStale status={feed} />
                 <TripSummary
                   itinerary={displayed ?? plan.itinerary}
                   noStop={noStop}
@@ -662,7 +700,7 @@ export default function PlannerShell() {
                     <li key={suggestion.kind}>
                       <button
                         type="button"
-                        className="min-h-11 rounded-control border border-edge px-3 text-xs hover:bg-paper"
+                        className="state-layer min-h-11 rounded-control border border-edge px-3 text-xs"
                         onClick={() =>
                           applySuggestion(
                             suggestion.kind,

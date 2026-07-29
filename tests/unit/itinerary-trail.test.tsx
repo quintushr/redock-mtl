@@ -146,8 +146,26 @@ describe("ItineraryTrail is one continuous list (FR-116, FR-117)", () => {
     // start, walk, ride, anchor, ride, walk, destination
     expect(text).toHaveLength(7);
     expect(text[3]).toMatch(/Station Bravo/);
-    expect(text[2]).toMatch(/Roule jusqu'à/);
-    expect(text[4]).toMatch(/Roule jusqu'à/);
+    // A row no longer opens with the verb; the rail's icon is the verb. What is
+    // left is where the row takes you, and the two rides say Bravo then
+    // Charlie.
+    expect(text[2]).toMatch(/Station Bravo/);
+    expect(text[4]).toMatch(/Station Charlie/);
+  });
+
+  /**
+   * "Une ligne du fil comporte au maximum: une icône, un nom, une durée."
+   *
+   * The rows used to open with a sentence and close with a second line of
+   * qualifiers. Nothing in the list is a sentence now: the longest thing on a
+   * row is a station name.
+   */
+  it("writes no sentence in any row", () => {
+    render(<ItineraryTrail itinerary={oneStop} stations={stations} params={params} />);
+    for (const item of screen.getAllByRole("listitem")) {
+      // The gauge's spoken name is an aria-label, not row text.
+      expect(item.textContent ?? "").not.toMatch(/\b(jusqu'à|Ancre|entame|remet)\b/);
+    }
   });
 
   it("names its stations rather than showing raw ids", () => {
@@ -165,21 +183,41 @@ describe("ItineraryTrail is one continuous list (FR-116, FR-117)", () => {
     render(<ItineraryTrail itinerary={noStop} stations={stations} params={params} />);
     // start, walk, ride, walk, destination
     expect(screen.getAllByRole("listitem")).toHaveLength(5);
-    expect(screen.queryByText(/Ancre le vélo ici/i)).toBeNull();
+    expect(screen.queryByText("Station Bravo")).toBeNull();
   });
 });
 
-describe("What does not spend the free window says so (FR-114)", () => {
-  it("labels every walking leg", () => {
+/**
+ * What used to be said, and is not any more (FR-114).
+ *
+ * "La marche n'entame pas la fenêtre gratuite" and "ancrer remet la fenêtre
+ * gratuite à zéro" were printed on every row they applied to, then moved into a
+ * legend under the list, then removed with the legend on request.
+ *
+ * These tests pin the *absence*, deliberately. Both facts are the mechanism the
+ * product rests on, so if either ever comes back it should come back on purpose
+ * and in one place, not by someone re-adding a qualifier to a row and starting
+ * the whole cycle again.
+ */
+describe("the free-window rules are stated nowhere (FR-114)", () => {
+  it("keeps them out of the rows", () => {
     render(<ItineraryTrail itinerary={oneStop} stations={stations} params={params} />);
-    expect(
-      screen.getAllByText(/n'entame pas la fenêtre gratuite/i).length,
-    ).toBeGreaterThanOrEqual(2);
+    expect(screen.getByRole("list").textContent).not.toMatch(
+      /fenêtre gratuite/i,
+    );
   });
 
-  it("says the docking wait resets the window rather than spending it", () => {
+  it("offers no legend to open", () => {
     render(<ItineraryTrail itinerary={oneStop} stations={stations} params={params} />);
-    expect(screen.getByText(/remet la fenêtre gratuite à zéro/i)).toBeTruthy();
+    expect(screen.queryAllByRole("button")).toHaveLength(0);
+  });
+
+  it("states them nowhere else in the trail either", () => {
+    const { container } = render(
+      <ItineraryTrail itinerary={oneStop} stations={stations} params={params} />,
+    );
+    expect(container.textContent).not.toMatch(/n'entame pas la fenêtre/i);
+    expect(container.textContent).not.toMatch(/remet la fenêtre gratuite/i);
   });
 });
 
@@ -196,10 +234,23 @@ describe("Estimate honesty (FR-113, FR-138, SC-010)", () => {
     expect(container.textContent).not.toMatch(/\b\d{1,2}:\d{2}\b/);
   });
 
-  it("words the total as an estimate and says so out loud", () => {
-    render(<TripSummary itinerary={oneStop} noStop={null} settled params={params} />);
-    expect(screen.getByText(/environ/i)).toBeTruthy();
-    expect(screen.getByText(/durées estimées/i)).toBeTruthy();
+  /**
+   * The total is still rounded and still cannot be a clock time, but it no
+   * longer says either thing out loud: "environ" and the standing "Durées
+   * estimées" line were both removed on request. This is what is left of
+   * FR-113 and principle IV in the summary — coarseness, and nothing else.
+   */
+  it("rounds the total rather than announcing a precise one", () => {
+    const { container } = render(
+      <TripSummary itinerary={oneStop} noStop={null} settled params={params} />,
+    );
+    const text = container.textContent ?? "";
+    expect(text).not.toMatch(/environ/i);
+    expect(text).not.toMatch(/durées estimées/i);
+    // The one-stop fixture totals a shade over 51 minutes; it is reported at a
+    // five-minute step, never at the minute.
+    // No trailing \b: textContent runs the total straight into the stop count.
+    expect(text).toMatch(/\b(50|55) min/);
   });
 });
 
@@ -257,6 +308,16 @@ describe("Remaining, never consumed (FR-108, FR-109, SC-005)", () => {
     }
   });
 
+  /**
+   * The bands, now that the figure is measured against the whole free window
+   * rather than against the usable budget.
+   *
+   * The 90%-of-budget ride is 36 minutes and leaves 9 on a 45 minute window, so
+   * it is neutral, not alarming. That is the point of the change: the planner
+   * will not build a segment that leaves a rider genuinely short, so a segment
+   * it built should not be dressed as an emergency. See the note in
+   * lib/remaining.ts.
+   */
   it("gives the tight ride and the comfortable one different accessible names", () => {
     render(
       <ItineraryTrail itinerary={oneStop} stations={stations} params={params} />,
@@ -265,17 +326,54 @@ describe("Remaining, never consumed (FR-108, FR-109, SC-005)", () => {
       .getAllByRole("img")
       .map((g) => g.getAttribute("aria-label"));
     expect(tight).not.toBe(comfortable);
-    // The 90%-of-budget ride leaves almost nothing; the 30% one leaves plenty.
-    expect(tight).toMatch(/risqué/i);
+    expect(tight).toMatch(/correct/i);
     expect(comfortable).toMatch(/confortable/i);
   });
 
-  it("carries the state in words, not only in colour (FR-112)", () => {
+  it("reserves the alarming band for a segment that actually overruns", () => {
+    // Only reachable when measured geometry pushed a ride past its budget and
+    // correction gave up. Under the old denominator every ride near its budget
+    // looked like this, which is what made the band mean nothing.
+    const overrun: Itinerary = {
+      ...oneStop,
+      steps: [ride("a", "b", params.freeWindow - 60)],
+      stopCount: 0,
+    };
     render(
+      <ItineraryTrail itinerary={overrun} stations={stations} params={params} />,
+    );
+    expect(screen.getByRole("img").getAttribute("aria-label")).toMatch(
+      /risqué/i,
+    );
+  });
+
+  /**
+   * FR-112 asks that the band never rest on colour alone. It used to be met by
+   * printing the adjective at the end of every gauge line, which is exactly
+   * what "Densité verbale" rules out: a state told in a word rather than shown.
+   *
+   * Three carriers now, none of them colour on its own: the figure in minutes,
+   * the bar's fill, and a mark on the alarming band. The adjective survives in
+   * the gauge's accessible name, for the reader who sees none of the three.
+   */
+  it("carries the state without colour and without an adjective (FR-112)", () => {
+    const { container } = render(
       <ItineraryTrail itinerary={oneStop} stations={stations} params={params} />,
     );
-    expect(screen.getByText(/risqué/i)).toBeTruthy();
-    expect(screen.getByText(/confortable/i)).toBeTruthy();
+
+    // Not drawn anywhere in the trail.
+    expect(container.textContent).not.toMatch(/risqué|confortable|correct/i);
+
+    // Still announced, and still telling the two rides apart.
+    const spoken = screen
+      .getAllByRole("img")
+      .map((gauge) => gauge.getAttribute("aria-label") ?? "");
+    expect(spoken.some((label) => /correct/i.test(label))).toBe(true);
+    expect(spoken.some((label) => /confortable/i.test(label))).toBe(true);
+
+    // And the alarming band carries a mark of its own, so the band is not the
+    // colour alone for a reader who can see the bar but not the hue.
+    expect(container.querySelectorAll("svg").length).toBeGreaterThan(0);
   });
 
   it("keeps a visible sliver when nothing is left, so an empty gauge is not a bug", () => {
@@ -291,7 +389,7 @@ describe("Remaining, never consumed (FR-108, FR-109, SC-005)", () => {
     expect(fill).toBeTruthy();
     expect(fill.style.width).not.toBe("0%");
     expect(screen.getByRole("img").getAttribute("aria-label")).toMatch(
-      /environ 0 min/i,
+      /^0 min/i,
     );
   });
 });

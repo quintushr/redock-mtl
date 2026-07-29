@@ -1,18 +1,22 @@
 "use client";
 
-import { useResolve, useStrings } from "@/components/LocaleProvider";
+import { useStrings } from "@/components/LocaleProvider";
 import { RETRYABLE_FEED_REASONS, type FeedStatus } from "@/lib/types";
 
 /**
- * What the station feed is doing, in the two pieces that qualify the result.
+ * What the station feed is doing, when it is the reason there is no plan.
  *
- * A feed that failed is the reason there is no plan, and a snapshot old enough
- * to be wrong is a caveat on the plan there is. Both belong in the result
- * region, where the reader is already looking. The ordinary age — the figure a
- * rider glances at rather than reacts to — is the panel footer's second row.
+ * A failed feed belongs in the result region, where the reader is already
+ * looking, because it *is* the result. Every failure gets a specific message;
+ * an empty screen or a raw error is forbidden (FR-030).
  *
- * Every failure gets a specific message. An empty screen or a raw error is
- * forbidden (FR-030).
+ * This module used to export a second notice, `FeedStale`, which qualified a
+ * working plan built on an ageing snapshot. It was removed on request. The
+ * snapshot's age is still reported, in the panel footer's second row where
+ * docs/ui-guidelines.md puts it — but it is now only ever the quiet figure a
+ * rider glances at, never a caveat attached to the plan itself. A rider reading
+ * an itinerary built on half-hour-old availability is no longer told so where
+ * they are looking.
  */
 
 /** The alert. Null unless the feed actually failed. */
@@ -37,34 +41,12 @@ export function FeedFailure({
       {retryable && (
         <button
           type="button"
-          className="mt-2 min-h-11 rounded-control border border-edge px-3 text-xs hover:bg-paper"
+          className="state-layer mt-2 min-h-11 rounded-control border border-edge px-3 text-xs"
           onClick={onRetry}
         >
           {t.feed.retry}
         </button>
       )}
     </div>
-  );
-}
-
-/**
- * How stale a working snapshot is, when it is stale enough to say so.
- *
- * The ordinary age lives in the panel footer's second row, where
- * docs/ui-guidelines.md puts it. This is the louder statement, and it stays in
- * the result region: a snapshot old enough to disagree with the stations
- * qualifies the answer rather than the interface, and a rider must not have to
- * look at a footer to learn that the plan they are reading may not hold.
- */
-export function FeedStale({ status }: { status: FeedStatus }) {
-  const say = useResolve();
-  const t = useStrings();
-  if (status.state !== "stale") return null;
-
-  // A stale plan clearly labelled beats no plan at all.
-  return (
-    <p role="status" className="mb-3 text-xs font-medium">
-      {say(t.feed.stale, { minutes: Math.round(status.age / 60) })}
-    </p>
   );
 }

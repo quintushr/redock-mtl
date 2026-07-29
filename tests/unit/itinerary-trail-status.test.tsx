@@ -144,26 +144,60 @@ describe("the status is available to assistive technology (FR-309)", () => {
   });
 });
 
-describe("no global claim that would be false for any part (FR-311)", () => {
-  it("claims the whole route is real only when every leg is", () => {
-    trail([traced, traced, traced]);
-    expect(screen.getByText(fr.trail.traceAllReal)).toBeTruthy();
+/**
+ * The global claim is gone (FR-311).
+ *
+ * A line under the list used to say which of three things the map's trace was:
+ * every leg measured, some legs measured, or none. It was removed on request,
+ * so FR-311's "no global claim may be false for any part" is now satisfied by
+ * there being no global claim at all.
+ *
+ * Pinned as an absence, and worth the two tests: the per-leg mark still reports
+ * status row by row, so it would be easy to conclude the map is covered. It is
+ * not. Nothing describes the line drawn over the map any more.
+ */
+describe("nothing claims anything about the map's trace", () => {
+  it("says nothing under the list, whatever was traced", () => {
+    const { container } = trail([traced, traced, traced]);
+    expect(container.textContent).not.toMatch(/sur la carte/i);
   });
 
-  it("says some parts are approximate when statuses are mixed", () => {
-    trail([traced, approximate, traced]);
-    expect(screen.getByText(fr.trail.traceMixed)).toBeTruthy();
-    expect(screen.queryByText(fr.trail.traceAllReal)).toBeNull();
+  it("says nothing under the list when nothing was traced either", () => {
+    const { container } = trail([approximate, approximate, approximate]);
+    expect(container.textContent).not.toMatch(/sur la carte/i);
+    expect(container.textContent).not.toMatch(/ligne droite/i);
+  });
+});
+
+/**
+ * The status is announced, never drawn as an adjective.
+ *
+ * docs/ui-guidelines.md: a segment's state is read off the gauge, its colour
+ * and a mark, never off a word at the end of a line. A leg whose path was not
+ * measured therefore carries the same discontinuity the map draws on it, and
+ * the word rides along for screen readers.
+ */
+describe("the status is a mark on screen and a word in the ear", () => {
+  it("draws no status adjective on any row", () => {
+    const { container } = trail([traced, approximate, pending]);
+    for (const row of screen.getAllByRole("listitem")) {
+      const drawn = Array.from(row.querySelectorAll("p"))
+        .map((p) => p.textContent)
+        .join(" ");
+      expect(drawn).not.toContain(fr.trail.pathApproximate);
+      expect(drawn).not.toContain(fr.trail.pathPending);
+      expect(drawn).not.toContain(fr.trail.pathTraced);
+    }
+    // The words are in the document all the same, out of sight.
+    expect(container.querySelectorAll(".sr-only").length).toBe(3);
   });
 
-  it("does not claim a real route when one leg is still pending", () => {
-    trail([traced, traced, pending]);
-    expect(screen.queryByText(fr.trail.traceAllReal)).toBeNull();
-  });
-
-  it("keeps the straight-line caveat when nothing is traced", () => {
-    trail([approximate, approximate, approximate]);
-    expect(screen.getByText(fr.trail.traceIsIndicative)).toBeTruthy();
+  it("marks the legs that were not measured, and only those", () => {
+    trail([traced, approximate, pending]);
+    const marked = screen
+      .getAllByRole("listitem")
+      .filter((row) => row.querySelector(".sr-only")?.parentElement?.querySelector("svg"));
+    expect(marked).toHaveLength(2);
   });
 });
 

@@ -21,13 +21,16 @@ import type { Metres, Seconds } from "./types";
  * because the separator, the currency position and the plural categories are
  * conventions of the language rather than of this codebase (FR-220).
  *
- * Every duration here is an estimate and is worded as one (FR-113, FR-223,
- * principle IV). Nothing in this module can produce a clock time.
+ * Every duration here is an estimate. It is no longer *worded* as one: the
+ * "environ"/"about" hedge FR-113, FR-223 and principle IV asked for was removed
+ * on request, so the rounding below is the only thing left keeping a figure from
+ * reading as a promise. Nothing in this module can produce a clock time.
  */
 
 /**
- * Rounds to a coarse figure and words it as an estimate. Never a precise minute
- * count, because a precise number reads as a promise.
+ * Rounds to a coarse figure. Never a precise minute count, because a precise
+ * number reads as a promise — and since the hedge was removed, the coarseness
+ * is the only thing saying so.
  *
  * Takes no descriptor: the three duration entries are plain strings, so nothing
  * here selects a plural category. If they ever become plural maps — and
@@ -49,6 +52,15 @@ export function approximateDuration(seconds: Seconds, t: Messages): string {
  * Words a whole number of minutes, choosing among the three shapes a duration
  * can take. The choice is arithmetic, so it is made here rather than inside
  * each language.
+ *
+ * The minutes are padded to two digits in the hours-and-minutes shape, and only
+ * there: an hour and five minutes is "1 h 05", never "1 h 5". That is the clock
+ * convention every transport timetable uses, and the unpadded form read as a
+ * typo. It is padding, not arithmetic on the value, and it belongs here for the
+ * same reason the hours/minutes split does — no language decides it differently,
+ * so no language should have to restate it (FR-207a).
+ *
+ * Not padded in the minutes-only shape: "05 min" would be wrong.
  */
 function wordDuration(totalMinutes: number, t: Messages): string {
   const hours = Math.floor(totalMinutes / 60);
@@ -62,16 +74,18 @@ function wordDuration(totalMinutes: number, t: Messages): string {
     return fill(t.units.durationHours, { hours });
   }
 
-  return fill(t.units.durationHoursMinutes, { hours, minutes });
+  return fill(t.units.durationHoursMinutes, {
+    hours,
+    minutes: String(minutes).padStart(2, "0"),
+  });
 }
 
 /**
- * The bare figure, for the gauge and the trail's right-hand column where the
- * word "about" is already carried by the surrounding sentence and repeating it
- * on every row would be noise.
+ * The bare figure, for the gauge, which words the unit itself.
  *
- * Still rounded, so it still cannot be read as a measurement. Language-free: a
- * number is a number, which is why this one keeps its signature.
+ * Still rounded on exactly the same rule as `approximateDuration`, so the two
+ * can never report different minutes for one duration. Language-free: a number
+ * is a number, which is why this one keeps its signature.
  */
 export function roundedMinutes(seconds: Seconds): number {
   const minutes = seconds / 60;
@@ -86,16 +100,15 @@ export function roundedMinutes(seconds: Seconds): number {
  * has is "is this stale", which "14:32" answers only after they check their own
  * clock and subtract.
  *
- * Floors to the minute, which is the conventional reading of "3 min ago". The
- * risk of understating age by under a minute is carried by `feed.stale`, which
- * is a separate and louder statement.
+ * Floors to the minute, which is the conventional reading of "3 min ago". That
+ * understates the age by under a minute, and nothing else compensates any more:
+ * the louder stale notice this used to lean on has been removed.
  *
- * Deliberately not routed through `approximateDuration`, and this is the whole
- * reason it is its own function: that one words a duration as "about 7 min",
- * because a travel time is an estimate and principle IV requires it to say so.
- * An age is not an estimate. The snapshot arrived at a known instant and it is
- * exactly that old. Hedging a measurement makes the hedge on the estimates mean
- * less, which is the opposite of what principle IV is for.
+ * Deliberately not routed through `approximateDuration`, and it stays its own
+ * function even now that neither hedges in words: that one rounds to five
+ * minutes past ten, because a travel time is an estimate. An age is not. The
+ * snapshot arrived at a known instant and it is exactly that old, so it is
+ * floored to the minute and reported as read.
  *
  * Pure, and outside the component that shows it, because the component has to
  * re-run this on a timer and a function called every thirty seconds is one that
@@ -110,7 +123,11 @@ export function relativeAge(ageSeconds: Seconds, t: Messages): string {
 
   if (hours === 0) return fill(t.feed.ageMinutes, { minutes });
   if (minutes === 0) return fill(t.feed.ageHours, { hours });
-  return fill(t.feed.ageHoursMinutes, { hours, minutes });
+  // Padded on the same clock convention as `wordDuration`: "il y a 1 h 05".
+  return fill(t.feed.ageHoursMinutes, {
+    hours,
+    minutes: String(minutes).padStart(2, "0"),
+  });
 }
 
 export function formatDistance(

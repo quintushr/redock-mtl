@@ -42,16 +42,32 @@ export default function PanelHeader() {
   const t = useStrings();
 
   return (
-    <div className="shrink-0 border-b border-edge px-4 py-1">
-      <div className="flex items-center justify-between gap-2">
-        <p className="flex items-baseline gap-1.5 text-sm">
+    <div className="shrink-0 border-b border-edge px-4 pt-2 pb-2.5">
+      <div className="flex items-center justify-between gap-3">
+        {/*
+          The wordmark at 16px rather than 14px. It is the one thing in the
+          panel that names the product, and it was set at body size next to a
+          44px control that outweighed it — so the eye landed on "FR / EN"
+          first. Sixteen is the "titres de section" step of the type scale, not
+          a new size.
+
+          The city drops to 12px muted in the same move. It was the same size
+          and weight as the product's name, which made two words of equal
+          loudness where one is a name and the other is a qualifier.
+        */}
+        <p className="flex min-w-0 items-baseline gap-1.5">
           <span
             aria-hidden="true"
-            className="h-[9px] w-[9px] shrink-0 translate-y-[1px] rounded-[3px] bg-brand"
+            className="h-[9px] w-[9px] shrink-0 translate-y-[-1px] rounded-[3px] bg-brand"
           />
-          <span className="font-medium text-brand-deep">{t.app.name}</span>
-          <span className="text-muted">{t.app.city}</span>
+          <span className="truncate text-base leading-none font-medium text-brand-deep">
+            {t.app.name}
+          </span>
+          <span className="truncate text-xs leading-none text-muted">
+            {t.app.city}
+          </span>
         </p>
+
         <LanguageToggle />
       </div>
 
@@ -59,8 +75,14 @@ export default function PanelHeader() {
         Full width, under both the wordmark and the toggle, so it has the whole
         panel to wrap into and competes with nothing for horizontal room.
         `text-balance` keeps a two-line wrap from leaving one orphan word.
+
+        `leading-snug` rather than the default: at 12px over two lines the
+        default leading opened a gap wide enough to read as a paragraph break
+        inside a single sentence.
       */}
-      <p className="pb-0.5 text-xs text-balance text-muted">{t.app.tagline}</p>
+      <p className="mt-1.5 text-xs leading-snug text-balance text-muted">
+        {t.app.tagline}
+      </p>
     </div>
   );
 }

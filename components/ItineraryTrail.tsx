@@ -1,8 +1,9 @@
 "use client";
 
-import { useLanguage, useResolve, useStrings } from "@/components/LocaleProvider";
+import { useResolve, useStrings } from "@/components/LocaleProvider";
 import RemainingGauge from "@/components/RemainingGauge";
-import { approximateDuration, formatDistance } from "@/lib/format";
+import { Anchor, Bike, Dashed, Destination, Origin, Walk } from "@/components/icons";
+import { approximateDuration } from "@/lib/format";
 import { gaugeFraction } from "@/lib/remaining";
 import type { Messages } from "@/components/LocaleProvider";
 import type {
@@ -30,6 +31,33 @@ import type {
  * The rail runs through both, which is what makes it read as one journey rather
  * than as two interleaved lists.
  *
+ * On density. A row is an icon, a name and a duration, and nothing else. The
+ * verb each row used to open with ("Marche jusqu'à", "Roule jusqu'à") is the
+ * icon now.
+ *
+ * The qualifiers that used to trail every row — "n'entame pas la fenêtre
+ * gratuite" on each walk, "remet la fenêtre gratuite à zéro" on each stop —
+ * went into a legend under the list, and the legend has since been removed on
+ * request. They are not stated anywhere any more. That is a real gap and not a
+ * tidy-up: those two facts are the mechanism the whole product rests on, and a
+ * first-time reader now has to infer from a missing gauge that walking is free,
+ * and from a wait with no explanation that docking is what buys the next free
+ * window. Nothing in this component or the summary tells them.
+ *
+ * A segment's state is read off the gauge, its colour, and a mark — never off
+ * an adjective at the end of a line. The trace status keeps its word for screen
+ * readers, which see neither the mark nor the map, and it is the only text on a
+ * row that is not drawn.
+ *
+ * The line under the list is gone too, removed on request. It said which of
+ * three things the map's trace was — every leg measured, some legs measured, or
+ * none — and it was the only thing that said so. What remains is the dashed
+ * mark on the rows themselves, which reports the same fact per leg but says
+ * nothing about the line drawn on the map. So a straight segment across the
+ * river now asserts a route nobody checked, and FR-311's requirement that no
+ * global claim be false for any part is met only by there no longer being a
+ * global claim.
+ *
  * There is no arrival time anywhere in this component, and adding one would
  * break FR-138 and constitution principle IV.
  */
@@ -52,10 +80,11 @@ type Entry =
 /**
  * The status word for one leg (FR-307, FR-308, FR-309).
  *
- * Rendered as text rather than as a colour or an icon, and placed in the flow
- * rather than in a title attribute, so a screen reader announces it with the
- * leg it belongs to. A rider who cannot see the dash pattern on the map has no
- * other way to know whether this part of their journey was checked.
+ * Not drawn. It is announced, beside the mark that carries the same claim
+ * visually, so a rider who cannot see the dashes is still told which parts of
+ * their journey were checked and which were guessed at. This is an accessible
+ * name, not a hover: nothing on this row reveals itself to a pointer, because
+ * most readers do not have one.
  */
 function statusWord(status: PathStatus, t: Messages): string {
   switch (status) {
@@ -110,176 +139,166 @@ function toEntries(
 }
 
 /**
- * The rail and, for a node, its marker.
+ * The rail, and the entry's icon sitting on it.
  *
- * Three shapes, so a node's role never depends on its position alone (FR-118):
- * a hollow dot with a neutral border is the start, a hollow dot with an accent
- * border is an anchor stop, a filled dot is the destination.
+ * One family, one 20px box, one stroke, whatever the row is: the ring you left
+ * from, the walk, the bike, the anchor, the pin you are going to. The rail is
+ * drawn behind and the icon is painted on the panel colour, so the line joins
+ * the marks rather than striking through them.
+ *
+ * The accent is on the anchor and nowhere else in this column. That is the one
+ * thing on the trail this product exists to tell you about, and
+ * docs/ui-guidelines.md reserves the accent for exactly this kind of use.
  */
-function Rail({
-  marker,
-  first,
-  last,
-}: {
-  marker: "start" | "anchor" | "destination" | null;
-  first: boolean;
-  last: boolean;
-}) {
+function Rail({ entry, last }: { entry: Entry; last: boolean }) {
+  const glyph = {
+    start: <Origin />,
+    walk: <Walk />,
+    ride: <Bike />,
+    anchor: <Anchor />,
+    destination: <Destination />,
+  }[entry.kind];
+
+  const tint =
+    entry.kind === "anchor"
+      ? "text-brand"
+      : entry.kind === "destination" || entry.kind === "start"
+        ? "text-ink"
+        : "text-muted";
+
   return (
-    <div className="relative flex w-4 shrink-0 justify-center" aria-hidden="true">
-      <span
-        className={[
-          "absolute w-[1.5px] bg-edge",
-          first ? "top-2 bottom-0" : last ? "top-0 h-2" : "inset-y-0",
-        ].join(" ")}
-      />
+    <div
+      // `items-start` is load-bearing. Stretched, the icon's span would be as
+      // tall as the row and its panel-coloured background would paint over the
+      // whole rail rather than the 20px it occupies — a trail with no line.
+      className="relative flex w-5 shrink-0 items-start justify-center"
+      aria-hidden="true"
+    >
       {/*
-      An anchor stop is the one thing on this trail the product exists to
-      tell you about, so it is the one marker that carries the accent and
-      the one that is larger than the rest: 13px against 9px. The shape
-      grammar of docs/ui-guidelines.md is otherwise unchanged, hollow at the
-      start, hollow with an accent ring at a stop, filled at the end.
+        Full height, and masked where the icon sits: the icon is at the top of
+        the row and carries the panel colour, so the segment above it never
+        shows and only the run down to the next row does. The last row draws no
+        line at all, because there is nothing below the destination to join.
       */}
-      {marker !== null && (
-        <span
-          className={[
-            "relative rounded-full",
-            marker === "anchor"
-              ? "mt-0.5 h-[13px] w-[13px] border-2 border-brand bg-panel"
-              : "mt-1 h-[9px] w-[9px]",
-            marker === "destination"
-              ? "bg-ink"
-              : marker === "start"
-                ? "border-[1.5px] border-muted bg-panel"
-                : "",
-          ].join(" ")}
-        />
-      )}
+      {!last && <span className="absolute inset-y-0 w-[1.5px] bg-edge" />}
+      <span className={`relative bg-panel ${tint}`}>{glyph}</span>
     </div>
   );
 }
 
+/**
+ * One row: an icon, a name, a duration.
+ *
+ * The duration column is monospace and right-aligned, so the figures form a
+ * column down the trail and can be compared without being read one by one.
+ */
 function EntryRow({
   entry,
-  first,
   last,
   stationName,
   params,
   t,
 }: {
   entry: Entry;
-  first: boolean;
   last: boolean;
   stationName: (id: string) => string;
   params: PlanningParameters;
   t: Messages;
 }) {
-  // Read here rather than threaded down as props: the store is the browser, not
-  // a React tree, so a hook reads the same value at any depth.
-  const say = useResolve();
-  const lang = useLanguage();
-
-  const marker =
-    entry.kind === "start" || entry.kind === "anchor" || entry.kind === "destination"
-      ? entry.kind
-      : null;
-
-  return (
-    <li className="flex gap-3">
-      <Rail marker={marker} first={first} last={last} />
-      <div className="min-w-0 flex-1 pb-4">{content()}</div>
-    </li>
-  );
-
-  function content() {
+  /**
+   * Where this row takes you, or null when the row below already says it.
+   *
+   * The last walk has no name. Its target is the destination, and the
+   * destination is the very next row with the pin on it; writing it twice, two
+   * lines apart, is the sort of repetition the density rule exists to stop. The
+   * walk icon and the duration are the whole of what that row has to add.
+   */
+  const name = (() => {
     switch (entry.kind) {
       case "start":
-        return <p className="text-sm font-medium">{t.trail.start}</p>;
-
+        return t.trail.start;
       case "destination":
-        return <p className="text-sm font-medium">{t.trail.destination}</p>;
-
+        return t.trail.destination;
       case "anchor":
-        return (
-          <>
-            <p className="text-sm font-medium">
-              {stationName(entry.stationId)}
-            </p>
-            <p className="text-xs text-muted">
-              {say(t.trail.anchor, {
-                wait: approximateDuration(entry.cooldown, t),
-              })}
-              {/* FR-114: the wait costs time but buys a fresh window. */}
-              <span className="ml-1">{t.trail.anchorResets}</span>
-            </p>
-          </>
-        );
-
+        return stationName(entry.stationId);
       case "walk":
-        // FR-114: walking never spends the free window, so it carries no gauge
-        // and says so rather than leaving the reader to infer it.
-        return (
-          <>
-            <p className="text-sm">
-              {entry.step.toStationId !== null
-                ? say(t.trail.walkTo, {
-                    place: stationName(entry.step.toStationId),
-                  })
-                : t.trail.walkToDestination}
-            </p>
-            <p className="text-xs text-muted">
-              {approximateDuration(entry.step.duration, t)} ·{" "}
-              {formatDistance(entry.step.distance, t, lang)}
-              <span className="ml-1">{t.trail.walkFree}</span>
-              {" · "}
-              <span>{statusWord(entry.status, t)}</span>
-            </p>
-          </>
-        );
-
+        return entry.step.toStationId === null
+          ? null
+          : stationName(entry.step.toStationId);
       case "ride":
-        // The only entry that carries a gauge, because riding is the only thing
-        // that spends the free window (FR-108, FR-114).
-        return (
-          <>
-            <p className="text-sm">
-              {say(t.trail.rideTo, {
-                place: stationName(entry.step.toStationId),
-              })}
-            </p>
-            <p className="text-xs text-muted">
-              {approximateDuration(entry.step.duration, t)} ·{" "}
-              {formatDistance(entry.step.distance, t, lang)}
-              {" · "}
-              <span>{statusWord(entry.status, t)}</span>
-            </p>
-            <RemainingGauge
-              remaining={entry.step.remaining}
-              status={entry.step.remainingStatus}
-              fraction={gaugeFraction(entry.step.remaining, params)}
-            />
-          </>
-        );
+        return stationName(entry.step.toStationId);
     }
-  }
-}
+  })();
 
-/**
- * The note under the list, chosen by what is actually traced (FR-311).
- *
- * One sentence for the whole itinerary would be false the moment one leg
- * differs from the rest, which is exactly the claim FR-311 forbids. So: every
- * leg traced gets the confident sentence, none traced keeps the old
- * straight-line caveat, and anything in between says that *some* parts are
- * approximate without pretending to say which. Which ones is on each leg.
- */
-function traceNote(geometry: StepGeometry[] | null, t: Messages): string {
-  if (geometry === null || geometry.length === 0) return t.trail.traceIsIndicative;
+  const duration = (() => {
+    switch (entry.kind) {
+      case "start":
+      case "destination":
+        return null;
+      case "anchor":
+        return approximateDuration(entry.cooldown, t);
+      case "walk":
+      case "ride":
+        return approximateDuration(entry.step.duration, t);
+    }
+  })();
 
-  const traced = geometry.filter((g) => g.status === "traced").length;
-  if (traced === 0) return t.trail.traceIsIndicative;
-  if (traced === geometry.length) return t.trail.traceAllReal;
-  return t.trail.traceMixed;
+  const status = entry.kind === "walk" || entry.kind === "ride" ? entry.status : null;
+
+  return (
+    <li className="flex gap-2">
+      <Rail entry={entry} last={last} />
+
+      <div className="min-w-0 flex-1 pb-3">
+        <div className="flex min-h-5 items-center gap-2">
+          {name === null ? (
+            <span className="flex-1" />
+          ) : (
+            <p
+              className={[
+                "min-w-0 flex-1 truncate text-sm",
+                entry.kind === "start" ||
+                entry.kind === "destination" ||
+                entry.kind === "anchor"
+                  ? "font-medium"
+                  : "",
+              ].join(" ")}
+            >
+              {name}
+            </p>
+          )}
+
+          {/*
+            A mark, not a word. It appears only on a leg whose path was not
+            measured, so an untroubled trail carries nothing here at all; the
+            word rides along for screen readers and is announced on every leg,
+            traced ones included, because "this one was checked" is the half a
+            rider most needs to hear.
+          */}
+          {status !== null && (
+            <span className="shrink-0 text-muted">
+              {status !== "traced" && <Dashed />}
+              <span className="sr-only">{statusWord(status, t)}</span>
+            </span>
+          )}
+
+          {duration !== null && (
+            <p className="shrink-0 font-mono text-xs text-muted">{duration}</p>
+          )}
+        </div>
+
+        {/* The only entry that carries a gauge, because riding is the only
+            thing that spends the free window (FR-108, FR-114). */}
+        {entry.kind === "ride" && (
+          <RemainingGauge
+            remaining={entry.step.remaining}
+            status={entry.step.remainingStatus}
+            fraction={gaugeFraction(entry.step.remaining, params)}
+          />
+        )}
+      </div>
+    </li>
+  );
 }
 
 export default function ItineraryTrail({
@@ -331,7 +350,6 @@ export default function ItineraryTrail({
           <EntryRow
             key={index}
             entry={entry}
-            first={index === 0}
             last={index === entries.length - 1}
             stationName={stationName}
             params={params}
@@ -339,13 +357,6 @@ export default function ItineraryTrail({
           />
         ))}
       </ol>
-
-      {/*
-        The caveat in words, next to the list it qualifies, because the map
-        cannot carry it: docs/ui-guidelines.md allows no second container over
-        the map, and a dashed line alone does not say why it is dashed.
-      */}
-      <p className="text-xs text-muted">{traceNote(geometry, t)}</p>
     </>
   );
 }

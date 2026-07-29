@@ -87,6 +87,16 @@ export interface MapTokens {
  * values have to be handed to it as literals. Reading them from :root keeps
  * app/globals.css the single source, and keeps this file from becoming a
  * second, silently diverging copy of the palette.
+ *
+ * The `--map-*` set, deliberately, and not the themed tokens these used to
+ * read. Those now change with the dark theme; the basemap does not, because it
+ * is external raster tiles drawn by someone else and they are light whatever
+ * this interface is doing. A route station carries a --panel ring to lift it
+ * off the streets underneath, and reading the themed token would paint that
+ * ring near-black on a pale map — a dark halo, which is exactly backwards.
+ *
+ * The fallbacks stay the light values for the same reason, and are reached only
+ * when the stylesheet has not applied.
  */
 export function readTokens(): MapTokens {
   const style = getComputedStyle(document.documentElement);
@@ -95,11 +105,11 @@ export function readTokens(): MapTokens {
     return value === "" ? fallback : value;
   };
   return {
-    ink: read("--ink", "#17171a"),
-    brand: read("--brand", "#e0402b"),
-    panel: read("--panel", "#ffffff"),
-    muted: read("--muted", "#6e6e6b"),
-    line: read("--line", "#e4e4e0"),
+    ink: read("--map-ink", "#17171a"),
+    brand: read("--map-brand", "#e0402b"),
+    panel: read("--map-panel", "#ffffff"),
+    muted: read("--map-muted", "#6e6e6b"),
+    line: read("--map-line", "#e4e4e0"),
   };
 }
 

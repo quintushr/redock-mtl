@@ -25,8 +25,8 @@ function setup(overrides: Partial<Parameters<typeof SearchField>[0]> = {}) {
   vi.stubGlobal("fetch", fetchSpy);
 
   const props = {
-    label: "Start",
-    kind: "origin" as const,
+    label: "Départ",
+    clearLabel: "Effacer le départ",
     placeholder: "Adresse",
     value: "",
     point: null,
@@ -94,10 +94,8 @@ describe("arming the map", () => {
   });
 
   /**
-   * There is no clear button any more: `type="search"` gives the field its
-   * own, and that one only empties the text. Emptying the text therefore has
-   * to clear the point too, or the pin stays on the map and the plan stays
-   * computed under a field that reads as empty.
+   * Typing the field empty has to clear the point too, or the pin stays on the
+   * map and the plan stays computed under a field that reads as empty.
    */
   it("clears the point when the field is emptied, not just the text", () => {
     const { rerender, onClear } = setup();
@@ -111,5 +109,48 @@ describe("arming the map", () => {
     const { onClear } = setup();
     fireEvent.change(screen.getByRole("combobox"), { target: { value: "" } });
     expect(onClear).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * The cross inside the row, which replaced a full-width "Effacer" button.
+ *
+ * docs/ui-guidelines.md, "Saisie du départ et de la destination": clearing is a
+ * discreet cross in the row, shown only when the row holds something, and never
+ * a text button. The name says which end it clears, because two identical
+ * crosses sit 38px apart.
+ */
+describe("clearing the row", () => {
+  it("shows no cross while the row is empty", () => {
+    setup();
+    expect(screen.queryByRole("button", { name: /effacer/i })).toBeNull();
+  });
+
+  it("shows a cross once the row holds something, and clears on press", () => {
+    const { onClear } = setup({ value: "45.5088, -73.5878", point: MONTREAL });
+
+    const cross = screen.getByRole("button", { name: /effacer le départ/i });
+    fireEvent.click(cross);
+    expect(onClear).toHaveBeenCalled();
+  });
+
+  it("offers no text button to clear with", () => {
+    setup({ value: "45.5088, -73.5878", point: MONTREAL });
+    for (const button of screen.getAllByRole("button")) {
+      expect(button.textContent).toBe("");
+    }
+  });
+});
+
+/**
+ * No visible label. The rail and the pin beside the rows carry that, which is
+ * what gets the block from about 180px to 78px; the name survives where a
+ * screen reader looks for it.
+ */
+describe("the row's naming", () => {
+  it("names the input without drawing a heading above it", () => {
+    setup();
+    expect(screen.getByRole("combobox", { name: "Départ" })).toBeTruthy();
+    expect(document.querySelector("label")).toBeNull();
   });
 });

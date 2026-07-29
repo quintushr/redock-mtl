@@ -33,7 +33,7 @@ const renderFooter = (
 ) => {
   const onToggleSettings = vi.fn();
   const onRefresh = vi.fn();
-  render(
+  const view = render(
     <PanelFooter
       parameters={parameters}
       settingsOpen={settingsOpen}
@@ -44,7 +44,7 @@ const renderFooter = (
       refreshWait={refreshWait}
     />,
   );
-  return { onToggleSettings, onRefresh };
+  return { onToggleSettings, onRefresh, view };
 };
 
 describe("row 1 is a button, never a disclosure list", () => {
@@ -141,7 +141,10 @@ describe("row 2 carries the refresh", () => {
 
   it("puts the refusal in row 2 rather than growing a third", () => {
     renderFooter(at(0), DEFAULT_PARAMETERS, false, 42);
-    expect(screen.getAllByRole("button")).toHaveLength(2);
+    // One live region, because the refusal replaces the age rather than
+    // joining it. Counting buttons no longer proves the row count: row 2 now
+    // carries the theme control beside the refresh. The structural assertion
+    // is in the describe below.
     expect(screen.getAllByRole("status")).toHaveLength(1);
   });
 
@@ -157,6 +160,48 @@ describe("nothing else may join the two rows", () => {
     // The credits moved back onto the map. A footer that grows a third line
     // pushes these two out of reach on the itineraries that need them most.
     expect(screen.queryByText(/openstreetmap/i)).toBeNull();
-    expect(screen.getAllByRole("button")).toHaveLength(2);
+  });
+
+  /**
+   * The rule docs/ui-guidelines.md actually states is about *rows*, not about
+   * controls: "Exactement deux rangées, dans cet ordre, et rien d'autre ne peut
+   * s'y ajouter."
+   *
+   * This used to be checked by counting buttons, which held only for as long as
+   * each row had exactly one. The theme control joined row 2 rather than
+   * becoming a row 3 — which is the only placement that satisfies both this
+   * rule and a request to put it at the very bottom — so the count is now three
+   * and the rule is still kept. Assert the structure instead.
+   */
+  it("is two rows, whatever the controls on them", () => {
+    const { view } = renderFooter();
+    const footer = view.container.firstElementChild;
+    expect(footer?.children).toHaveLength(2);
+  });
+
+  it("keeps the theme control on row 2, beside the refresh", () => {
+    const { view } = renderFooter();
+    const rowTwo = view.container.firstElementChild?.children[1] as HTMLElement;
+
+    const theme = screen.getByRole("button", { name: /thème/i });
+    const refresh = screen.getByRole("button", {
+      name: /actualiser les stations/i,
+    });
+
+    expect(rowTwo.contains(theme)).toBe(true);
+    expect(rowTwo.contains(refresh)).toBe(true);
+    // The refresh belongs to this row's own subject, so it stays last on it.
+    expect(
+      theme.compareDocumentPosition(refresh) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("names the theme control by the action it performs", () => {
+    // Icon-only, so the accessible name is the whole of what a screen reader
+    // gets. It must say what pressing does, not what the theme currently is.
+    renderFooter();
+    expect(
+      screen.getByRole("button", { name: /passer au thème sombre/i }),
+    ).toBeTruthy();
   });
 });

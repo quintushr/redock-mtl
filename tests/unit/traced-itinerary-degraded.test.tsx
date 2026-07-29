@@ -150,7 +150,9 @@ describe("the source is entirely unreachable", () => {
     // Start, two rides, one anchor, two walks, destination: the whole journey.
     expect(screen.getByText(fr.trail.start)).toBeTruthy();
     expect(screen.getByText(fr.trail.destination)).toBeTruthy();
-    expect(screen.getByText("Station Bravo")).toBeTruthy();
+    // Twice on purpose: the ride that arrives there, then the stop itself.
+    // That repetition is what FR-117 is for.
+    expect(screen.getAllByText("Station Bravo")).toHaveLength(2);
     expect(screen.getAllByRole("listitem").length).toBe(7);
   });
 
@@ -198,9 +200,15 @@ describe("the source is entirely unreachable", () => {
     expect(screen.getByText(fr.summary.noStopNeeded)).toBeTruthy();
   });
 
-  it("says every part is an approximation, and claims nothing more", () => {
+  it("claims no measured path anywhere when nothing was measured", () => {
+    /*
+     * This used to also assert the straight-line caveat under the list. That
+     * line was removed on request, so what remains is the half that can still
+     * be checked: no leg is described as traced. The rider is no longer told
+     * that the line on the map joins the stations in a straight line.
+     */
     const state = everythingFails();
-    render(
+    const { container } = render(
       <ItineraryTrail
         itinerary={state.traced.itinerary}
         geometry={state.traced.geometry}
@@ -209,10 +217,8 @@ describe("the source is entirely unreachable", () => {
       />,
     );
 
-    expect(screen.getByText(fr.trail.traceIsIndicative)).toBeTruthy();
-    expect(screen.queryByText(fr.trail.traceAllReal)).toBeNull();
-    expect(screen.queryByText(fr.trail.traceMixed)).toBeNull();
     expect(screen.queryByText(new RegExp(fr.trail.pathTraced))).toBeNull();
+    expect(container.textContent).not.toMatch(/sur la carte/i);
   });
 
   it("shows no raw error anywhere", () => {
