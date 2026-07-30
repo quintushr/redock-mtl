@@ -74,8 +74,26 @@ describe("1. the domain core does not know about I/O", () => {
   });
 });
 
-describe("2. only two modules under lib/ perform I/O", () => {
-  const allowed = new Set(["lib/feed-client.ts", "lib/routing.ts"]);
+describe("2. only three modules under lib/ perform I/O", () => {
+  /**
+   * The third entry is new and is the narrowest of the three.
+   *
+   * lib/runtime-config.ts reads one file from our own origin, `/config.json`, and
+   * it is what lets a self-hosted image be pointed at another provider without
+   * being rebuilt — a `NEXT_PUBLIC_` value is inlined at build time and cannot do
+   * it. It contacts no third party, holds no domain logic, and everything in it
+   * that decides anything is `parseRuntimeConfig`, which is pure and takes an
+   * unknown value.
+   *
+   * Widening this set is how the rule dies, so the bar is the same as for the
+   * other two: a module belongs here only if it exists to perform I/O and has
+   * pushed every judgement out into something testable without it.
+   */
+  const allowed = new Set([
+    "lib/feed-client.ts",
+    "lib/routing.ts",
+    "lib/runtime-config.ts",
+  ]);
 
   for (const file of LIB_FILES) {
     if (allowed.has(file)) continue;

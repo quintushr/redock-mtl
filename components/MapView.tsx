@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 // maplibre-gl 6 has no default export; it publishes named classes. `Map`
 // would shadow the global, so the package provides the MapLibreMap alias.
 import {
@@ -29,8 +29,8 @@ import {
   type MapTokens,
 } from "@/components/map-symbols";
 import StationCallout from "@/components/StationCallout";
-import { MAP_STYLE_URL } from "@/lib/endpoints";
 import { anchorPath } from "@/lib/route-geometry";
+import { configReady } from "@/lib/runtime-config";
 import { useStrings } from "@/components/LocaleProvider";
 import type { Itinerary, LatLon, Station, TracedItinerary } from "@/lib/types";
 
@@ -217,6 +217,33 @@ export default function MapView({
   const container = useRef<HTMLDivElement | null>(null);
   const map = useRef<MapLibreMap | null>(null);
   const ready = useRef(false);
+  /**
+   * The basemap style's address, once the configuration has been read.
+   *
+   * Null until then, and the map is not built until it is a string. It used to be
+   * a compiled-in constant; it is a deployment's choice now, so that somebody
+   * running the published image can point it at their own tile server without
+   * rebuilding it (lib/runtime-config.ts).
+   *
+   * State rather than a value awaited inside the creating effect below: that
+   * effect stays synchronous and keeps its early return, which is what lets the
+   * body of it remain exactly the code that was there before.
+   */
+  const [styleUrl, setStyleUrl] = useState<string | null>(null);
+  /**
+   * Whether the MapLibre instance exists yet, as state rather than as a ref.
+   *
+   * Every effect below begins by bailing out when `map.current` is null. That was
+   * free while the map was built synchronously on the first commit; now that it
+   * waits one fetch for the line above, a ref would let all of them bail once and
+   * never hear that the instance had appeared — stations already in hand would be
+   * written to a source that did not exist, which is to say not drawn.
+   *
+   * So it is in their dependency lists. All of them are idempotent, setting source
+   * data or writing a style property, so running a second time costs a redraw and
+   * changes nothing.
+   */
+  const [hasMap, setHasMap] = useState(false);
   const tokens = useRef<MapTokens | null>(null);
   /** The opening framing happens once, on the first stations that arrive. */
   const framed = useRef(false);
@@ -262,13 +289,33 @@ export default function MapView({
     ? null
     : (stations.find((candidate) => candidate.id === selected) ?? null);
 
-  // Create once. Never in render: at build time there is no browser.
+  /**
+   * The configuration, and from it the basemap's address.
+   *
+   * Its own effect, so the creating effect below stays synchronous. The request
+   * itself is already in flight before this runs: the document's head starts it
+   * before the bundle has parsed. See lib/runtime-config.ts.
+   */
   useEffect(() => {
-    if (container.current === null || map.current !== null) return;
+    let live = true;
+    void configReady().then(({ mapStyleUrl }) => {
+      if (live) setStyleUrl(mapStyleUrl);
+    });
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  // Create once, as soon as the style's address is known. Never in render: at
+  // build time there is no browser.
+  useEffect(() => {
+    if (styleUrl === null || container.current === null || map.current !== null) {
+      return;
+    }
 
     const instance = new MapLibreMap({
       container: container.current,
-      style: MAP_STYLE_URL,
+      style: styleUrl,
       center: [MONTREAL.lon, MONTREAL.lat],
       zoom: 12,
       /**
@@ -493,14 +540,16 @@ export default function MapView({
     });
 
     map.current = instance;
+    setHasMap(true);
 
     return () => {
       instance.remove();
       map.current = null;
       ready.current = false;
       markers.current = { origin: null, destination: null };
+      setHasMap(false);
     };
-  }, []);
+  }, [styleUrl]);
 
   // Start and destination pins, draggable so a point set roughly can be nudged
   // without retyping an address. Markers are DOM overlays, not layers, so they
@@ -545,7 +594,7 @@ export default function MapView({
 
     sync("origin", origin);
     sync("destination", destination);
-  }, [origin, destination]);
+  }, [origin, destination, hasMap]);
 
   /**
    * Keeps the pins' names in the reader's language.
@@ -571,7 +620,7 @@ export default function MapView({
       element.setAttribute("aria-label", endpointLabels.current[target]);
       element.title = endpointLabels.current[target];
     }
-  }, [strings]);
+  }, [strings, hasMap]);
 
   // Arming a point turns the whole map into a target, so the cursor says so.
   // On a touch screen there is no cursor to say it, which is why the panel
@@ -584,7 +633,7 @@ export default function MapView({
     if (map.current === null) return;
     arming.current = picking;
     applyCursor.current();
-  }, [picking]);
+  }, [picking, hasMap]);
 
   // The one place the camera is allowed to move on its own: the user asked for
   // a place by name, so showing them where it is answers the question they
@@ -616,7 +665,7 @@ export default function MapView({
       maxZoom: 15,
       duration: cameraDuration(),
     });
-  }, [focus]);
+  }, [focus, hasMap]);
 
   // Stations, shown before any input (FR-027).
   useEffect(() => {
@@ -679,7 +728,7 @@ export default function MapView({
     // `onRoute` is a dependency because a station joining or leaving the
     // itinerary changes whether its name is drawn below zoom 15. The opening
     // framing is guarded by a ref, so re-running this cannot move the camera.
-  }, [stations, onRoute]);
+  }, [stations, onRoute, hasMap]);
 
   /**
    * The station being pointed at, from the trail or from the map.
@@ -728,7 +777,7 @@ export default function MapView({
 
     if (ready.current) apply();
     else instance.once("load", apply);
-  }, [highlighted, stations]);
+  }, [highlighted, stations, hasMap]);
 
   /**
    * Keeps the callout over the station it belongs to.
@@ -758,7 +807,7 @@ export default function MapView({
     return () => {
       instance.off("move", place);
     };
-  }, [station]);
+  }, [station, hasMap]);
 
   // The itinerary. Note what this effect does not do: it never calls setCenter
   // or fitBounds on a parameter change, because that would discard the view the
@@ -873,7 +922,7 @@ export default function MapView({
     // `traced` is in the dependency list, so a path arriving redraws the route
     // source and nothing else. No camera call here, so centre and zoom survive
     // every arrival (FR-323).
-  }, [itinerary, traced, stations]);
+  }, [itinerary, traced, stations, hasMap]);
 
   return (
     <div

@@ -1,0 +1,7 @@
+{
+  "_comment": "Runtime configuration. Copy to config.json and mount it over /usr/share/nginx/html/config.json. See the Self-hosting section of README.md. Every key is optional: a key that is missing, blank, or not an absolute http(s) URL falls back to the value this build was compiled with, on its own, without disturbing the others. Unknown keys such as this one are ignored.",
+  "stationsFeedUrl": "https://gbfs.velobixi.com/gbfs/2-2/gbfs.json",
+  "routingBaseUrl": "https://brouter.de/brouter",
+  "geocoderUrl": "https://photon.komoot.io/api/",
+  "mapStyleUrl": "https://tiles.openfreemap.org/styles/positron"
+}

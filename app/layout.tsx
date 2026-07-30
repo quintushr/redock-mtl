@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { DocumentLanguage } from "@/components/LocaleProvider";
 import { THEME_SCRIPT } from "@/components/ThemeProvider";
 import { STATIC_METADATA } from "@/lib/i18n/static-metadata";
+import { CONFIG_SCRIPT } from "@/lib/runtime-config";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -51,6 +52,21 @@ export default function RootLayout({
           wrong colour, not a frame.
         */}
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+
+        {/*
+          Where the external services live, asked for before the bundle parses.
+
+          Nothing in this document renders differently because of it — the panel,
+          the tagline and the empty state depend on no URL — so this deliberately
+          does not block paint. What it does is make the answer already in hand by
+          the time the first request wants one.
+
+          No `<link rel="preload">` beside it, deliberately: the request is
+          `cache: "no-store"`, so a preloaded response could not be reused and the
+          hint would buy a second round trip rather than save one. See the note on
+          CONFIG_SCRIPT in lib/runtime-config.ts.
+        */}
+        <script dangerouslySetInnerHTML={{ __html: CONFIG_SCRIPT }} />
       </head>
       <body className="min-h-full flex flex-col">
         <DocumentLanguage>{children}</DocumentLanguage>

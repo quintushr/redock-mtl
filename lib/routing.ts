@@ -1,11 +1,11 @@
 import {
   MAX_REQUESTS_PER_USER_REQUEST,
   PATH_REQUEST_TIMEOUT_MS,
-  ROUTING_BASE_URL,
   ROUTING_PROFILES,
   ROUTING_TRACKNAME,
 } from "./endpoints";
 import { readStoredPath, writeStoredPath } from "./path-store";
+import { configReady } from "./runtime-config";
 import { isPlausiblePath, parseRoutePayload, pathKey } from "./route-geometry";
 import type { PathKey, RoutingRequest, TracedPath } from "./types";
 
@@ -70,8 +70,12 @@ export function remainingRequestBudget(): number {
  * `lonlats` is longitude first, which is the opposite of LatLon and the single
  * most likely way to get this feature wrong. Keeping the conversion here means
  * there is one line to check rather than several to audit.
+ *
+ * `base` is passed in rather than read from a module constant: the endpoint is a
+ * deployment's choice now (lib/runtime-config.ts), and the one caller is already
+ * in an async path where awaiting the configuration costs nothing.
  */
-function requestUrl(request: RoutingRequest): string {
+function requestUrl(request: RoutingRequest, base: string): string {
   const point = (p: { lat: number; lon: number }): string => `${p.lon},${p.lat}`;
   const query = new URLSearchParams({
     lonlats: `${point(request.from)}|${point(request.to)}`,
@@ -82,7 +86,7 @@ function requestUrl(request: RoutingRequest): string {
     // would be preflighted and the instance does not answer preflight.
     trackname: ROUTING_TRACKNAME,
   });
-  return `${ROUTING_BASE_URL}?${query.toString()}`;
+  return `${base}?${query.toString()}`;
 }
 
 /**
@@ -134,8 +138,26 @@ async function requestPath(
   const { signal: combined, done } = withTimeout(signal);
 
   try {
+    // The configured endpoint, read before the budget is spent so a request
+    // abandoned during that read costs nothing.
+    const { routingBaseUrl } = await configReady();
+
+    /*
+     * The caller may have moved on while the configuration was being read, and a
+     * plan is superseded several times in the first second of use.
+     *
+     * `fetch` rejects on its own when handed an already-aborted signal, so this
+     * is not what stops the request going out. What it stops is spending a unit
+     * of the ceiling on a request nobody is waiting for, and it keeps the
+     * "aborted means null" contract in this function rather than borrowing it
+     * from the platform.
+     */
+    if (combined.aborted) return null;
+
     requestsThisUserRequest += 1;
-    const response = await fetch(requestUrl(request), { signal: combined });
+    const response = await fetch(requestUrl(request, routingBaseUrl), {
+      signal: combined,
+    });
     if (!response.ok) return null;
 
     const payload: unknown = await response.json();

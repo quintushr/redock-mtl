@@ -2,6 +2,7 @@
   "name": "redock-mtl",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "scripts": {
     "predev": "node scripts/copy-maplibre-worker.mjs",
     "dev": "next dev",
@@ -10,6 +11,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
     "i18n:report": "node scripts/i18n-report.mjs"
   },
   "dependencies": {

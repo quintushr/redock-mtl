@@ -102,6 +102,21 @@ const eslintConfig = defineConfig([
     "tests/fixtures/**",
     // Copied verbatim out of node_modules by scripts/copy-maplibre-worker.mjs.
     "public/maplibre/**",
+    /*
+     * Agent tooling, not application source.
+     *
+     * These two trees hold CommonJS helper scripts and workflow definitions that
+     * came with the assistant configuration and the spec-kit templates. They are
+     * not built, not shipped, not imported by anything under app/, components/ or
+     * lib/, and they are written for Node rather than for this project's
+     * TypeScript rules — fifteen `require()` calls in them were the whole of what
+     * `npm run lint` reported, which meant the lint script had never once exited
+     * zero and could not be a CI gate. Linting them to this project's standard
+     * would mean rewriting vendored helpers to satisfy a rule that exists for the
+     * bundle they are not in.
+     */
+    ".claude/**",
+    ".specify/**",
   ]),
 ]);
 

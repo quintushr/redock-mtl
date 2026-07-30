@@ -5,8 +5,8 @@ import {
   GEOCODER_DEBOUNCE_MS,
   GEOCODER_MIN_QUERY_LENGTH,
   GEOCODER_RESULT_LIMIT,
-  GEOCODER_URL,
 } from "@/lib/endpoints";
+import { configReady } from "@/lib/runtime-config";
 import {
   formatCoordinates,
   parseCoordinates,
@@ -151,15 +151,22 @@ export default function SearchField({
       controller.current = abort;
       setSearching(true);
 
-      const url = new URL(GEOCODER_URL);
-      url.searchParams.set("q", trimmed);
-      url.searchParams.set("limit", String(GEOCODER_RESULT_LIMIT));
-      // Bias to the network's area so a short query is useful locally rather
-      // than returning the same street name from another continent.
-      url.searchParams.set("lat", String(bias.lat));
-      url.searchParams.set("lon", String(bias.lon));
-
-      fetch(url, { signal: abort.signal })
+      // The geocoder a deployment configured, which on the public one is the
+      // compiled-in default. Chained rather than awaited in an effect body: the
+      // configuration is in flight from the document's head, so this is a
+      // resolved promise in every realistic case and the debounce above is what
+      // actually paces the request.
+      configReady()
+        .then(({ geocoderUrl }) => {
+          const url = new URL(geocoderUrl);
+          url.searchParams.set("q", trimmed);
+          url.searchParams.set("limit", String(GEOCODER_RESULT_LIMIT));
+          // Bias to the network's area so a short query is useful locally rather
+          // than returning the same street name from another continent.
+          url.searchParams.set("lat", String(bias.lat));
+          url.searchParams.set("lon", String(bias.lon));
+          return fetch(url, { signal: abort.signal });
+        })
         .then((response) => {
           if (!response.ok) throw new Error(String(response.status));
           return response.json();

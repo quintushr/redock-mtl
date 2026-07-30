@@ -7,6 +7,17 @@
  *
  * All three providers are keyless. Adding one that needs an account or an API
  * key would violate constitution principle II.
+ *
+ * On the four service URLs and who reads them. They are the *defaults* now, not
+ * the values in force: lib/runtime-config.ts can replace any of them from a
+ * config.json fetched at start-up, which is what lets a self-hosted image be
+ * pointed at another provider without being rebuilt. They are gathered into
+ * DEFAULT_SERVICE_ENDPOINTS at the bottom of this file, and nothing outside
+ * runtime-config.ts should read them directly — a caller that does gets the
+ * default even when the reader configured something else, and nothing fails
+ * loudly enough for anyone to notice. Everything else here is a constant of this
+ * application rather than of its deployment (the ttl floor, the detour bounds,
+ * the request budget) and is imported straight from here as before.
  */
 
 // ---------------------------------------------------------------------------
@@ -27,7 +38,8 @@
  * - Every feed declares `ttl: 10` and `version: "2.2"`.
  * - Feeds are published per language under `/en/` and `/fr/`.
  */
-export const GBFS_DISCOVERY_URL = "https://gbfs.velobixi.com/gbfs/2-2/gbfs.json";
+const GBFS_DISCOVERY_URL_DEFAULT =
+  "https://gbfs.velobixi.com/gbfs/2-2/gbfs.json";
 
 /**
  * The feeds we consume, by their GBFS `name` in the discovery document. We
@@ -81,7 +93,7 @@ export const GBFS_FALLBACK_ATTRIBUTION = {
  * attribution automatically from the style document. The OpenFreeMap credit is
  * optional per the provider, and we render it anyway.
  */
-export const MAP_STYLE_URL = "https://tiles.openfreemap.org/styles/positron";
+const MAP_STYLE_URL_DEFAULT = "https://tiles.openfreemap.org/styles/positron";
 
 /**
  * The map credits, rendered by the panel rather than by MapLibre.
@@ -125,7 +137,7 @@ export const MAP_ATTRIBUTION = [
  * construction: FR-002's map-click and manual entry remain fully functional
  * when this endpoint is unreachable.
  */
-export const GEOCODER_URL = "https://photon.komoot.io/api/";
+const GEOCODER_URL_DEFAULT = "https://photon.komoot.io/api/";
 
 /** Milliseconds of quiet before a query is sent. */
 export const GEOCODER_DEBOUNCE_MS = 400;
@@ -192,7 +204,7 @@ function resolveRoutingBaseUrl(): string {
   }
 }
 
-export const ROUTING_BASE_URL = resolveRoutingBaseUrl();
+const ROUTING_BASE_URL_DEFAULT_RESOLVED = resolveRoutingBaseUrl();
 
 /**
  * Our vocabulary to the provider's. The domain speaks "bike" and "foot"; only
@@ -342,3 +354,34 @@ export const PATH_CACHE_MAX_ENTRIES = 500;
 
 /** Bump to discard every stored path. */
 export const PATH_CACHE_SCHEMA_VERSION = 1;
+
+// ---------------------------------------------------------------------------
+// The four addresses a deployment may change
+// ---------------------------------------------------------------------------
+
+/**
+ * What runs when there is no config.json, which includes the public deployment.
+ *
+ * Read by lib/runtime-config.ts and by nothing else. The reason for the single
+ * reader is stated at the top of this file: a component reading one of these
+ * directly would get the default even on a deployment that had configured
+ * something else, and would keep working, so nobody would find out.
+ *
+ * These are the *only* four. The rest of this file is arithmetic and policy —
+ * the refresh floor, the plausibility bounds, the request budget — and none of
+ * it is a deployment's business to move: a self-hoster pointing at their own
+ * BRouter still owes the same courtesy to it that we owe the public instance.
+ *
+ * `routingBaseUrl` keeps the build-time NEXT_PUBLIC_ROUTING_BASE_URL override as
+ * its default rather than dropping it. The two are not rivals and the order is
+ * deliberate: config.json beats the env var beats the literal. Someone building
+ * their own bundle can still bake in their instance, and someone running the
+ * published image can still override it without building anything, which is the
+ * case the env var never could serve.
+ */
+export const DEFAULT_SERVICE_ENDPOINTS = {
+  stationsFeedUrl: GBFS_DISCOVERY_URL_DEFAULT,
+  routingBaseUrl: ROUTING_BASE_URL_DEFAULT_RESOLVED,
+  geocoderUrl: GEOCODER_URL_DEFAULT,
+  mapStyleUrl: MAP_STYLE_URL_DEFAULT,
+} as const;

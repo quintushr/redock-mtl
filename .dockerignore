@@ -1,0 +1,40 @@
+# What never needs to reach the build context.
+#
+# Two reasons to care beyond speed. A context that carries node_modules ships one
+# platform's native builds into a multi-platform build, and `npm ci` in the image
+# would then be layered on top of them. And a context that carries .next or out
+# means a stale local build can be copied into an image that looks freshly built.
+
+node_modules
+.next
+out
+
+# Local tooling and history. None of it is input to the build.
+.git
+.gitignore
+.github
+.claude
+.specify
+specs
+docs
+tests
+*.log
+
+# The one that would defeat the whole point of this feature: a config.json a
+# maintainer wrote for their own machine, baked into a published image. The image
+# gets config.example.json, copied explicitly by the Dockerfile.
+config.json
+
+# Editor and OS noise.
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# Docs and metadata that change nothing about the output.
+README.md
+LICENSE
+AGENTS.md
+CLAUDE.md
+Dockerfile
+.dockerignore

@@ -2,33 +2,72 @@
 
 Frozen provider output. Tests read these and never touch the network.
 
-Everything below describes the GBFS set unless stated otherwise; the one
-non-GBFS file is `photon-housenumber.json`, documented at the end.
+Everything below describes the GBFS set unless stated otherwise; the non-GBFS
+files are `photon-housenumber.json` and the four `brouter-*.json`, documented at
+the end.
+
+## Provenance and licensing
+
+**None of this is ours, and none of it is MIT.**
+
+The repository's [LICENSE](../../LICENSE) is MIT and covers the code this project
+wrote. It does not and cannot cover the files in this directory: they are captured
+output from three third parties, committed verbatim so the suite can run offline.
+
+| Source | What came from it | Regime |
+|---|---|---|
+| The operator's GBFS feed (`Bixi_MTL`) | every `montreal-*.json`, `gbfs-discovery.json`, and the `empty-*` / `malformed-*` envelopes derived from them | The operator's. `system_information` publishes an empty `license_url`, so no licence is declared at source; treated as available for interoperability and used here only to test a parser |
+| Photon (komoot), over OpenStreetMap | `photon-housenumber.json` | OpenStreetMap data, **ODbL** |
+| BRouter, over OpenStreetMap | the four `brouter-*.json` | Engine MIT, geometry from OpenStreetMap, **ODbL** |
+
+Two things follow, and they are the reason this section exists rather than being
+assumed:
+
+1. **Do not treat these as example data you may relicense.** Copying a fixture
+   into another project carries its own regime with it, not this repository's.
+2. **The ODbL attribution obligation is on the running application, not on this
+   directory.** `components/MapAttribution.tsx` discharges it. Nothing in a test
+   fixture satisfies a credit that a reader has to be able to see.
+
+Recapture rather than hand-edit. Every quirk listed further down was found in live
+data, and a fixture edited by hand to make a test pass stops being evidence of
+anything.
 
 ## Files
 
 | File | Contents |
 |---|---|
-| `montreal-station-information.json` | 52 stations, trimmed from 1106 |
-| `montreal-station-status.json` | matching status rows for the same 52 |
+| `gbfs-discovery.json` | the discovery document, four feeds |
+| `montreal-station-information.json` | 100 stations, trimmed from 1106 at capture time |
+| `montreal-station-status.json` | matching status rows for the same 100 |
 | `montreal-vehicle-types.json` | full catalogue, 5 types |
 | `montreal-system-information.json` | full, unmodified |
 | `empty-station-information.json` | valid envelope, zero stations |
 | `empty-station-status.json` | valid envelope, zero stations |
 | `malformed-station-status.json` | a station row missing every required field |
+| `brouter-trekking.json` | one bike route, the `trekking` profile |
+| `brouter-hiking.json` | the same pair on `hiking-beta`, the foot profile |
+| `brouter-corridor.json` | a long route across the corridor the station set follows |
+| `brouter-malformed.json` | a well-formed envelope with nothing usable in it |
 
 ## What the trimmed set deliberately covers
 
-Selected from live data so the cases are real rather than invented:
+Selected from live data so the cases are real rather than invented. The counts
+below were recomputed from the committed files on 2026-07-30 and total 100; an
+earlier version of this table described a 52-station draft that no longer exists,
+and the corridor selection documented in the next section is what replaced it.
 
-- **45 healthy stations** sampled evenly west to east across the island, giving
-  enough spread to force a multi-segment trip.
-- **3 stations with free docks but zero mechanical bikes.** This is the case the
+- **93 healthy stations** holding at least one mechanical bike, forming the
+  corridor described below.
+- **2 stations with free docks but zero mechanical bikes.** This is the case the
   whole design turns on: usable as an intermediate stop (FR-011a), not usable as
   the first pickup (FR-011). 110 such stations existed at capture time.
 - **2 e-bike-only stations**, for FR-031's "no mechanical bike nearby, but
   e-bikes are present" message. 47 existed at capture time.
 - **3 non-operational stations**, for FR-013.
+
+To recount after a recapture, cross-reference `vehicle_types_available` against
+the type catalogue rather than reading `num_bikes_available`; quirk 3 below is why.
 
 ## Real-data quirks these fixtures preserve
 
@@ -81,6 +120,22 @@ The current selection is every healthy station within 700 m of a straight line
 across the island: 93 corridor stations with a 376 m median gap over 11.3 km.
 Dense enough that each hop fits one free window, long enough that a single window
 cannot cover the trip.
+
+## `brouter-*.json` (route geometry, not GBFS)
+
+**Captured**: 2026-07-28, from the public BRouter instance reached through
+`ROUTING_BASE_URL` in `lib/endpoints.ts`. The responses carry
+`creator: "BRouter-1.7.9"` and `name: "redock-mtl"`, the trackname the application
+sends so the operator can identify us in their logs.
+**Licence**: the engine is MIT; the geometry is derived from OpenStreetMap and is
+therefore **ODbL**. `components/MapAttribution.tsx` credits BRouter whenever a
+measured path is on screen, which is the obligation these files stand in for
+during tests.
+
+`trekking` and `hiking-beta` are the only two profiles the application asks for,
+and `lib/endpoints.ts` records why, with the measured speeds of the alternatives
+and the list of profile names that return HTTP 500 on that instance. Do not reach
+for one of those to fix a failure.
 
 ## `photon-housenumber.json` (geocoding, not GBFS)
 

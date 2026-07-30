@@ -1,0 +1,96 @@
+name: CI
+
+# Every proposed change, and both long-lived branches.
+#
+# `pull_request` covers the review gate; the two `push` entries cover what lands,
+# because a merge commit is not identical to the head it was tested from and a
+# direct push to either branch is possible.
+on:
+  pull_request:
+  push:
+    branches: [main, dev]
+
+# One run per ref. A second push supersedes the first rather than queueing behind
+# it, and nothing is lost: the newer commit is the one anybody cares about.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Lint, types, tests, build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          # Matches the build stage of the Dockerfile. Two Node versions in one
+          # project is how a build passes here and fails in the image.
+          node-version: "22"
+          cache: npm
+
+      # `npm ci` and never `npm install`: it installs exactly the lockfile and
+      # fails when the two disagree, so CI cannot pass against a dependency set
+      # that nobody committed.
+      - name: Install
+        run: npm ci
+
+      # The four gates, each its own step so a failure names itself in the run
+      # summary rather than hiding inside a compound command.
+      #
+      # They are run in this order on purpose: lint and typecheck are seconds and
+      # catch the largest share of mistakes, so a broken change fails before
+      # spending twenty seconds on the suite and a minute on the build.
+      - name: Lint
+        run: npm run lint
+
+      - name: Types
+        run: npm run typecheck
+
+      - name: Tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Build weight
+        run: |
+          # The threshold, in KiB, written out rather than computed.
+          #
+          # Measured at 5815 KiB on 2026-07-29 immediately after a clean build of
+          # commit 71348e9. 6400 is about 10% above that.
+          #
+          # Why it exists. This project's whole premise is that it costs nothing to
+          # operate and runs entirely in the browser (constitution principle I),
+          # and the thing that quietly destroys that is weight: a convenience
+          # dependency here, an inlined asset there, and the reader on a phone on
+          # mobile data is downloading six megabytes before they can be told where
+          # to dock a bike. Two thirds of the current figure is MapLibre, which is
+          # load-bearing and is not going anywhere; the headroom above is for
+          # ordinary feature work and is deliberately too small to absorb a new
+          # runtime dependency without somebody deciding to raise this number.
+          #
+          # Raising it is allowed. Raising it without saying why in the commit
+          # message is not: the number is the conversation, not the obstacle.
+          LIMIT_KIB=6400
+
+          # Actual file bytes, not `du`, whose answer depends on the filesystem's
+          # block size and so differs between a runner and a laptop. Paste this
+          # line locally after `npm run build` to get the same figure CI does.
+          SIZE_KIB=$(( $(find out -type f -printf '%s\n' | awk '{s+=$1} END {print s}') / 1024 ))
+
+          echo "Build output: ${SIZE_KIB} KiB (limit ${LIMIT_KIB} KiB)"
+
+          if [ "$SIZE_KIB" -gt "$LIMIT_KIB" ]; then
+            echo "::error::The build is ${SIZE_KIB} KiB, over the ${LIMIT_KIB} KiB limit."
+            echo "Ten largest files:"
+            find out -type f -printf '%s %p\n' | sort -rn | head -10 \
+              | awk '{ printf "  %8.0f KiB  %s\n", $1/1024, $2 }'
+            echo "Either shed the weight, or raise LIMIT_KIB in this workflow and say why."
+            exit 1
+          fi

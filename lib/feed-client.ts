@@ -1,10 +1,10 @@
 import {
-  GBFS_DISCOVERY_URL,
   GBFS_FALLBACK_ATTRIBUTION,
   MIN_REFRESH_INTERVAL_SECONDS,
   REQUIRED_GBFS_FEEDS,
 } from "./endpoints";
 import { parseStationSnapshot } from "./gbfs";
+import { configReady } from "./runtime-config";
 import type {
   FeedStatus,
   RefreshOutcome,
@@ -179,7 +179,12 @@ export async function loadStationSnapshot(
 
   inFlight = (async (): Promise<FeedStatus> => {
     try {
-      const discovery = await fetchJson(GBFS_DISCOVERY_URL, signal);
+      // The configured feed, not the compiled-in one. Awaited here rather than
+      // read from a constant so a self-hosted image pointed at another network's
+      // GBFS actually reaches it; on the public deployment there is no
+      // config.json and this resolves to the same URL it always was.
+      const { stationsFeedUrl } = await configReady();
+      const discovery = await fetchJson(stationsFeedUrl, signal);
       const urls = resolveFeedUrls(discovery);
       if (urls === null) {
         return { state: "unavailable", reason: "malformed" };
