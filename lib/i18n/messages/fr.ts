@@ -137,6 +137,46 @@ export const messages = {
   },
 
   /**
+   * La pastille qui s'ouvre sur une station de la carte.
+   *
+   * Elle existe parce que les marqueurs portent la disponibilité dans la
+   * longueur d'un anneau, ce qui est la bonne densité pour plusieurs centaines
+   * de points et ne répond pas à « celle-là, elle a des vélos ? ». Sur pointeur
+   * fin le survol donne le nom; le reste demande un appui, parce que le plancher
+   * de qualité interdit qu'une information n'existe qu'au survol.
+   */
+  station: {
+    /** Nom accessible de la pastille. {name} est le nom de la station. */
+    details: "Station {name}",
+    close: "Fermer la fiche de station",
+    /**
+     * Les deux moitiés de la disponibilité, qui ne répondent pas à la même
+     * question : les vélos décident si on peut partir d'ici, les ancrages si on
+     * peut y arriver.
+     *
+     * Mécaniques uniquement, comme les marqueurs : la fenêtre gratuite ne
+     * s'applique pas aux vélos électriques.
+     *
+     * Le français met zéro dans la catégorie « one », donc « 0 vélo mécanique »
+     * sort correctement de ces deux entrées sans qu'il faille une troisième.
+     */
+    bikes: {
+      one: "{count} vélo mécanique",
+      other: "{count} vélos mécaniques",
+    },
+    docks: {
+      one: "{count} ancrage libre",
+      other: "{count} ancrages libres",
+    },
+    /**
+     * Voix active, et le trajet plutôt que le champ : « Partir d'ici » dit ce
+     * que ça fait, « Définir comme départ » dit comment c'est implémenté.
+     */
+    useAsOrigin: "Partir d'ici",
+    useAsDestination: "Aller ici",
+  },
+
+  /**
    * Le thème, dans la rangée 2 du pied de panneau.
    *
    * Les deux entrées nomment l'action, pas l'état : le bouton est une icône
@@ -224,6 +264,20 @@ export const messages = {
     start: "Départ",
     destination: "Destination",
     unknownStation: "station {id}",
+
+    /**
+     * Le nom accessible d'une rangée qui porte une station (FR-118).
+     *
+     * La rangée est un bouton : la survoler ou la focaliser cerne la station sur
+     * la carte, l'activer y recentre la vue. Le nom visible reste le nom de la
+     * station seul; celui-ci dit ce que l'activation fait et contient le nom
+     * visible, ce qu'exige « Label in Name » pour la commande vocale.
+     *
+     * « Centrer » et non « Localiser » : la voix active demande que le contrôle
+     * annonce ce qu'il fait, et ce qu'il fait est déplacer le centre de la carte
+     * sans toucher au zoom.
+     */
+    centreOnMap: "Centrer la carte sur {name}",
 
     /**
      * Per-étape, jamais pour l'itinéraire entier (FR-307, FR-311).

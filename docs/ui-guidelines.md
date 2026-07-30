@@ -26,7 +26,8 @@ ni traitée comme une tuile parmi d'autres.
 
 Un panneau unique se superpose à la carte et contient l'intégralité de
 l'interface : saisie, résumé, itinéraire, réglages. Aucun autre conteneur
-flottant n'est autorisé.
+flottant **permanent** n'est autorisé. La seule exception est la pastille de
+station, décrite plus bas, qui n'existe que le temps d'un appui.
 
 | Contexte | Ancrage du panneau |
 |---|---|
@@ -118,6 +119,24 @@ l'arrivée — pas des annotations sur la carte.
 - Pastille pleine : destination
 - Les temps de marche sont en texte secondaire, sans jauge, puisqu'ils ne
   consomment pas la fenêtre gratuite
+
+*Amendé le 2026-07-29.* Un nom de station peut occuper **deux lignes**, puis
+ellipse au-delà. Il était tronqué sur une seule ligne, ce qui à 380px — 360px au
+plus étroit que couvre le plancher de qualité — réduisait les plus longs noms du
+réseau à un préfixe suivi de points de suspension. Un préfixe n'est pas une
+station qu'on retrouve dans la rue. La correction n'est pas une infobulle, c'est
+l'absence de troncature : une infobulle n'existe que pour qui a un pointeur.
+
+La durée reste alignée en haut à droite et ne bouge pas quand le nom passe sur
+deux lignes : la rangée est alignée sur son haut, et la durée reçoit la même
+hauteur de ligne que le nom pour que leurs premières lignes se centrent
+ensemble. Un attribut `title` porte le nom complet **en complément** de ces deux
+lignes, jamais à leur place, pour le cas résiduel où l'ellipse coupe malgré tout
+— le plus long nom du réseau fait 73 caractères et n'y tient pas à 360px.
+
+Ceci ne rouvre pas « Densité verbale » : une rangée porte toujours au maximum une
+icône, un nom et une durée. C'est le nom qui a le droit de faire deux lignes, pas
+la rangée d'accueillir une quatrième chose.
 
 Sous le fil, une action permet d'afficher le même trajet **sans aucun arrêt**,
 avec le montant qui serait facturé. C'est la démonstration la plus directe de la
@@ -276,6 +295,68 @@ détruirait la lisibilité et entrerait en conflit avec l'accent.
 
 Aucune épingle. Aucun code à trois couleurs. Aucune grappe colorée.
 
+### Noms de stations
+
+*Ajouté le 2026-07-29.* Un marqueur sans nom pose une question à laquelle il ne
+répond pas. L'anneau dit combien, il ne dit jamais laquelle, et « laquelle » est
+la seule chose qu'un lecteur peut comparer à un panneau dans la rue.
+
+Trois mécanismes, et il en faut trois parce qu'aucun ne couvre les cas des
+autres.
+
+| Mécanisme | Ce qu'il donne | Quand |
+|---|---|---|
+| Étiquette permanente | Le nom, en texte secondaire de 11px, halo à la couleur du panneau | À partir du zoom 15 |
+| Étiquette d'itinéraire | Le nom, en texte principal | À tout zoom, priorité de collision sur les autres |
+| Pastille | Le nom, les vélos mécaniques, les ancrages libres, deux actions | Sur appui ou clic |
+
+La collision est activée et c'est le mécanisme, pas une limite : plusieurs
+centaines de noms à 11px se recouvrent, la bibliothèque cartographique écarte
+ceux qui ne tiennent pas, et le lecteur en obtient davantage en zoomant. Les
+stations de l'itinéraire passent devant les autres par clé de tri, jamais par une
+seconde couche sans collision : un nom écarté vaut mieux que deux noms imprimés
+l'un sur l'autre.
+
+Le survol sur pointeur fin donne le nom et rien de plus. Tout le reste demande un
+appui, parce que la majorité des lecteurs n'a pas de pointeur et que le plancher
+de qualité interdit qu'une information n'existe qu'au survol.
+
+### Pastille de station
+
+*Ajouté le 2026-07-29.* La règle « aucun autre conteneur flottant » vise le
+mobilier **permanent** : la bannière d'armement et la légende de disponibilité
+s'étaient installées au-dessus de la carte et y restaient. La pastille est d'une
+autre nature et l'exception s'arrête à elle : elle est appelée par un appui sur
+une station précise, ancrée à cette station, et refermée par l'appui suivant
+ailleurs ou par Échap.
+
+Elle porte le nom, les vélos mécaniques, les ancrages libres, et les deux seules
+actions qui évitent de la refermer pour recommencer ailleurs : « Partir d'ici » et
+« Aller ici ». Traitement du panneau : bordure de 1px, surface opaque, aucune
+ombre, aucune pointe. Rien d'autre ne peut la rejoindre, et aucun second
+conteneur flottant ne peut s'autoriser de ce précédent.
+
+L'appui sur un marqueur ne place jamais d'extrémité de trajet : lire une station
+et y poser son départ sont deux gestes, et les confondre pose un point sous le
+doigt de qui venait lire.
+
+### Mise en évidence croisée
+
+*Ajouté le 2026-07-29.* Survoler ou focaliser une étape du fil cerne la station
+correspondante sur la carte, et pointer une station sur la carte marque son étape
+dans le fil.
+
+Sur la carte, la mise en évidence est un **diamètre** : un anneau creux plus
+large que tout autre marqueur. Pas une teinte — l'accent est réservé à trois
+usages et « l'étape que tu pointes » n'en est pas un, et il n'existe pas de
+quatrième couleur à prendre. Dans le fil, c'est le voile d'état, celui que tout
+contrôle de cette interface utilise pour accuser réception d'un pointeur.
+
+Une étape du fil est un bouton. C'est le seul chemin qu'un clavier a vers les
+stations dessinées sur la carte, et l'activer recentre la carte sur la station
+**sans toucher au zoom** : le lecteur a demandé où elle est, pas qu'on l'en
+rapproche.
+
 ---
 
 ## Pied de panneau
@@ -401,5 +482,8 @@ Non négociable, jamais annoncé dans l'interface.
 - Des ombres portées, des dégradés, une troisième graisse typographique
 - Une bibliothèque de composants tierce
 - Un affichage du temps consommé plutôt que du temps restant
+- Un conteneur flottant permanent au-dessus de la carte, autre que le panneau
+- Une information qui n'existe qu'au survol
+- Un nom de station tronqué sur une seule ligne dans le fil d'itinéraire
 
 

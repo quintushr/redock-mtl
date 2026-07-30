@@ -207,9 +207,40 @@ describe("the free-window rules are stated nowhere (FR-114)", () => {
     );
   });
 
+  /**
+   * There are buttons in the trail now — every row carrying a station is one,
+   * because that is the keyboard's only path to the map's stations. So this
+   * checks what it always meant to check rather than counting buttons: nothing
+   * in the trail discloses anything. A legend, a fold, an "explain this" is a
+   * control with an expanded state, and there is none.
+   */
   it("offers no legend to open", () => {
     render(<ItineraryTrail itinerary={oneStop} stations={stations} params={params} />);
-    expect(screen.queryAllByRole("button")).toHaveLength(0);
+    for (const control of screen.queryAllByRole("button")) {
+      expect(control.getAttribute("aria-expanded")).toBeNull();
+      expect(control.getAttribute("aria-controls")).toBeNull();
+    }
+  });
+
+  /**
+   * The rows that are buttons, and the rows that are not.
+   *
+   * The start and the destination are places the reader named; the last walk's
+   * target is the destination, which the next row already names. None of the
+   * three is a station on the map, so none of them can centre the map on one.
+   */
+  it("makes a control of every row that names a station, and of no other", () => {
+    render(<ItineraryTrail itinerary={oneStop} stations={stations} params={params} />);
+    // Walk to Alpha, ride to Bravo, anchor at Bravo, ride to Charlie.
+    expect(screen.queryAllByRole("button")).toHaveLength(4);
+    expect(
+      screen.queryAllByRole("button").map((control) => control.textContent),
+    ).toEqual([
+      "Station Alpha",
+      "Station Bravo",
+      "Station Bravo",
+      "Station Charlie",
+    ]);
   });
 
   it("states them nowhere else in the trail either", () => {

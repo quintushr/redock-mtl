@@ -78,6 +78,27 @@ type Entry =
     };
 
 /**
+ * The station a row is about, or null when the row is not about one.
+ *
+ * The start and the destination are places the reader named, not stations, and
+ * the last walk's target is the destination. Everything else lands on a station
+ * that exists on the map, and those are the rows that become reachable.
+ */
+function entryStationId(entry: Entry): string | null {
+  switch (entry.kind) {
+    case "start":
+    case "destination":
+      return null;
+    case "anchor":
+      return entry.stationId;
+    case "walk":
+      return entry.step.toStationId;
+    case "ride":
+      return entry.step.toStationId;
+  }
+}
+
+/**
  * The status word for one leg (FR-307, FR-308, FR-309).
  *
  * Not drawn. It is announced, beside the mark that carries the same claim
@@ -198,12 +219,20 @@ function EntryRow({
   stationName,
   params,
   t,
+  say,
+  highlighted,
+  onHighlight,
+  onSelect,
 }: {
   entry: Entry;
   last: boolean;
   stationName: (id: string) => string;
   params: PlanningParameters;
   t: Messages;
+  say: ReturnType<typeof useResolve>;
+  highlighted: string | null;
+  onHighlight: (stationId: string | null) => void;
+  onSelect: (stationId: string) => void;
 }) {
   /**
    * Where this row takes you, or null when the row below already says it.
@@ -245,27 +274,100 @@ function EntryRow({
 
   const status = entry.kind === "walk" || entry.kind === "ride" ? entry.status : null;
 
+  const stationId = entryStationId(entry);
+
+  /**
+   * How a name is set, in one place, so the paragraph and the button cannot
+   * drift apart.
+   *
+   * `line-clamp-2` and not `truncate`, which is the change this row exists for.
+   * A single truncated line turned "Métro Champ-de-Mars (Viger / Sanguinet)"
+   * into "Métro Champ-de-Ma…", which is not a station a rider can find, and the
+   * panel is 380px wide on desktop and 360px at its narrowest — a width that
+   * ellipsis was never going to survive. Two lines fit every name in the
+   * network; the clamp is what stops a pathological one pushing the gauge down
+   * the panel, and `title` below is the residue for that case.
+   *
+   * `[overflow-wrap:anywhere]` rather than plain wrapping: several Montreal
+   * stations are one unbroken hyphenated token longer than the column, and a
+   * word that cannot break does not wrap, it overflows.
+   *
+   * `leading-5` on both this and the duration is what keeps the duration where
+   * it was. The row is aligned to the top now, so a name on two lines grows
+   * downward; giving the 12px duration the same 20px line box as the 14px name
+   * makes their first lines share a centre, so the figure does not creep upward
+   * by 2px on the rows that wrap.
+   */
+  const nameClass = [
+    "min-w-0 flex-1 text-sm leading-5 line-clamp-2 [overflow-wrap:anywhere]",
+    entry.kind === "start" ||
+    entry.kind === "destination" ||
+    entry.kind === "anchor"
+      ? "font-medium"
+      : "",
+  ].join(" ");
+
   return (
     <li className="flex gap-2">
       <Rail entry={entry} last={last} />
 
       <div className="min-w-0 flex-1 pb-3">
-        <div className="flex min-h-5 items-center gap-2">
+        {/*
+          `items-start` and no longer `items-center`: centring a two-line name
+          against a one-line duration is what would move the duration.
+        */}
+        <div className="flex min-h-5 items-start gap-2">
           {name === null ? (
             <span className="flex-1" />
-          ) : (
-            <p
-              className={[
-                "min-w-0 flex-1 truncate text-sm",
-                entry.kind === "start" ||
-                entry.kind === "destination" ||
-                entry.kind === "anchor"
-                  ? "font-medium"
-                  : "",
-              ].join(" ")}
-            >
+          ) : stationId === null ? (
+            <p className={nameClass} title={name}>
               {name}
             </p>
+          ) : (
+            /*
+              A station on the itinerary, and therefore something the reader can
+              reach. Hovering or focusing it rings the same station on the map;
+              activating it recentres the map there, which is the only way to ask
+              that question on a screen with no pointer.
+
+              A button, not a div with a click handler, because the quality floor
+              requires the whole interface to be navigable by keyboard and this
+              is the one path to the map's stations that a keyboard has. It looks
+              exactly like the paragraph above it: no border, no chrome, and the
+              one focus ring the stylesheet declares for everything.
+
+              The accessible name says what activating it does and contains the
+              visible name, so a reader who says "Station Bravo" to a voice
+              control still hits it.
+            */
+            <button
+              type="button"
+              /*
+                Highlighted by a lay of the foreground colour, the same one every
+                other control in this interface uses to acknowledge a pointer. Not
+                the accent: docs/ui-guidelines.md reserves it for three things and
+                "the step you are pointing at" is not one of them, and a red
+                station name beside a red anchor icon would read as a state the
+                trip is in rather than as a pointer following the reader.
+
+                The negative margin is so the tint has room to breathe without
+                the text moving by 4px when it appears.
+              */
+              className={[
+                nameClass,
+                "state-layer -mx-1 rounded-control px-1 text-left",
+                highlighted === stationId ? "bg-state-hover" : "",
+              ].join(" ")}
+              title={name}
+              aria-label={say(t.trail.centreOnMap, { name })}
+              onMouseEnter={() => onHighlight(stationId)}
+              onMouseLeave={() => onHighlight(null)}
+              onFocus={() => onHighlight(stationId)}
+              onBlur={() => onHighlight(null)}
+              onClick={() => onSelect(stationId)}
+            >
+              {name}
+            </button>
           )}
 
           {/*
@@ -276,14 +378,16 @@ function EntryRow({
             rider most needs to hear.
           */}
           {status !== null && (
-            <span className="shrink-0 text-muted">
+            <span className="flex h-5 shrink-0 items-center text-muted">
               {status !== "traced" && <Dashed />}
               <span className="sr-only">{statusWord(status, t)}</span>
             </span>
           )}
 
           {duration !== null && (
-            <p className="shrink-0 font-mono text-xs text-muted">{duration}</p>
+            <p className="shrink-0 font-mono text-xs leading-5 text-muted">
+              {duration}
+            </p>
           )}
         </div>
 
@@ -307,6 +411,9 @@ export default function ItineraryTrail({
   corrections = 0,
   stations,
   params,
+  highlighted = null,
+  onHighlight,
+  onSelect,
 }: {
   itinerary: Itinerary;
   /**
@@ -322,6 +429,17 @@ export default function ItineraryTrail({
   stations: Station[];
   /** For the gauge's denominator only. No figure is recomputed here. */
   params: PlanningParameters;
+  /**
+   * The station being pointed at, wherever the pointing happened.
+   *
+   * Optional and null by default, so a caller that has no map — every test in
+   * this repository, and any future surface that shows a trail on its own — gets
+   * a trail with the interaction inert rather than one that throws.
+   */
+  highlighted?: string | null;
+  onHighlight?: (stationId: string | null) => void;
+  /** Asked to show this station. The shell decides what showing means. */
+  onSelect?: (stationId: string) => void;
 }) {
   const t = useStrings();
   const say = useResolve();
@@ -330,6 +448,12 @@ export default function ItineraryTrail({
     names.get(id) ?? say(t.trail.unknownStation, { id });
 
   const entries = toEntries(itinerary.steps, geometry);
+
+  // Absent handlers become no-ops rather than making the rows conditionally
+  // interactive: a row that is a button on one surface and a paragraph on
+  // another is two markups to keep accessible instead of one.
+  const highlight = onHighlight ?? (() => {});
+  const select = onSelect ?? (() => {});
 
   return (
     <>
@@ -354,6 +478,10 @@ export default function ItineraryTrail({
             stationName={stationName}
             params={params}
             t={t}
+            say={say}
+            highlighted={highlighted}
+            onHighlight={highlight}
+            onSelect={select}
           />
         ))}
       </ol>

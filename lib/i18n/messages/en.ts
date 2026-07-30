@@ -78,6 +78,23 @@ export const messages: Messages = {
       "Your location is unavailable. Type an address, or tap the map to place your start.",
   },
 
+  station: {
+    details: "{name} station",
+    close: "Close the station details",
+    // English puts zero in `other`, so "0 mechanical bikes" is correct here
+    // where "0 vélo mécanique" is correct in French.
+    bikes: {
+      one: "{count} mechanical bike",
+      other: "{count} mechanical bikes",
+    },
+    docks: {
+      one: "{count} free dock",
+      other: "{count} free docks",
+    },
+    useAsOrigin: "Start here",
+    useAsDestination: "Go here",
+  },
+
   theme: {
     toDark: "Switch to the dark theme",
     toLight: "Switch to the light theme",
@@ -114,6 +131,8 @@ export const messages: Messages = {
     start: "Start",
     destination: "Destination",
     unknownStation: "station {id}",
+
+    centreOnMap: "Centre the map on {name}",
 
     pathTraced: "real route",
     pathApproximate: "approximate trace",

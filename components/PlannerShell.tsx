@@ -39,6 +39,7 @@ import type {
   LatLon,
   PlanResult,
   PlanningParameters,
+  Station,
 } from "@/lib/types";
 
 /**
@@ -114,6 +115,23 @@ export default function PlannerShell() {
    */
   const [settingsOpen, setSettingsOpen] = useState(false);
   const settingsPanelId = useId();
+
+  /**
+   * The station under the reader's attention, and the station they opened.
+   *
+   * Two separate things, deliberately. Highlighting follows a pointer or a focus
+   * ring and is gone the moment either moves on; a callout was asked for and
+   * stays until it is dismissed. Collapsing them into one value would mean either
+   * a bubble that flickers open as the pointer crosses the map, or a highlight
+   * that outlives the pointer.
+   *
+   * Both live here rather than in either surface, because the map and the trail
+   * both read and both write them, and neither is the other's parent. This is the
+   * whole of the cross-highlight: two values in one place and no messages passed
+   * between siblings.
+   */
+  const [highlighted, setHighlighted] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
 
   // Debounce recomputation so dragging a slider does not queue redundant work
   // (FR-022a). The plan itself is fast; the point is to keep the main thread
@@ -392,6 +410,53 @@ export default function PlannerShell() {
     return noStopRide(plan.itinerary, snapshot?.stations ?? [], settled);
   }, [plan, snapshot, settled]);
 
+  /**
+   * A step of the trail was activated: show me that station.
+   *
+   * Centre and nothing else. `keepZoom` is the point of the request: the reader
+   * asked where a station is, not to be taken closer to it, and pulling them to
+   * zoom 14 from a framing they chose is the same discard FR-026 exists to
+   * prevent. It also leaves the highlight standing, which is what tells a reader
+   * with no pointer which of the dots now under the centre of the map is the one
+   * they tapped.
+   */
+  const showStation = useCallback(
+    (id: string) => {
+      const station = (snapshot?.stations ?? []).find(
+        (candidate) => candidate.id === id,
+      );
+      if (station === undefined) return;
+      setHighlighted(id);
+      focusCount.current += 1;
+      setFocus({
+        points: [station.position],
+        id: focusCount.current,
+        keepZoom: true,
+      });
+    },
+    [snapshot],
+  );
+
+  /**
+   * "Partir d'ici" and "Aller ici", from the callout.
+   *
+   * Through the same funnel every other way of setting a point goes through, so
+   * a station chosen on the map is indistinguishable downstream from an address
+   * typed into the field — and the field shows the station's name, because that
+   * is what the reader picked.
+   *
+   * The callout closes: it was opened to answer a question, and the question has
+   * been answered by acting on it.
+   */
+  const useStation = useCallback(
+    (target: PickTarget, station: Station) => {
+      setSelected(null);
+      setEndpoint(target, station.position, station.name);
+      advance(target);
+    },
+    [setEndpoint, advance],
+  );
+
   const handleMapClick = useCallback(
     (point: LatLon) => {
       // An unarmed map is inert. This is the fix for the click that used to
@@ -482,8 +547,13 @@ export default function PlannerShell() {
           destination={destination}
           picking={picking}
           focus={focus}
+          highlighted={highlighted}
+          selected={selected}
           onMapClick={handleMapClick}
           onEndpointMove={handleEndpointMove}
+          onHighlight={setHighlighted}
+          onSelect={setSelected}
+          onUseStation={useStation}
         />
 
         {/*
@@ -685,6 +755,16 @@ export default function PlannerShell() {
                     corrections={traced?.corrections ?? 0}
                     stations={snapshot?.stations ?? []}
                     params={settled}
+                    /*
+                      The other half of the cross-highlight. The trail writes
+                      `highlighted` on hover and on focus and reads it back to
+                      tint the row, so pointing at a station on the map lights up
+                      its step here without either component knowing the other
+                      exists.
+                    */
+                    highlighted={highlighted}
+                    onHighlight={setHighlighted}
+                    onSelect={showStation}
                   />
                 </div>
               </>

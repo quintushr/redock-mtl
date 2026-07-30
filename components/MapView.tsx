@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 // maplibre-gl 6 has no default export; it publishes named classes. `Map`
 // would shadow the global, so the package provides the MapLibreMap alias.
 import {
@@ -17,12 +17,18 @@ import {
   RING_LEVELS,
   RING_PIXEL_RATIO,
   endpointElement,
+  highlightLabelLayout,
+  highlightRingPaint,
   readTokens,
   ringIcon,
   ringImage,
   ringLevel,
+  routeStationIds,
+  stationLabelLayout,
+  stationLabelPaint,
   type MapTokens,
 } from "@/components/map-symbols";
+import StationCallout from "@/components/StationCallout";
 import { MAP_STYLE_URL } from "@/lib/endpoints";
 import { anchorPath } from "@/lib/route-geometry";
 import { useStrings } from "@/components/LocaleProvider";
@@ -45,6 +51,24 @@ import type { Itinerary, LatLon, Station, TracedItinerary } from "@/lib/types";
 const STATIONS_SOURCE = "stations";
 const ROUTE_SOURCE = "route";
 const STOPS_SOURCE = "stops";
+/** Holds nought or one feature: whichever station is being pointed at. */
+const HIGHLIGHT_SOURCE = "highlight";
+
+const STATIONS_LAYER = "stations-dots";
+const STATION_LABELS_LAYER = "station-labels";
+const HIGHLIGHT_RING_LAYER = "station-highlight";
+const HIGHLIGHT_LABEL_LAYER = "station-highlight-label";
+
+/**
+ * How far from a station's centre a tap still counts as landing on it, in
+ * pixels.
+ *
+ * The rendered dot is about 9px across at full icon size and half that when the
+ * reader has not zoomed in, which is well under the 44px a finger needs. This is
+ * queried as a box around the pointer rather than a point, so a near miss on a
+ * touch screen still opens the station the reader was aiming at.
+ */
+const STATION_HIT_SLOP = 12;
 
 const MONTREAL: LatLon = { lat: 45.5088, lon: -73.5878 };
 
@@ -62,6 +86,16 @@ export type PickTarget = "origin" | "destination";
 export interface FocusRequest {
   points: LatLon[];
   id: number;
+  /**
+   * Move the centre and leave the zoom alone.
+   *
+   * Set when the request came from tapping a step of the itinerary: the reader
+   * asked "where is that one", not "show me that one closer". Pulling them to
+   * zoom 14 from wherever they had settled would discard a framing they chose,
+   * which is the same mistake FR-026 names. Only meaningful for a single point;
+   * a fitted pair has to choose a zoom by definition.
+   */
+  keepZoom?: boolean;
 }
 
 /**
@@ -128,8 +162,13 @@ export default function MapView({
   destination,
   picking,
   focus,
+  highlighted,
+  selected,
   onMapClick,
   onEndpointMove,
+  onHighlight,
+  onSelect,
+  onUseStation,
 }: {
   stations: Station[];
   itinerary: Itinerary | null;
@@ -147,8 +186,22 @@ export default function MapView({
   destination: LatLon | null;
   picking: PickTarget | null;
   focus: FocusRequest | null;
+  /**
+   * The station being pointed at, from either side.
+   *
+   * One value for both directions of the cross-highlight, which is what stops
+   * the trail and the map disagreeing about which station is under the reader's
+   * attention. Owned by the shell, because neither of the two surfaces that set
+   * it is the parent of the other.
+   */
+  highlighted: string | null;
+  /** The station whose callout is open, or null for none. */
+  selected: string | null;
   onMapClick: (point: LatLon) => void;
   onEndpointMove: (target: PickTarget, point: LatLon) => void;
+  onHighlight: (stationId: string | null) => void;
+  onSelect: (stationId: string | null) => void;
+  onUseStation: (target: PickTarget, station: Station) => void;
 }) {
   const strings = useStrings();
 
@@ -171,6 +224,8 @@ export default function MapView({
     origin: null,
     destination: null,
   });
+  /** The element the callout is drawn in, moved by hand as the map moves. */
+  const callout = useRef<HTMLDivElement | null>(null);
 
   // The map instance and the markers are created once and outlive every render,
   // so their listeners must reach the current callbacks rather than the ones
@@ -178,10 +233,34 @@ export default function MapView({
   // during render.
   const clickHandler = useRef(onMapClick);
   const moveHandler = useRef(onEndpointMove);
+  const highlightHandler = useRef(onHighlight);
+  const selectHandler = useRef(onSelect);
   useEffect(() => {
     clickHandler.current = onMapClick;
     moveHandler.current = onEndpointMove;
-  }, [onMapClick, onEndpointMove]);
+    highlightHandler.current = onHighlight;
+    selectHandler.current = onSelect;
+  }, [onMapClick, onEndpointMove, onHighlight, onSelect]);
+
+  /**
+   * Whether a point is armed, and whether a station is under the pointer, as
+   * refs.
+   *
+   * The cursor is one property with two claims on it. Held here so the map's own
+   * listeners can settle the question without either of the two effects below
+   * having to know what the other last wrote.
+   */
+  const arming = useRef<PickTarget | null>(picking);
+  const overStation = useRef(false);
+
+  const applyCursor = useRef<() => void>(() => {});
+
+  /** Which stations the itinerary touches, for the label layer and nothing else. */
+  const onRoute = useMemo(() => routeStationIds(itinerary), [itinerary]);
+
+  const station = selected === null
+    ? null
+    : (stations.find((candidate) => candidate.id === selected) ?? null);
 
   // Create once. Never in render: at build time there is no browser.
   useEffect(() => {
@@ -215,8 +294,94 @@ export default function MapView({
       console.error("[map]", event.error ?? event);
     });
 
+    /**
+     * The station under a pointer, or null.
+     *
+     * A box rather than the bare point, so a finger that lands beside a 9px dot
+     * still hits it. `queryRenderedFeatures` returns them in draw order and any
+     * of the candidates is a legitimate answer at this tolerance, so the first
+     * one is taken rather than sorting by distance for a difference nobody could
+     * perceive.
+     */
+    const stationAt = (point: { x: number; y: number }): string | null => {
+      if (instance.getLayer(STATIONS_LAYER) === undefined) return null;
+      const [feature] = instance.queryRenderedFeatures(
+        [
+          [point.x - STATION_HIT_SLOP, point.y - STATION_HIT_SLOP],
+          [point.x + STATION_HIT_SLOP, point.y + STATION_HIT_SLOP],
+        ],
+        { layers: [STATIONS_LAYER] },
+      );
+      const id = feature?.properties?.id;
+      return typeof id === "string" ? id : null;
+    };
+
+    applyCursor.current = () => {
+      const canvas = instance.getCanvas();
+      canvas.style.cursor = overStation.current
+        ? "pointer"
+        : arming.current === null
+          ? ""
+          : "crosshair";
+    };
+
+    /**
+     * One click handler for the whole map, and that is the point.
+     *
+     * A tap that lands on a station opens that station and *stops there*. It
+     * must not also count as a tap on the map, or reading a station would drop
+     * an endpoint underneath it — the same defect the endpoint pins already guard
+     * against by stopping propagation on their own element. The station markers
+     * are a layer rather than a DOM element, so there is no element to stop it
+     * on; the equivalent is deciding here, once, before the map's own handler
+     * can run. Registering a second, layer-scoped listener would not do it:
+     * MapLibre would still deliver this one.
+     *
+     * A tap anywhere else dismisses the callout and then goes on to do whatever
+     * the map click does. Dismissal does not swallow the tap: the callout is not
+     * modal, and a reader who taps a street while the start is armed meant to
+     * place their start there.
+     */
     instance.on("click", (event) => {
+      const hit = stationAt(event.point);
+      if (hit !== null) {
+        selectHandler.current(hit);
+        highlightHandler.current(hit);
+        return;
+      }
+
+      selectHandler.current(null);
+      // And the ring goes with it. On a fine pointer `mousemove` has already
+      // done this; on a touch screen nothing has, and without it the ring left
+      // by the last tap would sit on a station the reader has finished with —
+      // including one they reached from the trail rather than from the map.
+      highlightHandler.current(null);
       clickHandler.current({ lat: event.lngLat.lat, lon: event.lngLat.lng });
+    });
+
+    /**
+     * Hover, on a pointer fine enough to have one.
+     *
+     * `mousemove` on the whole map rather than `mouseenter` on the layer,
+     * because the hit test above is a box and MapLibre's layer events are not:
+     * scoping to the layer would light up a station only when the pointer was
+     * dead on the dot, while a click a few pixels away still opened it. Two
+     * different targets for the same mark is worse than either.
+     *
+     * Only the name and the ring appear here. Everything the callout adds needs
+     * a tap, because most readers have no pointer at all.
+     */
+    instance.on("mousemove", (event) => {
+      const hit = stationAt(event.point);
+      overStation.current = hit !== null;
+      applyCursor.current();
+      highlightHandler.current(hit);
+    });
+
+    instance.on("mouseout", () => {
+      overStation.current = false;
+      applyCursor.current();
+      highlightHandler.current(null);
     });
 
     const palette = readTokens();
@@ -232,7 +397,7 @@ export default function MapView({
         });
       }
 
-      for (const id of [STATIONS_SOURCE, STOPS_SOURCE]) {
+      for (const id of [STATIONS_SOURCE, STOPS_SOURCE, HIGHLIGHT_SOURCE]) {
         instance.addSource(id, {
           type: "geojson",
           data: { type: "FeatureCollection", features: [] },
@@ -244,7 +409,7 @@ export default function MapView({
       });
 
       instance.addLayer({
-        id: "stations-dots",
+        id: STATIONS_LAYER,
         type: "symbol",
         source: STATIONS_SOURCE,
         layout: {
@@ -272,6 +437,19 @@ export default function MapView({
           "line-dasharray": ["get", "dash"],
         },
       });
+      /*
+        The cross-highlight ring, under the accent dot and over everything else.
+        Under, so highlighting a stop does not paint a grey ring on top of the
+        one coloured mark the map is allowed; over the plain stations, so the
+        ring is not lost behind the dust of a dense block.
+      */
+      instance.addLayer({
+        id: HIGHLIGHT_RING_LAYER,
+        type: "circle",
+        source: HIGHLIGHT_SOURCE,
+        paint: highlightRingPaint(palette),
+      });
+
       instance.addLayer({
         id: "stops-dots",
         type: "circle",
@@ -283,6 +461,31 @@ export default function MapView({
           "circle-color": palette.brand,
           "circle-stroke-width": 2,
           "circle-stroke-color": palette.panel,
+        },
+      });
+
+      /*
+        Names last, so they are on top of every mark they name. Both label
+        layers carry the same halo colour and size; what differs is that this one
+        yields to collision and the one below it never does.
+      */
+      instance.addLayer({
+        id: STATION_LABELS_LAYER,
+        type: "symbol",
+        source: STATIONS_SOURCE,
+        layout: stationLabelLayout(),
+        paint: stationLabelPaint(palette),
+      });
+
+      instance.addLayer({
+        id: HIGHLIGHT_LABEL_LAYER,
+        type: "symbol",
+        source: HIGHLIGHT_SOURCE,
+        layout: highlightLabelLayout(),
+        paint: {
+          "text-color": palette.ink,
+          "text-halo-color": palette.panel,
+          "text-halo-width": 1.5,
         },
       });
 
@@ -373,10 +576,14 @@ export default function MapView({
   // Arming a point turns the whole map into a target, so the cursor says so.
   // On a touch screen there is no cursor to say it, which is why the panel
   // carries the same message in words.
+  //
+  // Written through applyCursor rather than straight onto the canvas: a station
+  // under the pointer also has a claim on the cursor, and two effects each
+  // assigning the property directly would mean whichever ran last won.
   useEffect(() => {
-    const instance = map.current;
-    if (instance === null) return;
-    instance.getCanvas().style.cursor = picking === null ? "" : "crosshair";
+    if (map.current === null) return;
+    arming.current = picking;
+    applyCursor.current();
   }, [picking]);
 
   // The one place the camera is allowed to move on its own: the user asked for
@@ -390,7 +597,12 @@ export default function MapView({
       const [point] = focus.points;
       instance.easeTo({
         center: [point.lon, point.lat],
-        zoom: Math.max(instance.getZoom(), 14),
+        // Omitted entirely rather than set to the current value, so a request
+        // that only wants a recentring cannot round-trip the zoom through a
+        // float and land the reader a hair off where they were.
+        ...(focus.keepZoom === true
+          ? {}
+          : { zoom: Math.max(instance.getZoom(), 14) }),
         padding: framePadding(),
         duration: cameraDuration(),
       });
@@ -422,9 +634,19 @@ export default function MapView({
             type: "Point" as const,
             coordinates: [station.position.lon, station.position.lat],
           },
-          // No hue at any level. The ring's fill carries what this station
-          // holds; see components/map-symbols.ts.
-          properties: { icon: ringIcon(ringLevel(station)) },
+          properties: {
+            // No hue at any level. The ring's fill carries what this station
+            // holds; see components/map-symbols.ts.
+            icon: ringIcon(ringLevel(station)),
+            // The name travels with the feature so the label layer can draw it
+            // without a second source, and `id` so a tap can be resolved back to
+            // a station without a spatial search.
+            id: station.id,
+            name: station.name,
+            // Read by both the label layer's zoom step and its collision sort
+            // key: these are the names that are always drawn and always win.
+            onRoute: onRoute.has(station.id),
+          },
         })),
       });
 
@@ -454,7 +676,89 @@ export default function MapView({
 
     if (ready.current) apply();
     else instance.once("load", apply);
-  }, [stations]);
+    // `onRoute` is a dependency because a station joining or leaving the
+    // itinerary changes whether its name is drawn below zoom 15. The opening
+    // framing is guarded by a ref, so re-running this cannot move the camera.
+  }, [stations, onRoute]);
+
+  /**
+   * The station being pointed at, from the trail or from the map.
+   *
+   * Two things happen together and they have to: the ring and the always-drawn
+   * name go up, and the same station is filtered *out* of the collision-managed
+   * label layer. Without the second half a station whose name already fitted
+   * would have it printed twice, one on top of the other, which reads as a
+   * rendering fault rather than as emphasis.
+   */
+  useEffect(() => {
+    const instance = map.current;
+    if (instance === null) return;
+
+    const apply = (): void => {
+      const source = instance.getSource(HIGHLIGHT_SOURCE);
+      if (source === undefined) return;
+
+      const found =
+        highlighted === null
+          ? undefined
+          : stations.find((candidate) => candidate.id === highlighted);
+
+      (source as GeoJSONSource).setData({
+        type: "FeatureCollection",
+        features:
+          found === undefined
+            ? []
+            : [
+                {
+                  type: "Feature",
+                  geometry: {
+                    type: "Point",
+                    coordinates: [found.position.lon, found.position.lat],
+                  },
+                  properties: { name: found.name },
+                },
+              ],
+      });
+
+      instance.setFilter(
+        STATION_LABELS_LAYER,
+        found === undefined ? null : ["!=", ["get", "id"], found.id],
+      );
+    };
+
+    if (ready.current) apply();
+    else instance.once("load", apply);
+  }, [highlighted, stations]);
+
+  /**
+   * Keeps the callout over the station it belongs to.
+   *
+   * Written straight onto the element rather than held in state. MapLibre fires
+   * `move` on every frame of a pan and an inertial fling, and routing that
+   * through React would re-render the whole map subtree sixty times a second to
+   * change two numbers. The bubble's *content* is React's; its position is the
+   * map's.
+   */
+  useEffect(() => {
+    const instance = map.current;
+    if (instance === null || station === null) return;
+
+    const place = (): void => {
+      const element = callout.current;
+      if (element === null) return;
+      const point = instance.project([
+        station.position.lon,
+        station.position.lat,
+      ]);
+      element.style.transform = `translate(${point.x}px, ${point.y}px)`;
+    };
+
+    place();
+    instance.on("move", place);
+    return () => {
+      instance.off("move", place);
+    };
+  }, [station]);
 
   // The itinerary. Note what this effect does not do: it never calls setCenter
   // or fitBounds on a parameter change, because that would discard the view the
@@ -588,16 +892,49 @@ export default function MapView({
       />
 
       {/*
-        Nothing floats over the map any more.
+        One thing floats over the map, and only while it is asked for.
 
-        docs/ui-guidelines.md allows exactly one container above the map, and
-        it is the panel. The arming banner and the availability legend were two
-        more, and between them they carried a shadow, a blue outside the
-        palette and the three-colour availability code the guidelines forbid
-        outright. The banner's message now lives in the panel, next to the
-        field it concerns, and the legend has nothing left to explain: the
-        markers carry availability in the length of a ring, not in a hue.
+        docs/ui-guidelines.md allows exactly one *standing* container above the
+        map, and it is the panel. The arming banner and the availability legend
+        were two more, permanent, and between them they carried a shadow, a blue
+        outside the palette and the three-colour availability code the guidelines
+        forbid outright. Neither came back: the banner's message lives in the
+        panel next to the field it concerns, and the legend has nothing left to
+        explain.
+
+        The callout is a different kind of thing and the amendment dated
+        2026-07-29 in that document says so. It is summoned by a tap on one
+        station, anchored to that station, and gone on the next tap elsewhere. It
+        is also what makes the markers' availability reachable on a touch screen
+        at all, which the quality floor requires and which the legend never did
+        — the legend explained the code, it never told you what any given station
+        held.
       */}
+      {station !== null && (
+        <div
+          ref={callout}
+          // Zero-size and unclickable itself: the map's own transform lands on
+          // this, and the child does the offsetting. Without pointer-events-none
+          // here a 0x0 box at the station's centre would still swallow taps.
+          className="pointer-events-none absolute top-0 left-0 z-10"
+        >
+          {/*
+            Centred over the station and lifted clear of its marker, which is 20px
+            across at most; 16px puts the bubble's lower edge just above the ring
+            rather than on it.
+          */}
+          <div
+            className="pointer-events-auto"
+            style={{ transform: "translate(-50%, calc(-100% - 16px))" }}
+          >
+            <StationCallout
+              station={station}
+              onUse={onUseStation}
+              onClose={() => onSelect(null)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
