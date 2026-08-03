@@ -2,15 +2,16 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import PanelFooter from "@/components/PanelFooter";
 import { snapshot } from "./fixture";
+import { PROJECT_LINKS } from "@/lib/endpoints";
 import { DEFAULT_PARAMETERS } from "@/lib/params";
 import type { FeedStatus, PlanningParameters } from "@/lib/types";
 
 /**
- * The two rows docs/ui-guidelines.md fixes, and the rules that make them worth
+ * The three rows docs/ui-guidelines.md fixes, and the rules that make them worth
  * pinning: settings and refresh reachable without scrolling a long itinerary.
  *
- * What is NOT covered here, because jsdom has no layout: the 46px and 40px row
- * heights, the 44px touch targets, the safe-area padding, and that the footer
+ * What is NOT covered here, because jsdom has no layout: the 46px, 40px and 32px
+ * row heights, the 44px touch targets, the safe-area padding, and that the footer
  * stays visible at both of the sheet's rest positions. Those are measured by
  * hand at 360px, 768px and 1440px.
  */
@@ -154,7 +155,44 @@ describe("row 2 carries the refresh", () => {
   });
 });
 
-describe("nothing else may join the two rows", () => {
+describe("row 3 credits the author and points at the source", () => {
+  /*
+   * Asserted against PROJECT_LINKS rather than against a literal: lib/endpoints
+   * is the one file allowed to write an external URL down, and a test that
+   * repeated one here would be a second place to change when a link moves — and
+   * would break the rule that no test file carries a real host.
+   */
+  it("links the author's name to their site", () => {
+    renderFooter();
+    const author = screen.getByRole("link", { name: /quentin harnay/i });
+    expect(author.getAttribute("href")).toBe(PROJECT_LINKS.author);
+  });
+
+  it("links to the repository, saying where the link leads", () => {
+    renderFooter();
+    const source = screen.getByRole("link", { name: /github/i });
+    expect(source.getAttribute("href")).toBe(PROJECT_LINKS.repository);
+  });
+
+  it("opens both away from the planner, without handing it the opener", () => {
+    // A trip in progress is not something to navigate away from, and a new tab
+    // that keeps a handle on this one is a hole rel="noopener" closes.
+    renderFooter();
+    for (const name of [/quentin harnay/i, /github/i]) {
+      const link = screen.getByRole("link", { name });
+      expect(link.getAttribute("target")).toBe("_blank");
+      expect(link.getAttribute("rel")).toMatch(/noopener/);
+    }
+  });
+
+  it("is closed at two links, which is what keeps it one row", () => {
+    const { view } = renderFooter();
+    const rowThree = view.container.firstElementChild?.children[2] as HTMLElement;
+    expect(rowThree.querySelectorAll("a")).toHaveLength(2);
+  });
+});
+
+describe("nothing else may join the three rows", () => {
   it("carries no attribution: that is the map's, by licence", () => {
     renderFooter();
     // The credits moved back onto the map. A footer that grows a third line
@@ -164,19 +202,38 @@ describe("nothing else may join the two rows", () => {
 
   /**
    * The rule docs/ui-guidelines.md actually states is about *rows*, not about
-   * controls: "Exactement deux rangées, dans cet ordre, et rien d'autre ne peut
+   * controls: "Exactement trois rangées, dans cet ordre, et rien d'autre ne peut
    * s'y ajouter."
    *
    * This used to be checked by counting buttons, which held only for as long as
    * each row had exactly one. The theme control joined row 2 rather than
-   * becoming a row 3 — which is the only placement that satisfies both this
-   * rule and a request to put it at the very bottom — so the count is now three
-   * and the rule is still kept. Assert the structure instead.
+   * becoming a row of its own — which is the only placement that satisfies both
+   * this rule and a request to put it at the very bottom. Assert the structure
+   * instead.
    */
-  it("is two rows, whatever the controls on them", () => {
+  it("is three rows, whatever the controls on them", () => {
     const { view } = renderFooter();
     const footer = view.container.firstElementChild;
-    expect(footer?.children).toHaveLength(2);
+    expect(footer?.children).toHaveLength(3);
+  });
+
+  it("keeps the settings and the refresh above the credits", () => {
+    // The order is the whole reason a third row was tolerable: the two rows a
+    // rider actually uses stay where they were, at the top of the footer.
+    const { view } = renderFooter();
+    const [rowOne, rowTwo, rowThree] = [
+      ...(view.container.firstElementChild?.children ?? []),
+    ] as HTMLElement[];
+
+    expect(rowOne.contains(screen.getByRole("button", { name: /réglages/i }))).toBe(true);
+    expect(
+      rowTwo.contains(
+        screen.getByRole("button", { name: /actualiser les stations/i }),
+      ),
+    ).toBe(true);
+    expect(rowThree.contains(screen.getByRole("link", { name: /github/i }))).toBe(
+      true,
+    );
   });
 
   it("keeps the theme control on row 2, beside the refresh", () => {

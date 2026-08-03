@@ -120,6 +120,24 @@ export const MAP_ATTRIBUTION = [
 ] as const;
 
 // ---------------------------------------------------------------------------
+// The project itself
+// ---------------------------------------------------------------------------
+
+/**
+ * Where the source lives, and who wrote it.
+ *
+ * Not services: nothing is ever fetched from either. They are the two links the
+ * footer's credit row points at, and they live here because this file is the one
+ * place an external URL may be written down — so a repository that moves or a
+ * personal site that changes host is a single-file edit like every other
+ * provider.
+ */
+export const PROJECT_LINKS = {
+  repository: "https://github.com/quintushr/redock-mtl",
+  author: "https://quentin.harnay.eu",
+} as const;
+
+// ---------------------------------------------------------------------------
 // Geocoding (optional: manual entry and map click are the guaranteed path)
 // ---------------------------------------------------------------------------
 

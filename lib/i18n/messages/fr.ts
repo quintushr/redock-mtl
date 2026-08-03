@@ -505,6 +505,17 @@ export const messages = {
     },
   },
 
+  /**
+   * La rangée 3 du pied de panneau : qui a écrit ça, et où en est le code.
+   *
+   * Deux libellés, pas un de plus. Le nom propre reste tel quel dans les deux
+   * langues ; seul ce qui l'entoure se traduit.
+   */
+  credits: {
+    author: "Développé par Quentin Harnay",
+    source: "Code sur GitHub",
+  },
+
   attribution: {
     map: "Carte",
     stations: "Stations",

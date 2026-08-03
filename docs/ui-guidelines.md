@@ -366,7 +366,7 @@ un fond légèrement distinct. Elle ne défile jamais avec le contenu: sur un
 itinéraire long, les réglages et l'actualisation restent atteignables sans
 dérouler.
 
-Exactement deux rangées, dans cet ordre, et rien d'autre ne peut s'y ajouter.
+Exactement trois rangées, dans cet ordre, et rien d'autre ne peut s'y ajouter.
 
 Rangée 1 — Réglages, hauteur 46px.
 Icône, libellé "Réglages", résumé des valeurs actives aligné à droite, chevron.
@@ -379,6 +379,18 @@ Rangée 2 — Fraîcheur des données, hauteur 40px.
 Ancienneté exprimée en relatif et mise à jour d'elle-même, bouton
 d'actualisation aligné à droite. Zone tactile de 44px minimum malgré la
 hauteur de rangée.
+
+Rangée 3 — Crédits, hauteur 32px. *Ajoutée le 2026-08-03.*
+Deux liens et rien d'autre : l'auteur à gauche, le dépôt de code à droite. Texte
+xs atténué, pas d'icône — le jeu d'icônes est d'un seul trait dans une boîte de
+20×20 et la marque GitHub est un glyphe plein.
+
+Elle vient en dernier et elle est la plus basse des trois, parce qu'elle se lit
+une fois quand les deux autres servent à chaque trajet : la règle d'origine —
+réglages et actualisation atteignables sans dérouler — reste exactement aussi
+vraie qu'avant. Une ligne de crédits est précisément ce qui grossit d'une entrée
+à la fois jusqu'à devenir un pied de page ; elle est fermée à deux liens pour la
+même raison que ce pied est fermé à trois rangées.
 
 L'attribution cartographique n'appartient pas au pied de panneau. Elle reste
 sur la carte, où l'obligation légale l'exige.

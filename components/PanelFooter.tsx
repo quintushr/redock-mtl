@@ -4,12 +4,13 @@ import { useEffect, useState } from "react";
 import { useLanguage, useResolve, useStrings } from "@/components/LocaleProvider";
 import { ChevronDown, Refresh, Sliders } from "@/components/icons";
 import ThemeToggle from "@/components/ThemeToggle";
+import { PROJECT_LINKS } from "@/lib/endpoints";
 import { approximateDuration, relativeAge } from "@/lib/format";
 import { changedCount } from "@/lib/params";
 import type { FeedStatus, PlanningParameters } from "@/lib/types";
 
 /**
- * The panel's sticky footer: exactly two rows, and nothing else may join them.
+ * The panel's sticky footer: exactly three rows, and nothing else may join them.
  *
  * docs/ui-guidelines.md, "Pied de panneau", is unusually prescriptive here, and
  * for a reason worth restating: on a long itinerary the settings and the refresh
@@ -19,10 +20,17 @@ import type { FeedStatus, PlanningParameters } from "@/lib/types";
  * Row 1, 46px: settings. A button, never a disclosure list, and the whole row is
  * the hit area rather than the label alone.
  * Row 2, 40px: how old the figures are, and the control that renews them.
+ * Row 3, 32px: the credits. Added 2026-08-03.
  *
- * The map attribution is deliberately not here. It sits on the map, where the
- * tile licences require it, and where it no longer competes with these two rows
- * for the one part of the panel that never scrolls.
+ * Row 3 is last and is the shortest of the three on purpose. It is read once, if
+ * ever, where the two above it are used on every trip, so it takes the position
+ * and the height that cost them the least — and the rule the original two rows
+ * were given, that settings and refresh stay reachable without scrolling, holds
+ * exactly as before.
+ *
+ * The map attribution is still deliberately not here. It sits on the map, where
+ * the tile licences require it, and where it does not compete with these rows for
+ * the one part of the panel that never scrolls.
  */
 
 /** How often the age re-words itself. */
@@ -237,6 +245,46 @@ function FreshnessRow({
   );
 }
 
+/**
+ * Row 3. Who wrote this, and where the source is.
+ *
+ * Two links, and the row is closed at two: a credit line is exactly the kind of
+ * thing that grows an item at a time until it is a site footer, which is the
+ * failure mode the two rows above were written to avoid.
+ *
+ * Plain text links rather than a logo. The icon set is one stroke width in a
+ * 20x20 box and the GitHub mark is a filled glyph, so an icon here would either
+ * break that rule or be a worse GitHub mark than no mark at all; "Code sur
+ * GitHub" also says where the link leads, which a bare logo does not.
+ *
+ * The links fill the row's height, so the target is the whole 32px rather than
+ * the cap height of 12px text.
+ */
+function CreditsRow() {
+  const t = useStrings();
+
+  return (
+    <div className="flex min-h-8 items-center justify-between gap-3 px-4 text-xs text-muted">
+      <a
+        className="state-layer -mx-1 flex min-h-8 min-w-0 items-center truncate rounded-control px-1 underline underline-offset-2 hover:text-ink"
+        href={PROJECT_LINKS.author}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {t.credits.author}
+      </a>
+      <a
+        className="state-layer -mx-1 flex min-h-8 shrink-0 items-center rounded-control px-1 underline underline-offset-2 hover:text-ink"
+        href={PROJECT_LINKS.repository}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {t.credits.source}
+      </a>
+    </div>
+  );
+}
+
 export default function PanelFooter({
   parameters,
   settingsOpen,
@@ -279,6 +327,9 @@ export default function PanelFooter({
           onRefresh={onRefresh}
           refreshWait={refreshWait ?? null}
         />
+      </div>
+      <div className="border-t border-edge">
+        <CreditsRow />
       </div>
     </div>
   );

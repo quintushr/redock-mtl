@@ -283,6 +283,11 @@ export const messages: Messages = {
     },
   },
 
+  credits: {
+    author: "Built by Quentin Harnay",
+    source: "Code on GitHub",
+  },
+
   attribution: {
     map: "Map",
     stations: "Stations",
