@@ -140,7 +140,7 @@ For Cloudflare Pages, the project settings are:
 |---|---|
 | Build command | `npm run build` |
 | Build output directory | `out` |
-| Environment variables | none required, two optional for [audience measurement](#audience-measurement) |
+| Environment variables | none required. `NEXT_PUBLIC_UMAMI_WEBSITE_ID` and `NEXT_PUBLIC_UMAMI_HOST_URL` switch on cookieless page-view counting; unset, nothing is loaded and nothing is sent |
 | Functions | none |
 | Bindings | none |
 
