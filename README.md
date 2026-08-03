@@ -229,6 +229,48 @@ If you are hosting the static files yourself without the container, put
 Everything above applies unchanged; the container is only a web server with that
 one header already set.
 
+### Response headers
+
+`npm run build` writes two files nobody edits by hand:
+
+| File | Read by |
+|---|---|
+| `out/_headers` | Cloudflare Pages, and any host that speaks the same format |
+| `nginx.csp.conf` | The container, copied in by the `Dockerfile` |
+
+Both carry the same set: `X-Content-Type-Options`, `Referrer-Policy: no-referrer`,
+`X-Frame-Options`, a `Permissions-Policy` that allows geolocation to this document
+and refuses every other capability, `Cross-Origin-Opener-Policy`, and a
+`Content-Security-Policy`.
+
+The policy is generated rather than committed because `script-src` names the
+SHA-256 of every inline script in the build, and one of them is Next's hydration
+payload, whose text contains this build's content-hashed chunk names. A list
+written by hand would be wrong after the next commit and wrong *quietly*: the page
+would still be served and the bundle would refuse to run. `scripts/security-headers.mjs`
+reads the emitted HTML instead, and fails the build rather than emit a policy it
+could not derive.
+
+Two directives are deliberately wide. `connect-src` and `img-src` allow any
+`https:` origin, because the four service URLs above are yours to change at run
+time and an allow-list of the defaults would turn every override into a blank map
+or a dead search box. `script-src` is the one that stops an injected script, and
+it stays exact: this origin, those hashes, and the analytics host when a build has
+one.
+
+Three consequences worth knowing before you change something:
+
+- **Serving `out/` from your own web server means serving these headers yourself.**
+  Nothing in the export enforces them. `out/_headers` is the list; translate it to
+  whatever your server speaks.
+- **Switching on analytics changes the policy**, and it is read from
+  `NEXT_PUBLIC_UMAMI_HOST_URL` at build time, so set the variable and rebuild
+  rather than editing the generated file.
+- **Serving `.mjs` as anything but JavaScript breaks the map.** MapLibre's worker
+  is an ES module and nginx's stock `mime.types` has no entry for the extension;
+  the `Dockerfile` adds one. With `nosniff` set, a wrong type is no longer
+  something a browser will paper over.
+
 ## Translating
 
 Every string the interface shows lives in `lib/i18n/messages/`, one file per

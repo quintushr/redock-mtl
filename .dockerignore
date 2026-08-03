@@ -9,6 +9,10 @@ node_modules
 .next
 out
 
+# Same reason as .next and out: a local build's policy, carrying a local build's
+# script hashes, must not reach the image. The build stage regenerates it.
+nginx.csp.conf
+
 # Local tooling and history. None of it is input to the build.
 .git
 .gitignore

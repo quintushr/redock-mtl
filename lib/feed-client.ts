@@ -45,6 +45,32 @@ async function fetchJson(url: string, signal?: AbortSignal): Promise<unknown> {
 }
 
 /**
+ * Whether an address out of a discovery document is one we are willing to ask
+ * for.
+ *
+ * Absolute http(s), which is the same rule `readUrl` in lib/runtime-config.ts
+ * holds a configured URL to, and it is here for the same reason. Discovery is
+ * indirection: the operator's document decides what four later requests go to,
+ * and `stationsFeedUrl` is a value a self-hoster may repoint at anything (see
+ * that module). One hostile or mistaken document should not be able to name a
+ * `javascript:` or a `data:` address and have this module hand it to `fetch`.
+ *
+ * The consequence of a rejection is a feed that fails to resolve, which
+ * loadStationSnapshot already reports as a feed problem. That is the right
+ * outcome: a discovery document that names a non-http address is broken, and
+ * the app says so rather than following it.
+ */
+function isFetchable(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    // Relative, or not a URL. A GBFS discovery document publishes absolute URLs.
+    return false;
+  }
+}
+
+/**
  * Resolves the feed URLs from the discovery document rather than hard-coding
  * them, so a provider reorganising its paths does not break us.
  *
@@ -65,7 +91,7 @@ function resolveFeedUrls(discovery: unknown): Map<string, string> | null {
     for (const feed of feeds) {
       if (typeof feed !== "object" || feed === null) continue;
       const { name, url } = feed as { name?: unknown; url?: unknown };
-      if (typeof name === "string" && typeof url === "string") {
+      if (typeof name === "string" && typeof url === "string" && isFetchable(url)) {
         urls.set(name, url);
       }
     }

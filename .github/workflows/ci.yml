@@ -25,9 +25,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v5
+      # Pinned by commit, not by tag, and the comment is the human-readable half.
+      #
+      # A tag is a moving pointer that the action's owner may repoint at any
+      # time, so `@v5` means "whatever that account publishes next" and a
+      # compromised or coerced maintainer account rewrites what runs in this
+      # workflow without a commit here. A commit id cannot be repointed. The
+      # cost is that updates are deliberate: resolve the tag, paste the new id,
+      # and say which version it is beside it.
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           # Matches the build stage of the Dockerfile. Two Node versions in one
           # project is how a build passes here and fails in the image.

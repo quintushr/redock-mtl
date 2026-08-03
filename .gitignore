@@ -42,6 +42,12 @@ yarn-error.log*
 # analytics fields blank so a fork never inherits somebody else's website id.
 /config.json
 
+# written by scripts/security-headers.mjs on every build, from the hashes of the
+# scripts that build inlined. Committing it would let it go stale against a
+# bundle it no longer describes, which is the one failure the generator exists to
+# prevent. nginx-security.conf, beside it, is the committed half.
+/nginx.csp.conf
+
 # vercel
 .vercel
 
