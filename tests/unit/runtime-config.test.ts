@@ -30,12 +30,21 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-/** The nominal file: all four services moved somewhere else. */
+/**
+ * The nominal file: all four services moved somewhere else.
+ *
+ * `analytics: null` is both a legal input and what the parse answers when the
+ * block is absent, so the same literal serves as payload and as expectation.
+ * Measurement has its own file — tests/unit/analytics-config.test.ts — because
+ * it is the one key with no fallback: it is either configured or it does not
+ * happen.
+ */
 const complete = {
   stationsFeedUrl: "https://gbfs.example.org/gbfs.json",
   routingBaseUrl: "https://router.example.org/brouter",
   geocoderUrl: "https://geocoder.example.org/api/",
   mapStyleUrl: "https://tiles.example.org/styles/plain",
+  analytics: null,
 };
 
 describe("the nominal file", () => {
@@ -85,6 +94,9 @@ describe("the file is absent", () => {
       routingBaseUrl: DEFAULT_SERVICE_ENDPOINTS.routingBaseUrl,
       geocoderUrl: DEFAULT_SERVICE_ENDPOINTS.geocoderUrl,
       mapStyleUrl: DEFAULT_SERVICE_ENDPOINTS.mapStyleUrl,
+      // No default and never one: a fork that inherited a website id would
+      // report its readers to somebody else's dashboard.
+      analytics: null,
     });
   });
 

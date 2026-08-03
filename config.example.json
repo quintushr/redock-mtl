@@ -3,5 +3,10 @@
   "stationsFeedUrl": "https://gbfs.velobixi.com/gbfs/2-2/gbfs.json",
   "routingBaseUrl": "https://brouter.de/brouter",
   "geocoderUrl": "https://photon.komoot.io/api/",
-  "mapStyleUrl": "https://tiles.openfreemap.org/styles/positron"
+  "mapStyleUrl": "https://tiles.openfreemap.org/styles/positron",
+  "_analytics_comment": "Cookieless audience measurement with Umami, off by default. Both fields ship blank and must stay blank in this file: fill them in your own config.json and the app counts page views on YOUR instance. Leave either one blank and no script is loaded, no request is ever sent, and nothing is measured. Never copy another deployment's websiteId into a fork -- that reports your readers to their dashboard. Only a page path is ever sent, never an address, a coordinate, a station name or a query string. Nothing is measured on localhost or on a private network address.",
+  "analytics": {
+    "websiteId": "",
+    "hostUrl": ""
+  }
 }

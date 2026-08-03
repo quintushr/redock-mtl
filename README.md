@@ -15,9 +15,14 @@ billed at 19¢ before taxes.
 > segments.
 
 This app works out where to stop. Everything runs in your browser: no server, no
-account, no tracking, and nothing to sign up for. If any of that ever stops being
+account, no cookie, and nothing to sign up for. Where you are going is never sent
+anywhere it is not needed to draw your route. If any of that ever stops being
 true, the change should be rejected in review. See the
 [constitution](.specify/memory/constitution.md).
+
+A deployment may switch on cookieless page-view counting, which ships **off** and
+is off in this repository. What it can send is a page path and nothing else — no
+address, no coordinate, no query string, by construction rather than by policy.
 
 Not affiliated with BIXI Montréal. The two figures above are the operator's
 published prices, read on 2026-07-27 from
@@ -68,6 +73,9 @@ lib/            pure core: no React, no DOM, no global state
   routing.ts      route geometry: fetch, session cache, request ceiling (impure)
   path-store.ts   browser-local store of station-to-station geometry (impure)
   params-store.ts browser-local store of the reader's planning parameters (impure)
+  analytics.ts    optional page-view counting: the page allow-list, the host
+                  rules, and the one call that reaches the tracker (impure,
+                  off unless configured, imported by two files)
 tests/
   unit/         Vitest specs mirroring lib/
   fixtures/     frozen provider JSON, committed, never fetched at test time
@@ -219,6 +227,47 @@ If you are hosting the static files yourself without the container, put
 `config.json` beside `index.html` and serve it with `Cache-Control: no-store`.
 Everything above applies unchanged; the container is only a web server with that
 one header already set.
+
+### Audience measurement
+
+Off, and off in this repository. Filling both fields in your own `config.json`
+turns on page-view counting through [Umami](https://umami.is), which uses no
+cookie:
+
+```json
+{
+  "analytics": {
+    "websiteId": "e676c9b4-11e4-4ef1-a4d7-87001773e9f2",
+    "hostUrl": "https://umami.example.org"
+  }
+}
+```
+
+The tracker is fetched from `hostUrl/script.js` and events are posted to
+`hostUrl/api/send`. Either field blank, missing, or not an absolute `http`/`https`
+URL and nothing is loaded and no request is made at all — there is no partial
+state and no compiled-in default.
+
+**`config.example.json` ships both fields empty and must keep shipping them
+empty.** Copying somebody else's `websiteId` into a fork does not give you
+statistics, it sends your readers to their dashboard.
+
+A page view carries the website id and the page path — today always `/`, since
+the app has one route. That is the whole payload: no address, no coordinate, no
+station name, no query string, no fragment, no referrer. Umami's automatic
+tracking, which reports the full URL of every page it sees, is switched off at the
+script tag; the path is produced by `normalizePagePath` in
+[lib/analytics.ts](lib/analytics.ts), whose
+[tests](tests/unit/analytics-path.test.ts) exist so that a future URL carrying an
+origin and a destination cannot leak one, and
+[another test](tests/unit/analytics-isolation.test.ts) fails the build if any
+other file reaches for the tracker. Nothing is stored in the reader's browser for
+measurement, which is why there is no consent banner.
+
+Nothing is measured on `localhost` or on a private network address, so a
+development machine never reaches the dashboard. If you serve the app behind a
+`Content-Security-Policy`, allow your Umami host in `script-src` and
+`connect-src`; a blocked tracker fails silently and changes nothing else.
 
 ## Translating
 

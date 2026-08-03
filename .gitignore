@@ -37,6 +37,11 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# a local runtime configuration, which is one deployment's and not the
+# repository's. config.example.json is the committed one, and it ships its
+# analytics fields blank so a fork never inherits somebody else's website id.
+/config.json
+
 # vercel
 .vercel
 

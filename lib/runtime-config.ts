@@ -1,3 +1,4 @@
+import { type AnalyticsConfig, parseAnalyticsConfig } from "./analytics";
 import { DEFAULT_SERVICE_ENDPOINTS } from "./endpoints";
 
 /**
@@ -39,6 +40,15 @@ export interface RuntimeConfig {
   geocoderUrl: string;
   /** MapLibre style document for the basemap. */
   mapStyleUrl: string;
+  /**
+   * Where audience measurement reports to, or null.
+   *
+   * Null on every deployment that has not filled both fields in, which includes
+   * this project's own build and every fork of it until somebody decides
+   * otherwise. Unlike the four URLs above there is no fallback: measurement is
+   * either configured or it does not happen. See lib/analytics.ts.
+   */
+  analytics: AnalyticsConfig | null;
 }
 
 /**
@@ -53,6 +63,13 @@ export const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
   routingBaseUrl: DEFAULT_SERVICE_ENDPOINTS.routingBaseUrl,
   geocoderUrl: DEFAULT_SERVICE_ENDPOINTS.geocoderUrl,
   mapStyleUrl: DEFAULT_SERVICE_ENDPOINTS.mapStyleUrl,
+  /*
+   * No default, and there will never be one. A fork that deployed this image
+   * and inherited a website id would be reporting its readers to somebody
+   * else's dashboard, which is the one configuration mistake this file can make
+   * on a stranger's behalf.
+   */
+  analytics: null,
 };
 
 /** Where the file is looked for. Root-relative: the app is served from the root. */
@@ -151,6 +168,12 @@ export function parseRuntimeConfig(payload: unknown): RuntimeConfig {
       readUrl(record, "geocoderUrl") ?? DEFAULT_RUNTIME_CONFIG.geocoderUrl,
     mapStyleUrl:
       readUrl(record, "mapStyleUrl") ?? DEFAULT_RUNTIME_CONFIG.mapStyleUrl,
+    /*
+     * Parsed by the module that owns it. This file owns the shape of the
+     * document; what a valid analytics block is, and why it is all-or-nothing,
+     * belongs next to the code that acts on it.
+     */
+    analytics: parseAnalyticsConfig(record.analytics),
   };
 }
 

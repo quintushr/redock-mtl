@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Analytics from "@/components/Analytics";
 import { DocumentLanguage } from "@/components/LocaleProvider";
 import { THEME_SCRIPT } from "@/components/ThemeProvider";
 import { STATIC_METADATA } from "@/lib/i18n/static-metadata";
@@ -70,6 +71,21 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col">
         <DocumentLanguage>{children}</DocumentLanguage>
+
+        {/*
+          Audience measurement, and on most deployments — including this one
+          until someone decides otherwise — a component that renders nothing and
+          does nothing.
+
+          Deliberately *not* a script in the head beside the other two. Those are
+          there because the theme and the service URLs have to be settled before
+          paint; a page-view count has to be settled before nothing at all, and
+          the tracker is the one thing on this page that must never be in the way
+          of the first frame. It is appended from an effect, async and defer,
+          with Umami's own automatic tracking switched off. See
+          components/Analytics.tsx and lib/analytics.ts.
+        */}
+        <Analytics />
       </body>
     </html>
   );
