@@ -81,7 +81,6 @@ describe("with an analytics block", () => {
     // The attribute the whole module rests on: with automatic tracking on, the
     // tracker reports the full URL by itself and nothing here can stop it.
     expect(script?.getAttribute("data-auto-track")).toBe("false");
-    expect(script?.getAttribute("data-do-not-track")).toBe("true");
     expect(script?.getAttribute("data-exclude-search")).toBe("true");
     expect(script?.getAttribute("data-exclude-hash")).toBe("true");
   });

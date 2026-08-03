@@ -315,8 +315,18 @@ export function startAnalytics(
    */
   script.setAttribute("data-exclude-search", "true");
   script.setAttribute("data-exclude-hash", "true");
-  /* A reader who has asked not to be tracked is not tracked. */
-  script.setAttribute("data-do-not-track", "true");
+  /*
+   * `data-do-not-track` is deliberately absent.
+   *
+   * It was set, and it was removed on purpose. With it, Umami drops every event
+   * from a browser sending the "do not track" signal — which Brave and a
+   * strictly configured Firefox send by default, so the figures were silently a
+   * fraction of the traffic and there was no way to tell from the dashboard.
+   *
+   * What that signal asks to be spared is being followed, and this counts a page
+   * without a cookie, without an identifier, and without anything that says who
+   * or where. There is nothing here to opt out of.
+   */
 
   script.addEventListener("load", () => {
     loaded = true;
