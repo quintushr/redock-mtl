@@ -1,18 +1,17 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-import { type Analytics, startAnalytics } from "@/lib/analytics";
-import { configReady } from "@/lib/runtime-config";
+import { useEffect, useRef } from "react";
+import { ANALYTICS_CONFIG, type Analytics, startAnalytics } from "@/lib/analytics";
 
 /**
  * The only place in this application that starts a tracker or reports a page.
  *
- * Renders nothing, and on a deployment that has not configured measurement it
- * also *does* nothing: `startAnalytics` returns null before creating an element
- * or touching the network, so there is no script tag, no request, and nothing
- * for an ad blocker to have an opinion about. That is the default, here and in
- * every fork.
+ * Renders nothing, and on a build that set neither environment variable it also
+ * *does* nothing: `startAnalytics` returns null before creating an element or
+ * touching the network, so there is no script tag, no request, and nothing for an
+ * ad blocker to have an opinion about. That is the default, here and in every
+ * fork.
  *
  * Mounted in app/layout.tsx, after the tree rather than before it, because
  * measurement is the last thing that should compete for the first paint. The
@@ -29,37 +28,17 @@ import { configReady } from "@/lib/runtime-config";
 export default function Analytics() {
   const pathname = usePathname();
   const analytics = useRef<Analytics | null>(null);
-  /*
-   * Whether a tracker exists, held as state rather than read from the ref,
-   * because a ref changing is not a reason for React to re-run the effect
-   * below — and the first page view has to be sent by the run that follows the
-   * configuration arriving.
-   */
-  const [started, setStarted] = useState(false);
 
   useEffect(() => {
-    let cancelled = false;
-
-    configReady()
-      .then((config) => {
-        if (cancelled) return;
-        analytics.current = startAnalytics(window, config.analytics);
-        if (analytics.current !== null) setStarted(true);
-      })
-      .catch(() => {
-        // `configReady` is total by contract. If that ever stops being true,
-        // the answer here is still to measure nothing and say nothing.
-      });
-
-    return () => {
-      cancelled = true;
-    };
+    // Once per mount, and never during render: creating a DOM node is not
+    // something a render is allowed to do, and a static export prerenders this
+    // component on a machine with no window at all.
+    analytics.current ??= startAnalytics(window, ANALYTICS_CONFIG);
   }, []);
 
   useEffect(() => {
-    if (!started) return;
     analytics.current?.trackPage(pathname);
-  }, [started, pathname]);
+  }, [pathname]);
 
   return null;
 }

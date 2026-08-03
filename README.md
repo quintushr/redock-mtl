@@ -73,9 +73,9 @@ lib/            pure core: no React, no DOM, no global state
   routing.ts      route geometry: fetch, session cache, request ceiling (impure)
   path-store.ts   browser-local store of station-to-station geometry (impure)
   params-store.ts browser-local store of the reader's planning parameters (impure)
-  analytics.ts    optional page-view counting: the page allow-list, the host
+  analytics.ts    optional page-view counting: path normalisation, the host
                   rules, and the one call that reaches the tracker (impure,
-                  off unless configured, imported by two files)
+                  off unless two env vars are set, one importer)
 tests/
   unit/         Vitest specs mirroring lib/
   fixtures/     frozen provider JSON, committed, never fetched at test time
@@ -140,12 +140,13 @@ For Cloudflare Pages, the project settings are:
 |---|---|
 | Build command | `npm run build` |
 | Build output directory | `out` |
-| Environment variables | none |
+| Environment variables | none required, two optional for [audience measurement](#audience-measurement) |
 | Functions | none |
 | Bindings | none |
 
-Needing any of those last three would mean the deployment has drifted away from
-running at zero cost.
+Needing a function or a binding would mean the deployment has drifted away from
+running at zero cost. The same settings work on Vercel, which builds the same
+static export.
 
 CI also fails if the build output grows past a stated ceiling. The number and the
 reasoning live in `.github/workflows/ci.yml`; the short version is that a
@@ -227,47 +228,6 @@ If you are hosting the static files yourself without the container, put
 `config.json` beside `index.html` and serve it with `Cache-Control: no-store`.
 Everything above applies unchanged; the container is only a web server with that
 one header already set.
-
-### Audience measurement
-
-Off, and off in this repository. Filling both fields in your own `config.json`
-turns on page-view counting through [Umami](https://umami.is), which uses no
-cookie:
-
-```json
-{
-  "analytics": {
-    "websiteId": "e676c9b4-11e4-4ef1-a4d7-87001773e9f2",
-    "hostUrl": "https://umami.example.org"
-  }
-}
-```
-
-The tracker is fetched from `hostUrl/script.js` and events are posted to
-`hostUrl/api/send`. Either field blank, missing, or not an absolute `http`/`https`
-URL and nothing is loaded and no request is made at all — there is no partial
-state and no compiled-in default.
-
-**`config.example.json` ships both fields empty and must keep shipping them
-empty.** Copying somebody else's `websiteId` into a fork does not give you
-statistics, it sends your readers to their dashboard.
-
-A page view carries the website id and the page path — today always `/`, since
-the app has one route. That is the whole payload: no address, no coordinate, no
-station name, no query string, no fragment, no referrer. Umami's automatic
-tracking, which reports the full URL of every page it sees, is switched off at the
-script tag; the path is produced by `normalizePagePath` in
-[lib/analytics.ts](lib/analytics.ts), whose
-[tests](tests/unit/analytics-path.test.ts) exist so that a future URL carrying an
-origin and a destination cannot leak one, and
-[another test](tests/unit/analytics-isolation.test.ts) fails the build if any
-other file reaches for the tracker. Nothing is stored in the reader's browser for
-measurement, which is why there is no consent banner.
-
-Nothing is measured on `localhost` or on a private network address, so a
-development machine never reaches the dashboard. If you serve the app behind a
-`Content-Security-Policy`, allow your Umami host in `script-src` and
-`connect-src`; a blocked tracker fails silently and changes nothing else.
 
 ## Translating
 

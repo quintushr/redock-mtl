@@ -26,15 +26,13 @@ const TRACKER_MODULE = "lib/analytics.ts";
 /**
  * Who may import that module at all, and what each is allowed it for.
  *
- * Kept short on purpose: a fourth entry should have to be argued for in a
+ * Kept short on purpose: a third entry should have to be argued for in a
  * review, which is what a list that fails the build gives you.
  */
 const IMPORTERS = new Set([
   TRACKER_MODULE,
   // Starts the tracker and reports pages. The one caller of `trackPage`.
   "components/Analytics.tsx",
-  // Owns the shape of config.json, so it parses the analytics block.
-  "lib/runtime-config.ts",
 ]);
 
 function sourceFiles(dir: string): string[] {

@@ -23,12 +23,14 @@
  * nor a cookie; that was verified by reading the shipped script, not from
  * memory — see the note on `TRACKER_SCRIPT_FILE`.
  *
- * Isolated on purpose. Nothing in `lib/` imports this except
- * `lib/runtime-config.ts`, which owns the shape of config.json and so owns the
- * parsing of the block that configures it; the only other importer is
- * `components/Analytics.tsx`. `tests/unit/analytics-isolation.test.ts` fails the
- * build if a third one appears, or if anything else reaches for `window.umami`
- * and goes around the normalisation.
+ * Configured by two environment variables and nothing else. They are read at
+ * build time, which is the whole of the setup: set them where the build runs,
+ * deploy, done. Unset — the default, and what a fork gets — is off.
+ *
+ * Isolated on purpose. `components/Analytics.tsx` is the only importer, and
+ * `tests/unit/analytics-isolation.test.ts` fails the build if a second one
+ * appears, or if anything else reaches for `window.umami` and goes around the
+ * normalisation.
  *
  * Impure, like `lib/feed-client.ts` and `lib/runtime-config.ts`, and confined
  * the same way: every function here that touches a document or a window takes
@@ -149,44 +151,66 @@ export function isCollectableHostname(hostname: string): boolean {
 }
 
 /**
- * The analytics block of config.json, or null.
+ * Two settings turned into a configuration, or null.
  *
- * Null is the default and the normal state: absent, empty, half-filled or
- * malformed all mean the same thing, which is that this deployment measures
- * nothing. There is deliberately no partial acceptance and no fallback to a
- * built-in value — unlike the four service URLs, which fall back per key,
- * because a missing tile server is a degraded map and a missing analytics block
- * is a decision.
+ * Null is the default and the normal state: unset, empty, half-filled or
+ * nonsense all mean the same thing, which is that this deployment measures
+ * nothing. There is deliberately no partial acceptance and no built-in fallback
+ * — unlike the service URLs in lib/endpoints.ts, which have defaults, because a
+ * missing tile server is a degraded map and a missing website id is a decision.
  *
  * `hostUrl` is held to absolute http(s), and that is a security boundary rather
  * than tidiness: this string becomes the `src` of a script element, so a
- * `javascript:` URL in a hand-edited config file would be arbitrary code with a
- * configuration file as its delivery mechanism. Same rule, same reason, as
- * `readUrl` in lib/runtime-config.ts.
+ * `javascript:` value would be arbitrary code with a deployment setting as its
+ * delivery mechanism. Same rule, same reason, as `readUrl` in
+ * lib/runtime-config.ts.
+ *
+ * Pure and takes its two strings as arguments, so the tests exercise every case
+ * without touching `process.env` or rebuilding anything.
  */
-export function parseAnalyticsConfig(payload: unknown): AnalyticsConfig | null {
-  if (payload === null || typeof payload !== "object" || Array.isArray(payload)) {
-    return null;
-  }
+export function readAnalyticsConfig(
+  websiteId: string | undefined,
+  hostUrl: string | undefined,
+): AnalyticsConfig | null {
+  const id = typeof websiteId === "string" ? websiteId.trim() : "";
+  const host = typeof hostUrl === "string" ? hostUrl.trim() : "";
 
-  const record = payload as Record<string, unknown>;
-
-  const websiteId =
-    typeof record.websiteId === "string" ? record.websiteId.trim() : "";
-  const hostUrl = typeof record.hostUrl === "string" ? record.hostUrl.trim() : "";
-
-  if (websiteId === "" || hostUrl === "") return null;
+  if (id === "" || host === "") return null;
 
   let parsed: URL;
   try {
-    parsed = new URL(hostUrl);
+    parsed = new URL(host);
   } catch {
     return null;
   }
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
 
-  return { websiteId, hostUrl };
+  return { websiteId: id, hostUrl: host };
 }
+
+/**
+ * The configuration this build was made with. Null on a build that set neither
+ * variable, which is every build of this repository as it stands.
+ *
+ * Read here and nowhere else, and written out in full rather than looked up by
+ * name: `next build` replaces the literal `process.env.NEXT_PUBLIC_*` text with
+ * the value, so an indexed read would be replaced by nothing at all. Verified in
+ * node_modules/next/dist/docs/01-app/02-guides/environment-variables.md, which
+ * also states the consequence worth knowing — "after being built, your app will
+ * no longer respond to changes to these environment variables". Changing either
+ * one is a rebuild, not a restart. On a host that builds on every deploy, which
+ * is what this project deploys to, that distinction costs nothing.
+ *
+ * The `NEXT_PUBLIC_` prefix is not decoration: it is what makes a value reach
+ * the browser at all, and it means the website id ends up readable in the
+ * bundle. That is correct for what this is. A Umami website id identifies a
+ * dashboard, not a secret, and the browser has to send it with every page view
+ * regardless.
+ */
+export const ANALYTICS_CONFIG: AnalyticsConfig | null = readAnalyticsConfig(
+  process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID,
+  process.env.NEXT_PUBLIC_UMAMI_HOST_URL,
+);
 
 /** Where the tracker is fetched from, given the configured root. */
 export function trackerScriptUrl(hostUrl: string): string {

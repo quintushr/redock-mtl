@@ -1,101 +1,78 @@
 import { describe, expect, it } from "vitest";
 import {
+  ANALYTICS_CONFIG,
   isCollectableHostname,
-  parseAnalyticsConfig,
+  readAnalyticsConfig,
   trackerScriptUrl,
 } from "@/lib/analytics";
-import { DEFAULT_RUNTIME_CONFIG, parseRuntimeConfig } from "@/lib/runtime-config";
 
 /**
  * When measurement is on, and — far more importantly — when it is off.
  *
- * Off is the default and the only state this project's own build ships in. The
- * cases that matter most here are therefore the empty ones: they are what a fork
- * gets, and a fork that inherited a website id would be reporting its readers to
+ * Off is the default and the only state this repository builds in. The cases
+ * that matter most here are therefore the empty ones: they are what a fork gets,
+ * and a fork that inherited a website id would be reporting its readers to
  * somebody else's dashboard without anybody choosing that.
  */
 
-describe("the analytics block", () => {
-  const complete = {
-    websiteId: "e676c9b4-11e4-4ef1-a4d7-87001773e9f2",
-    hostUrl: "https://umami.example.org",
-  };
+const WEBSITE_ID = "e676c9b4-11e4-4ef1-a4d7-87001773e9f2";
+const HOST_URL = "https://umami.example.org";
 
-  it("is read when both fields are filled", () => {
-    expect(parseAnalyticsConfig(complete)).toEqual(complete);
+describe("the two settings", () => {
+  it("are read when both are set", () => {
+    expect(readAnalyticsConfig(WEBSITE_ID, HOST_URL)).toEqual({
+      websiteId: WEBSITE_ID,
+      hostUrl: HOST_URL,
+    });
   });
 
-  it("trims what an operator pasted", () => {
-    expect(
-      parseAnalyticsConfig({
-        websiteId: `  ${complete.websiteId} `,
-        hostUrl: ` ${complete.hostUrl}  `,
-      }),
-    ).toEqual(complete);
+  it("trim what somebody pasted into a dashboard field", () => {
+    expect(readAnalyticsConfig(`  ${WEBSITE_ID} `, ` ${HOST_URL}  `)).toEqual({
+      websiteId: WEBSITE_ID,
+      hostUrl: HOST_URL,
+    });
   });
 
-  it("is off when the block is missing", () => {
-    expect(parseAnalyticsConfig(undefined)).toBeNull();
+  it("are off when unset, which is how this repository builds", () => {
+    expect(readAnalyticsConfig(undefined, undefined)).toBeNull();
+    expect(ANALYTICS_CONFIG).toBeNull();
   });
 
-  it("is off when the fields are blank, which is what config.example.json ships", () => {
-    expect(parseAnalyticsConfig({ websiteId: "", hostUrl: "" })).toBeNull();
+  it("are off when blank", () => {
+    expect(readAnalyticsConfig("", "")).toBeNull();
+    expect(readAnalyticsConfig("   ", "   ")).toBeNull();
   });
 
-  it("is off when only half of it is filled", () => {
+  it("are off when only one of the two is set", () => {
     // An id with nowhere to report and a host with nothing to report about are
     // both configuration in progress, never a decision to start measuring.
-    expect(parseAnalyticsConfig({ websiteId: complete.websiteId })).toBeNull();
-    expect(parseAnalyticsConfig({ hostUrl: complete.hostUrl })).toBeNull();
+    expect(readAnalyticsConfig(WEBSITE_ID, undefined)).toBeNull();
+    expect(readAnalyticsConfig(undefined, HOST_URL)).toBeNull();
   });
 
-  it("is off when the host is not an absolute http(s) URL", () => {
-    // The value becomes a script element's `src`. A configuration file is not a
+  it("are off when the host is not an absolute http(s) URL", () => {
+    // The value becomes a script element's `src`. A deployment setting is not a
     // code delivery mechanism.
     for (const hostUrl of [
       "javascript:alert(1)",
       "data:text/javascript,alert(1)",
       "//umami.example.org",
       "umami.example.org",
-      "",
     ]) {
-      expect(
-        parseAnalyticsConfig({ websiteId: complete.websiteId, hostUrl }),
-      ).toBeNull();
+      expect(readAnalyticsConfig(WEBSITE_ID, hostUrl)).toBeNull();
     }
-  });
-
-  it("is off when the block is not an object", () => {
-    for (const payload of [null, 42, "on", ["on"], true]) {
-      expect(parseAnalyticsConfig(payload)).toBeNull();
-    }
-  });
-
-  it("is off in a config.json that says nothing about it", () => {
-    expect(DEFAULT_RUNTIME_CONFIG.analytics).toBeNull();
-    expect(parseRuntimeConfig({}).analytics).toBeNull();
-    expect(
-      parseRuntimeConfig({ mapStyleUrl: "https://tiles.example.org/s" })
-        .analytics,
-    ).toBeNull();
-  });
-
-  it("reaches the rest of the configuration when it is filled", () => {
-    expect(parseRuntimeConfig({ analytics: complete }).analytics).toEqual(
-      complete,
-    );
   });
 });
 
 describe("the tracker's address", () => {
   it("is the script under the configured root", () => {
-    expect(trackerScriptUrl("https://umami.example.org")).toBe(
+    expect(trackerScriptUrl(HOST_URL)).toBe(
       "https://umami.example.org/script.js",
     );
   });
 
   it("does not double the slash when the root carries one", () => {
-    expect(trackerScriptUrl("https://umami.example.org/")).toBe(
+    expect(trackerScriptUrl(`${HOST_URL}/`)).toBe(
       "https://umami.example.org/script.js",
     );
   });
