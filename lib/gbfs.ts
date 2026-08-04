@@ -4,7 +4,6 @@ import type {
   LatLon,
   Metres,
   ParseResult,
-  PlanningParameters,
   ServiceArea,
   Station,
   StationSnapshot,
@@ -260,44 +259,45 @@ export function isOperational(station: Station): boolean {
 }
 
 /**
- * FR-011: only the first pickup needs a mechanical bike above the reserve.
+ * Whether a station can hand over a bike, and whether it can take one back.
  *
- * This is not a general "can be used" test. Intermediate stops deliberately do
- * not call it, because the rider re-takes their own bike after the cooldown.
+ * Both are now the same question, and the answer is the station's *service
+ * status* rather than its current contents. This is a deliberate reversal, and
+ * it is worth stating plainly because it changes what a plan means.
+ *
+ * A plan is made before the trip, and a count read now is not a count that will
+ * hold when the rider arrives forty minutes later. Planning against live
+ * occupancy produces an itinerary that is precise about a moment already gone:
+ * it will route around a station that is empty now and full by the time anyone
+ * reaches it, and it will happily send a rider to one that is full now and
+ * empty on arrival. The occupancy is real information, but it is information
+ * about the present, and a route is a statement about the future.
+ *
+ * So availability leaves the calculation and stays on the map, where the ring
+ * around each marker still shows what that station holds and the callout still
+ * gives the figures. The rider sees it and decides; the planner does not
+ * pretend to.
+ *
+ * What is still consulted is `isOperational`: installed, renting and returning.
+ * That is not occupancy, it is whether the station is in service at all, and a
+ * station the operator has taken out of service is not somewhere anybody can be
+ * sent whatever the counts say.
+ *
+ * The consequence to be honest about: a rider can now be sent to a first station
+ * that has no mechanical bike at that instant. The map says so before they set
+ * off, and the alternative was worse, because the old behaviour also failed and
+ * failed silently, by planning a detour around a station that had refilled.
  */
-export function canStartSegment(
-  station: Station,
-  params: PlanningParameters,
-): boolean {
-  return (
-    isOperational(station) &&
-    station.mechanicalBikesAvailable > params.bikeReserve
-  );
+export function canStartSegment(station: Station): boolean {
+  return isOperational(station);
 }
 
 /**
- * FR-012: a station can end a segment when it has free docks above the reserve.
- *
- * FR-011a: this is also the only condition for continuing a trip from that
+ * FR-011a: this is also the only condition for continuing a trip from a
  * station, since the bike the rider docks is the bike they take again.
  */
-export function canEndSegment(
-  station: Station,
-  params: PlanningParameters,
-): boolean {
-  return isOperational(station) && station.docksAvailable > params.dockReserve;
-}
-
-/** True when a station has e-bikes but no mechanical bike, for FR-031. */
-export function hasOnlyEbikes(
-  station: Station,
-  params: PlanningParameters,
-): boolean {
-  return (
-    isOperational(station) &&
-    station.ebikesAvailable > 0 &&
-    station.mechanicalBikesAvailable <= params.bikeReserve
-  );
+export function canEndSegment(station: Station): boolean {
+  return isOperational(station);
 }
 
 // ---------------------------------------------------------------------------

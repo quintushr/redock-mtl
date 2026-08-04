@@ -390,14 +390,6 @@ export const messages = {
         label: "Déverrouillage et ancrage",
         hint: "Compté une fois par trajet à vélo, et il entame la fenêtre gratuite.",
       },
-      bikeReserve: {
-        label: "Vélos gardés en réserve",
-        hint: "Ne jamais compter sur les derniers vélos, quelqu'un peut les prendre avant toi.",
-      },
-      dockReserve: {
-        label: "Points d'ancrage gardés en réserve",
-        hint: "Ne jamais compter sur les derniers points d'ancrage libres.",
-      },
       detourFactor: {
         label: "Facteur de détour",
         hint: "De combien les rues rallongent par rapport à la ligne droite.",
@@ -489,8 +481,6 @@ export const messages = {
         "Ta destination est hors de la zone desservie par le réseau. Déplace-la vers un secteur couvert par les stations affichées sur la carte.",
       "no-station-near-origin":
         "Aucune station à distance de marche de ton départ. Augmente ta distance de marche, ou déplace ton départ.",
-      "no-mechanical-bike-near-origin":
-        "Des stations sont à proximité, mais aucune n'a de vélo mécanique, et la fenêtre gratuite ne s'applique pas aux vélos électriques. Augmente ta distance de marche pour en atteindre d'autres.",
       "no-station-near-destination":
         "Aucune station à distance de marche de ta destination. Augmente ta distance de marche, ou déplace ta destination.",
       "gap-too-large":
@@ -555,10 +545,6 @@ export const messages = {
       segmentOverhead:
         "Le temps de déverrouillage et d'ancrage doit être plus court que le budget d'un segment.",
       overageRate: "Le tarif hors fenêtre ne peut pas être négatif.",
-      bikeReserve:
-        "Les réserves de vélos et d'ancrages sont des entiers positifs.",
-      dockReserve:
-        "Les réserves de vélos et d'ancrages sont des entiers positifs.",
     },
   },
 } satisfies MessageTree;

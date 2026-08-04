@@ -56,18 +56,22 @@ describe("edges only exist when a segment fits the budget", () => {
 });
 
 describe("station roles", () => {
-  it("requires a mechanical bike only at the first pickup (FR-011)", () => {
+  it("starts from a station that is in service (FR-011)", () => {
+    // It used to require a mechanical bike here. It no longer does: occupancy is
+    // a fact about the present and a plan is a claim about the future, so what a
+    // station holds stays on the map and out of the search. Service status is
+    // what is left, and it still holds. See canStartSegment in lib/gbfs.ts.
     const first = segments[0];
     const pickup = byId.get(first.fromStationId);
     expect(pickup).toBeDefined();
-    expect(canStartSegment(pickup!, params)).toBe(true);
+    expect(canStartSegment(pickup!)).toBe(true);
   });
 
-  it("requires free docks at every segment end (FR-012)", () => {
+  it("ends every segment at a station that is in service (FR-012)", () => {
     for (const segment of segments) {
       const end = byId.get(segment.toStationId);
       expect(end).toBeDefined();
-      expect(canEndSegment(end!, params)).toBe(true);
+      expect(canEndSegment(end!)).toBe(true);
     }
   });
 
@@ -77,7 +81,7 @@ describe("station roles", () => {
     for (const segment of segments.slice(1)) {
       const continuation = byId.get(segment.fromStationId);
       expect(continuation).toBeDefined();
-      expect(canEndSegment(continuation!, params)).toBe(true);
+      expect(canEndSegment(continuation!)).toBe(true);
     }
   });
 

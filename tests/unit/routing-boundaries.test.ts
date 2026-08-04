@@ -125,9 +125,30 @@ describe("3. only the adapter hook may reach the path source", () => {
       });
     }
 
-    // No exception at all to this one: the path source is reached from exactly
-    // one place.
-    if (file === "components/useTracedItinerary.ts") continue;
+    /*
+     * Two places may reach the path source, and the second one is narrow.
+     *
+     * useTracedItinerary.ts owns the refinement: retrieval, the cache, the
+     * replan decision, the request budget. That is the thing this rule exists to
+     * keep in one file, and it stays in one file.
+     *
+     * useCorridor.ts issues exactly one request, for the direct path between the
+     * two endpoints, and returns its coordinates. It holds no state machine, no
+     * cache of its own and no plan; it cannot replan and it cannot retry. It
+     * exists because the corridor is needed *before* a plan exists, so it cannot
+     * live inside a hook whose input is a plan, and folding it in would be
+     * circular rather than tidy.
+     *
+     * Both go through `fetchPath`, so both sit inside the same session cache and
+     * the same per-user-request ceiling. That is what keeps the courtesy
+     * discipline of principle V in one place even though the callers are two.
+     */
+    if (
+      file === "components/useTracedItinerary.ts" ||
+      file === "components/useCorridor.ts"
+    ) {
+      continue;
+    }
     it(`${file} does not import lib/routing`, () => {
       expect(read(file)).not.toMatch(/from\s+["']@?\/?(lib\/)?routing["']/);
     });

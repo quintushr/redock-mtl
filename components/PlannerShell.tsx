@@ -32,6 +32,7 @@ import {
 import { planTrip } from "@/lib/planner";
 import { noStopRide } from "@/lib/pricing";
 import { useStrings } from "@/components/LocaleProvider";
+import { useCorridor } from "@/components/useCorridor";
 import { useTracedItinerary } from "@/components/useTracedItinerary";
 import { describeCorrection } from "@/lib/corrections";
 import type {
@@ -369,11 +370,27 @@ export default function PlannerShell() {
     ? null
     : describeCorrection(parameters, validation.corrected, t);
 
+  /**
+   * The direct path between the two ends, used to estimate rather than to ride.
+   *
+   * Null until it lands, and null for good if the router cannot be reached. The
+   * plan below is computed either way and simply improves when this arrives.
+   */
+  const corridor = useCorridor(origin, destination);
+
   const plan: PlanResult | null = useMemo(() => {
     if (snapshot === null || origin === null || destination === null)
       return null;
-    return planTrip(origin, destination, snapshot, settled);
-  }, [snapshot, origin, destination, settled]);
+    /*
+     * No `measured` here, and a corridor. The two are different tools: measured
+     * distances correct a plan that has already been drawn, one traced pair at a
+     * time, while the corridor improves the estimate the first draw is made
+     * from. Without it the planner ranks candidate stops by great-circle
+     * distance times a scalar, which cannot tell a station on the cycling artery
+     * from one on the far side of an escarpment 12 m from the same straight line.
+     */
+    return planTrip(origin, destination, snapshot, settled, undefined, corridor ?? undefined);
+  }, [snapshot, origin, destination, settled, corridor]);
 
   /**
    * Real geometry for the plan above, filled in as it arrives.

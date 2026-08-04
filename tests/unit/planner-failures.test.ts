@@ -105,61 +105,42 @@ describe("nothing in walking range", () => {
   });
 
   it("reports no station near the destination", () => {
-    const stations = snapshot.stations.map((station) =>
-      // Strip docks from everything near the eastern end so nothing can receive
-      // the bike there, while the west stays plannable.
-      station.position.lon > eastEnd.lon - 0.01
-        ? { ...station, docksAvailable: 0 }
-        : station,
-    );
-    const result = planTrip(
-      near(westEnd),
-      near(eastEnd),
-      withStations(stations),
-      params,
-    );
-    expect(result.ok).toBe(false);
-    if (result.ok) return;
-    expect([
-      "no-station-near-destination",
-      "gap-too-large",
-    ]).toContain(result.failure.reason);
-  });
-});
-
-describe("only e-bikes nearby (FR-031)", () => {
-  it("says so explicitly rather than reporting a generic absence", () => {
-    // Every station keeps its docks but loses its mechanical bikes, and gains
-    // e-bikes. The user is not out of luck for a generic reason: the free
-    // window simply does not apply to the bikes that are there.
-    const stations = snapshot.stations.map((station) => ({
-      ...station,
-      mechanicalBikesAvailable: 0,
-      ebikesAvailable: 4,
-    }));
+    /*
+     * Only the two extremes of the corridor, with the destination halfway
+     * between them. That point is inside the buffered hull, because the hull is
+     * the segment joining the two and the buffer is the walking distance, and it
+     * is several kilometres from either station. So coverage passes and the walk
+     * fails, which is the pair FR-029b exists to keep distinct.
+     *
+     * This used to be built by stripping the docks from every eastern station.
+     * That no longer excludes anything: an empty station is a station this
+     * planner will route to, because occupancy is a fact about the present and a
+     * route is a claim about the future (see canEndSegment in lib/gbfs.ts).
+     * Taking those stations out of service instead does exclude them, but it
+     * also shrinks the hull they defined, so the destination fell out of
+     * coverage and the test proved a different thing. Sparse-but-in-service is
+     * the construction that isolates the case.
+     */
+    const ends = [corridor[0], corridor[corridor.length - 1]];
+    const midpoint: LatLon = {
+      lat: (westEnd.lat + eastEnd.lat) / 2,
+      lon: (westEnd.lon + eastEnd.lon) / 2,
+    };
     expectFailure(
-      planTrip(near(westEnd), near(eastEnd), withStations(stations), params),
-      "no-mechanical-bike-near-origin",
+      planTrip(near(westEnd), midpoint, withStations(ends), params),
+      "no-station-near-destination",
     );
-  });
-
-  it("is distinct from a station that simply has nothing", () => {
-    const stations = snapshot.stations.map((station) => ({
-      ...station,
-      mechanicalBikesAvailable: 0,
-      ebikesAvailable: 0,
-    }));
-    const result = planTrip(
-      near(westEnd),
-      near(eastEnd),
-      withStations(stations),
-      params,
-    );
-    expect(result.ok).toBe(false);
-    if (result.ok) return;
-    expect(result.failure.reason).not.toBe("no-mechanical-bike-near-origin");
   });
 });
+
+/*
+ * "Only e-bikes nearby" stood here, asserting a `no-mechanical-bike-near-origin`
+ * failure. Both the failure and the rule that produced it are gone: the planner
+ * reads no station's contents, so it cannot know that the only bikes in range
+ * are electric, and it no longer refuses to plan on that basis. What a station
+ * holds, e-bikes included, is on the map for the rider to read before setting
+ * off.
+ */
 
 describe("gap too large", () => {
   it("is reported when stations exist at both ends but cannot be linked", () => {

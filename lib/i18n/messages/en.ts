@@ -199,14 +199,6 @@ export const messages: Messages = {
         label: "Unlocking and docking",
         hint: "Counted once per ride, and it does use the free window.",
       },
-      bikeReserve: {
-        label: "Bikes held in reserve",
-        hint: "Never count on the last bikes, someone may take them before you.",
-      },
-      dockReserve: {
-        label: "Docks held in reserve",
-        hint: "Never count on the last free docks.",
-      },
       detourFactor: {
         label: "Detour factor",
         hint: "How much longer streets are than a straight line.",
@@ -267,8 +259,6 @@ export const messages: Messages = {
         "Your destination is outside the area this network serves. Move it into a sector covered by the stations shown on the map.",
       "no-station-near-origin":
         "No station within walking distance of your start. Raise your walking distance, or move your start.",
-      "no-mechanical-bike-near-origin":
-        "Stations are nearby, but none has a mechanical bike, and the free window does not apply to electric bikes. Raise your walking distance to reach others.",
       "no-station-near-destination":
         "No station within walking distance of your destination. Raise your walking distance, or move your destination.",
       "gap-too-large":
@@ -311,8 +301,6 @@ export const messages: Messages = {
       segmentOverhead:
         "Unlocking and docking must take less than a segment's budget.",
       overageRate: "The rate past the window cannot be negative.",
-      bikeReserve: "Bike and dock reserves are whole positive numbers.",
-      dockReserve: "Bike and dock reserves are whole positive numbers.",
     },
   },
 };

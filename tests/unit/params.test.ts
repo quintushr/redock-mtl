@@ -31,9 +31,6 @@ describe("DEFAULT_PARAMETERS", () => {
     expect(DEFAULT_PARAMETERS.walkingSpeed).toBeLessThan(5 * (1000 / 3600));
     // A street route is never shorter than a straight line.
     expect(DEFAULT_PARAMETERS.detourFactor).toBeGreaterThan(1);
-    // A plan must never depend on the last bike or the last dock.
-    expect(DEFAULT_PARAMETERS.bikeReserve).toBeGreaterThan(0);
-    expect(DEFAULT_PARAMETERS.dockReserve).toBeGreaterThan(0);
     // Some margin must be set aside, or the free window is spent exactly.
     expect(DEFAULT_PARAMETERS.safetyMargin).toBeGreaterThan(0);
   });
@@ -52,7 +49,7 @@ describe("validateParameters", () => {
       freeWindow: Number.NaN,
       cyclingSpeed: -1,
       detourFactor: 0,
-      bikeReserve: -3.5,
+      segmentOverhead: -3.5,
     });
     expect(() => validateParameters(nonsense)).not.toThrow();
   });
@@ -96,16 +93,12 @@ describe("validateParameters", () => {
     expect(validateParameters(result.corrected)).toEqual({ ok: true });
   });
 
-  it("rejects negative and fractional reserves, correcting to whole numbers", () => {
-    const result = validateParameters(
-      withParams({ bikeReserve: -2, dockReserve: 1.5 }),
-    );
-    expect(result.ok).toBe(false);
-    if (result.ok) return;
-    expect(Number.isInteger(result.corrected.bikeReserve)).toBe(true);
-    expect(Number.isInteger(result.corrected.dockReserve)).toBe(true);
-    expect(result.corrected.bikeReserve).toBeGreaterThanOrEqual(0);
-  });
+  /*
+   * "Rejects negative and fractional reserves" stood here. `bikeReserve` and
+   * `dockReserve` no longer exist: the planner reads no station count, so a
+   * reserve on one could only be a control that changed nothing. The validation
+   * that remains covers every parameter that is still on screen.
+   */
 
   it("returns a correction rather than mutating the input", () => {
     const params = withParams({ freeWindow: 2700, safetyMargin: 2700 });

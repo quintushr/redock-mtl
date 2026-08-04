@@ -72,6 +72,156 @@ export function routedDistance(
 }
 
 // ---------------------------------------------------------------------------
+// Corridor
+// ---------------------------------------------------------------------------
+
+/**
+ * How far from the measured corridor a station may sit and still be estimated
+ * against it, in metres.
+ *
+ * The corridor model says "leave the path, ride along it, rejoin it", and that
+ * sentence stops describing anything real once a station is far enough away that
+ * getting to the path is a journey of its own. 400 m is about three Montreal
+ * blocks: near enough that the approach is a detail, far enough to admit the
+ * stations that actually line a cycling artery.
+ *
+ * Beyond it the old straight-line estimate is used instead, unchanged. This is a
+ * refinement of the estimate where it can be trusted, never a replacement of the
+ * planner's fallback.
+ */
+export const CORRIDOR_MAX_OFFSET: Metres = 400;
+
+/** Where a point falls with respect to a path. */
+export interface CorridorPosition {
+  /** Distance from the path's start to the nearest point on it. */
+  along: Metres;
+  /** Straight-line distance from the point to the path. */
+  offset: Metres;
+}
+
+/**
+ * Projects a point onto a path.
+ *
+ * Vertex-wise rather than segment-wise: the nearest *vertex* is taken rather
+ * than the nearest point on the nearest segment. A traced path from the router
+ * carries a vertex every few metres in a city, so the difference is under the
+ * error of everything else here, and the segment-wise version costs a
+ * projection per vertex per candidate over several hundred candidates.
+ */
+export function projectOntoPath(
+  point: LatLon,
+  path: readonly LatLon[],
+): CorridorPosition | null {
+  if (path.length === 0) return null;
+
+  let along = 0;
+  let bestAlong = 0;
+  let bestOffset = Number.POSITIVE_INFINITY;
+
+  for (let i = 0; i < path.length; i += 1) {
+    if (i > 0) along += haversineMetres(path[i - 1], path[i]);
+    const offset = haversineMetres(point, path[i]);
+    if (offset < bestOffset) {
+      bestOffset = offset;
+      bestAlong = along;
+    }
+  }
+
+  return { along: bestAlong, offset: bestOffset };
+}
+
+/**
+ * How much longer the measured corridor is than the straight line it spans.
+ *
+ * One real observation about how indirect this particular area is, which is
+ * exactly what `detourFactor` guesses at with a constant. Null when the corridor
+ * cannot supply one.
+ *
+ * It exists to keep the two estimators comparable, and that is not a detail. A
+ * corridor estimate is honest, and an honest number is usually *larger* than an
+ * optimistic one; a straight-line estimate with too small a factor is optimistic.
+ * Mix them without care and the planner prefers whichever station it knows least
+ * about, which is the opposite of what measuring was for. See the note at the
+ * edge cost in planner.ts.
+ */
+export function corridorDetourRatio(corridor: readonly LatLon[]): number | null {
+  if (corridor.length < 2) return null;
+
+  const straight = haversineMetres(corridor[0], corridor[corridor.length - 1]);
+  if (straight <= 0) return null;
+
+  let length = 0;
+  for (let i = 1; i < corridor.length; i += 1) {
+    length += haversineMetres(corridor[i - 1], corridor[i]);
+  }
+
+  return length / straight;
+}
+
+/**
+ * Riding distance between two stations, estimated along a measured corridor.
+ *
+ * Returns null when the corridor has nothing to say about this pair, which is
+ * the caller's signal to fall back to `routedDistance`.
+ *
+ * Why this exists. `routedDistance` is a great-circle distance times one scalar
+ * factor, and a scalar is isotropic: it assumes the street network is equally
+ * permeable in every direction. Montreal's west end is not. The Décarie trench,
+ * the Turcot rail yards and the Falaise Saint-Jacques make north-south crossings
+ * expensive, so a station that sits *on* the straight line between two points
+ * can be a long way off the route a rider can actually take.
+ *
+ * That is not hypothetical. On a downtown-to-Lachine trip, four candidate stops
+ * fell within 1.4% of each other under the straight-line estimate, and within
+ * 16% of each other in reality. The estimator could not tell them apart, and the
+ * one it picked was the worst of the four: 12 m from the straight line, on the
+ * far side of the escarpment, and 1.7 km of real riding worse than the best.
+ *
+ * The model here is the one the geometry actually supports: get onto the
+ * corridor, ride along it, get off. So the estimate is the distance between the
+ * two projections plus each station's own offset. Measured against BRouter on
+ * that same trip, it predicted the real distance to about 1%.
+ *
+ * `Math.abs` on the along-difference rather than rejecting a backwards pair: a
+ * corridor that doubles back on itself is ordinary, and a pair that goes
+ * momentarily against the flow is not automatically wrong. What the absolute
+ * value costs is that a genuine backtrack is under-estimated, which the
+ * measurement pass then catches.
+ */
+export function corridorDistance(
+  a: LatLon,
+  b: LatLon,
+  corridor: readonly LatLon[],
+): Metres | null {
+  return corridorDistanceBetween(
+    projectOntoPath(a, corridor),
+    projectOntoPath(b, corridor),
+  );
+}
+
+/**
+ * The same estimate from two projections already computed.
+ *
+ * This is the form the planner uses, and the split is not tidiness. Projecting
+ * is O(corridor length) and a graph over the whole network holds hundreds of
+ * thousands of candidate edges; projecting inside the edge cost meant several
+ * hundred million distance calculations for one plan, which took a planner that
+ * answers in milliseconds and hung it indefinitely. Each station is projected
+ * once, before the graph is built, and this reads the answers.
+ */
+export function corridorDistanceBetween(
+  a: CorridorPosition | null,
+  b: CorridorPosition | null,
+): Metres | null {
+  if (a === null || b === null) return null;
+  if (a.offset > CORRIDOR_MAX_OFFSET || b.offset > CORRIDOR_MAX_OFFSET) {
+    return null;
+  }
+
+  return Math.abs(b.along - a.along) + a.offset + b.offset;
+}
+
+// ---------------------------------------------------------------------------
 // Service area
 // ---------------------------------------------------------------------------
 

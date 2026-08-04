@@ -34,8 +34,10 @@ const hostileParameters: [string, PlanningParameters][] = [
   ["negative cooldown", withParams({ dockCooldown: -60 })],
   ["huge cooldown", withParams({ dockCooldown: 10_000 })],
   ["overhead above budget", withParams({ segmentOverhead: 100_000 })],
-  ["fractional reserves", withParams({ bikeReserve: 1.5, dockReserve: -2 })],
-  ["enormous reserves", withParams({ bikeReserve: 9999, dockReserve: 9999 })],
+  // The two "reserves" entries that stood here are gone with the parameters
+  // themselves: nothing in the planner reads a station's counts any more.
+  ["fractional overhead", withParams({ segmentOverhead: 1.5 })],
+  ["negative overhead", withParams({ segmentOverhead: -2 })],
 ];
 
 const hostilePoints: [string, LatLon][] = [

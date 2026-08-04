@@ -101,22 +101,13 @@ describe("raising the cooldown", () => {
   });
 });
 
-describe("raising the reserves", () => {
-  it("never widens the set of usable stations", () => {
-    // A larger reserve can only exclude stations, so the plan can only get
-    // worse or fail. It must never improve.
-    const lenient = plan(withParams({ bikeReserve: 0, dockReserve: 0 }));
-    const strict = plan(withParams({ bikeReserve: 4, dockReserve: 4 }));
-    if (!lenient.ok) return;
-    if (!strict.ok) {
-      expect(strict.ok).toBe(false);
-      return;
-    }
-    expect(strict.itinerary.totalDuration).toBeGreaterThanOrEqual(
-      lenient.itinerary.totalDuration - 1e-6,
-    );
-  });
-});
+/*
+ * "Raising the reserves never widens the set of usable stations" used to be
+ * here, over `bikeReserve` and `dockReserve`. Both parameters are gone: nothing
+ * in the planner reads a station's counts any more, so a reserve on a count
+ * could only have been a control that changed nothing, and principle IV rules
+ * out showing one of those. See canStartSegment in lib/gbfs.ts.
+ */
 
 describe("no parameter in the panel is inert", () => {
   // Constitution principle IV requires influencing parameters to be visible and
@@ -139,8 +130,6 @@ describe("no parameter in the panel is inert", () => {
     ["dockCooldown", withParams({ dockCooldown: 600 })],
     ["segmentOverhead", withParams({ segmentOverhead: 600 })],
     ["detourFactor", withParams({ detourFactor: 1.9 })],
-    ["bikeReserve", withParams({ bikeReserve: 500 })],
-    ["dockReserve", withParams({ dockReserve: 500 })],
   ])("changing %s changes the outcome", (_label, changed) => {
     expect(baseline.ok).toBe(true);
     const altered = plan(changed);

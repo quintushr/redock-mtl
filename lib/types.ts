@@ -100,10 +100,6 @@ export interface PlanningParameters {
    * which is an optimistic estimate and therefore forbidden by principle IV.
    */
   segmentOverhead: Seconds;
-  /** Bikes left untouched so a plan never depends on the last one. */
-  bikeReserve: number;
-  /** Docks left untouched so a plan never depends on the last one. */
-  dockReserve: number;
   /** Straight-line distance is multiplied by this to approximate street routing. */
   detourFactor: number;
   /** Metres per second. */
@@ -398,7 +394,6 @@ export type PlanningFailureReason =
   | "origin-out-of-coverage"
   | "destination-out-of-coverage"
   | "no-station-near-origin"
-  | "no-mechanical-bike-near-origin"
   | "no-station-near-destination"
   | "gap-too-large"
   | "invalid-parameters";

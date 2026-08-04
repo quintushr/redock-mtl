@@ -59,18 +59,14 @@ export const DEFAULT_PARAMETERS: PlanningParameters = {
    */
   segmentOverhead: 90,
 
-  /**
-   * 1 bike. A plan must not depend on the single last mechanical bike at the
-   * pickup station, because someone else may take it while the rider walks
-   * there. Availability is a snapshot, not a reservation (FR-014).
+  /*
+   * `bikeReserve` and `dockReserve` used to sit here, holding back one bike and
+   * one dock so a plan never depended on the last of either. They are gone with
+   * the availability filter they existed to soften: nothing in the planner reads
+   * a count any more, so a reserve on a count could only be a control that
+   * changed nothing. Principle IV requires every parameter on screen to
+   * influence the result, which cuts both ways. See canStartSegment in gbfs.ts.
    */
-  bikeReserve: 1,
-
-  /**
-   * 1 dock. Same reasoning in reverse: arriving to find the last free dock
-   * taken strands the rider mid-trip with the meter running.
-   */
-  dockReserve: 1,
 
   /**
    * 1.5. Street distance divided by straight-line distance for urban cycling.
@@ -265,23 +261,6 @@ export function validateParameters(
       ok: false,
       reason: "The overage rate cannot be negative.",
       corrected: { ...params, overageRate: 0 },
-    };
-  }
-
-  if (
-    !Number.isInteger(params.bikeReserve) ||
-    params.bikeReserve < 0 ||
-    !Number.isInteger(params.dockReserve) ||
-    params.dockReserve < 0
-  ) {
-    return {
-      ok: false,
-      reason: "Bike and dock reserves must be whole numbers of zero or more.",
-      corrected: {
-        ...params,
-        bikeReserve: Math.max(0, Math.floor(params.bikeReserve || 0)),
-        dockReserve: Math.max(0, Math.floor(params.dockReserve || 0)),
-      },
     };
   }
 
