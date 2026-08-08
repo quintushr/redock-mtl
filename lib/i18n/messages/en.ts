@@ -288,6 +288,12 @@ export const messages: Messages = {
     creditsHide: "Hide credits",
   },
 
+  themeSource: {
+    followingLabel: "Theme: your device's",
+    pinnedLabel: "Theme: your choice",
+    follow: "Follow the device",
+  },
+
   corrections: {
     fallback: "These settings cannot produce a trip. Adjust them and try again.",
     byKey: {

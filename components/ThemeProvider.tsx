@@ -15,6 +15,21 @@ import { useCallback, useSyncExternalStore } from "react";
  * first press is what turns that into a choice. What a stored value buys is the
  * reader who wants dark on a machine set to light, which is the case a pure
  * media query cannot serve at all.
+ *
+ * Two things were missing from that, and both are here now.
+ *
+ * The device was consulted exactly once, at load, by the inline script. A
+ * machine that switches to dark at sunset, or a reader who changes the system
+ * setting in another window, left this tab on whatever it had opened with until
+ * it was reloaded. `subscribe` watches the media query, so following the device
+ * now means following it rather than having read it.
+ *
+ * And the first press opted out of the device permanently: nothing short of
+ * clearing site data put it back in charge. `followSystem` is the way back, and
+ * it is deliberately not "set the theme the device currently asks for" — that
+ * would pin a value that stops following an hour later. It removes the pin, so
+ * the question is asked afresh every time. The toggle stays two states; the way
+ * back lives in the settings, beside the other controls that undo something.
  */
 
 export type Theme = "light" | "dark";
@@ -43,12 +58,48 @@ function isTheme(value: unknown): value is Theme {
  * a planner that throws on mount because a test environment lacks a media query
  * is worse than one that opens light.
  */
+function systemQuery(): MediaQueryList | null {
+  if (typeof window === "undefined") return null;
+  if (typeof window.matchMedia !== "function") return null;
+  return window.matchMedia("(prefers-color-scheme: dark)");
+}
+
 export function systemTheme(): Theme {
-  if (typeof window === "undefined") return "light";
-  if (typeof window.matchMedia !== "function") return "light";
-  return window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
+  return systemQuery()?.matches === true ? "dark" : "light";
+}
+
+/**
+ * Whether the reader has pinned a theme of their own.
+ *
+ * False means the device decides, now and whenever it changes its mind. It is
+ * the state the application opens in and the one `followSystem` returns to.
+ */
+export function followsSystem(): boolean {
+  if (sessionTheme !== null) return false;
+  try {
+    return !isTheme(window.localStorage.getItem(THEME_STORAGE_KEY));
+  } catch {
+    return true;
+  }
+}
+
+/**
+ * Hand the choice back to the device.
+ *
+ * Not the same as setting the theme the device currently asks for: that would
+ * pin a value that stops following it an hour later. This removes the pin, so
+ * the answer is recomputed every time the question is asked — including when
+ * the operating system changes its mind while the tab is open.
+ */
+export function followSystem(): void {
+  sessionTheme = null;
+  try {
+    window.localStorage.removeItem(THEME_STORAGE_KEY);
+  } catch {
+    // Storage denied. Clearing the in-memory pin above was the whole of it.
+  }
+  applyTheme(systemTheme());
+  window.dispatchEvent(new Event(CHANGED));
 }
 
 function readTheme(): Theme {
@@ -74,12 +125,40 @@ function serverTheme(): Theme {
   return "light";
 }
 
+/**
+ * Everything that can change the answer, including the device itself.
+ *
+ * The media query is the addition, and it is what "follow the device" actually
+ * means. The system preference used to be read exactly once, by the inline
+ * script at load: a reader whose machine switches to dark at sunset, or who
+ * flips the system setting in another window, kept whatever this tab had been
+ * opened with until they reloaded it. Reading a preference once is not
+ * following it.
+ *
+ * The handler applies before it notifies. `readTheme` already encodes the
+ * precedence — a pinned choice outranks the device — so a system change that
+ * the reader has overruled resolves to the same value and writing it is a
+ * no-op. Applying here rather than in an effect keyed on the rendered value is
+ * deliberate: an effect would also fire on the hydration render, where
+ * `getServerSnapshot` says light by construction, and would repaint the
+ * document light for a frame on every dark-themed load — the exact flash the
+ * inline script exists to prevent.
+ */
 function subscribe(onChange: () => void): () => void {
+  const react = (): void => {
+    applyTheme(readTheme());
+    onChange();
+  };
+
+  const media = systemQuery();
   window.addEventListener(CHANGED, onChange);
-  window.addEventListener("storage", onChange);
+  window.addEventListener("storage", react);
+  media?.addEventListener("change", react);
+
   return () => {
     window.removeEventListener(CHANGED, onChange);
-    window.removeEventListener("storage", onChange);
+    window.removeEventListener("storage", react);
+    media?.removeEventListener("change", react);
   };
 }
 
@@ -99,15 +178,27 @@ function applyTheme(theme: Theme): void {
  * The theme, and the means to change it.
  *
  * Reading it does not touch the DOM: the attribute is already correct, set by
- * the inline script at load and by `setTheme` afterwards. A component that only
- * reads gets a value and nothing else happens.
+ * the inline script at load, by `setTheme` afterwards, and by `subscribe` when
+ * the device changes its mind. A component that only reads gets a value and
+ * nothing else happens.
  */
 export function useTheme(): {
   theme: Theme;
+  /** False once the reader has pinned a theme of their own. */
+  following: boolean;
   setTheme: (next: Theme) => void;
   toggle: () => void;
+  /** Drops the pin, so the device decides again. */
+  follow: () => void;
 } {
   const theme = useSyncExternalStore(subscribe, readTheme, serverTheme);
+  /*
+   * Same store, same subscription, so this cannot disagree with `theme` about
+   * which of them is in force. `serverTheme` has a counterpart here for the same
+   * reason it has one there: the build has no reader and no device, so the
+   * prerendered markup has to say the thing that is true before either exists.
+   */
+  const following = useSyncExternalStore(subscribe, followsSystem, () => true);
 
   const setTheme = useCallback((next: Theme) => {
     try {
@@ -128,7 +219,9 @@ export function useTheme(): {
     setTheme(readTheme() === "dark" ? "light" : "dark");
   }, [setTheme]);
 
-  return { theme, setTheme, toggle };
+  const follow = useCallback(() => followSystem(), []);
+
+  return { theme, following, setTheme, toggle, follow };
 }
 
 /**

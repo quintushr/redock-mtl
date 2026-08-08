@@ -101,6 +101,28 @@ l'est pas sur 360×640, où il reste 184px à dérouler. Le levier qui n'a pas �
 tiré est le pied de panneau, dont les 121px sont plus de la moitié du mobilier
 restant.
 
+*Amendé le 2026-08-06.* La poignée fait désormais deux choses : un appui déplace
+entre les deux positions de repos, un glissement pose la feuille où le doigt la
+laisse, entre 260px et 80dvh. Les flèches haut et bas font la même chose au
+clavier, par pas de 48px — environ une rangée du fil, qui est l'unité que le
+lecteur demande réellement. Un changement de taille de fenêtre ou une rotation
+rend la feuille à ses positions de repos : une hauteur en pixels ne veut plus
+rien dire contre un écran qui n'existe plus.
+
+Les deux positions de repos ne sont pas remplacées, elles restent ce qu'un appui
+parcourt et ce à quoi la feuille s'ouvre. Ce que le glissement ajoute, c'est le
+cas où aucune des deux ne convient — un fil dont la longueur est le trajet du
+lecteur et non une donnée de conception, donc la plupart des cas.
+
+Le rembourrage de cadrage de la carte est posé **une fois** sur la
+transformation, par `setPadding`, jamais passé à un appel de caméra individuel.
+C'est un piège que la bibliothèque tend : un appel qui porte `padding`
+l'installe durablement, et le suivant ajoute le sien par-dessus. Deux de ces
+rembourrages sur un écran de 844px font 962px, `cameraForBounds` renvoie
+`undefined` parce que la boîte à cadrer est négative, et `fitBounds` ne fait
+rien du tout, sans erreur. C'est ce qui laissait la caméra sur le départ quand
+on saisissait une destination.
+
 Ouvrir les réglages porte la feuille à 80dvh, en hauteur ferme et non en
 plafond, et la poignée se retire pendant ce temps. La surcouche est absolue,
 donc elle ne compte pas dans la hauteur intrinsèque du panneau : sans hauteur
@@ -472,6 +494,17 @@ réglages et actualisation atteignables sans dérouler — reste exactement auss
 vraie qu'avant. Une ligne de crédits est précisément ce qui grossit d'une entrée
 à la fois jusqu'à devenir un pied de page ; elle est fermée à deux liens pour la
 même raison que ce pied est fermé à trois rangées.
+
+*Amendé le 2026-08-06.* La rangée 3 n'existe qu'à partir de 768px. Sous cette
+largeur, elle est la dernière chose de la surcouche des réglages.
+
+C'est la phrase ci-dessus prise au mot. Elle « se lit une fois quand les deux
+autres servent à chaque trajet », et sur un téléphone elle coûtait 33px de
+**chaque** écran, en permanence, dans un pied de 121px pour une zone de contenu
+de 241px. Le pied tombe à 88px et la zone de contenu passe de 241 à 274px au
+repos — mesuré. Rien n'est supprimé : les deux liens sont là où l'on va chercher
+ce qu'est cette application et qui l'a écrite, et le composant est le même aux
+deux emplacements, donc il n'y a pas deux dessins à maintenir.
 
 L'attribution cartographique n'appartient pas au pied de panneau. Elle reste
 sur la carte, où l'obligation légale l'exige.

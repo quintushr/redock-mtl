@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import dynamic from "next/dynamic";
 import EmptyState from "@/components/EmptyState";
 import { FeedFailure } from "@/components/FeedNotice";
@@ -389,7 +396,14 @@ export default function PlannerShell() {
      * distance times a scalar, which cannot tell a station on the cycling artery
      * from one on the far side of an escarpment 12 m from the same straight line.
      */
-    return planTrip(origin, destination, snapshot, settled, undefined, corridor ?? undefined);
+    return planTrip(
+      origin,
+      destination,
+      snapshot,
+      settled,
+      undefined,
+      corridor ?? undefined,
+    );
   }, [snapshot, origin, destination, settled, corridor]);
 
   /**
@@ -426,6 +440,69 @@ export default function PlannerShell() {
     if (plan === null || !plan.ok) return null;
     return noStopRide(plan.itinerary, snapshot?.stations ?? [], settled);
   }, [plan, snapshot, settled]);
+
+  /**
+   * The trip that was last framed, as the pair of ends it was computed for.
+   *
+   * A key and not a boolean, because what must not re-fire is a second framing
+   * of the *same* trip, and what must fire is the first framing of a different
+   * one. Null until a plan has been framed at all.
+   */
+  const framedTrip = useRef<string | null>(null);
+
+  /**
+   * Frame the route once it exists.
+   *
+   * Entering two ends used to leave the camera wherever the second address had
+   * put it — centred on the destination at zoom 14, with the other end and every
+   * stop between them off screen. The plan is the answer this application
+   * exists to give and the map is half of how it is read, so the moment there is
+   * a route, the map shows the route.
+   *
+   * Keyed on the two ends and nothing else, which is what keeps it inside
+   * FR-026. A parameter change recomputes the plan — different stops, different
+   * durations, possibly a different station count — against the same pair of
+   * ends, so the key does not move and the camera does not either. That is the
+   * whole guarantee: dragging a slider may rewrite the itinerary underneath the
+   * reader, but it may never take the map away from them.
+   *
+   * Every point of the itinerary, not just the two ends. A stop can sit well off
+   * the straight line between them — that is rather the point of a stop — and a
+   * framing that clipped it would hide the part of the plan the reader did not
+   * already know.
+   */
+  useEffect(() => {
+    if (origin === null || destination === null) return;
+    if (plan === null || !plan.ok) return;
+
+    const key = `${origin.lat},${origin.lon}>${destination.lat},${destination.lon}`;
+    if (framedTrip.current === key) return;
+    framedTrip.current = key;
+
+    const positions = new Map(
+      (snapshot?.stations ?? []).map((station) => [
+        station.id,
+        station.position,
+      ]),
+    );
+    const points: LatLon[] = [origin];
+    for (const step of plan.itinerary.steps) {
+      if (step.kind === "walk") {
+        points.push(step.from, step.to);
+      } else if (step.kind === "bike") {
+        const from = positions.get(step.fromStationId);
+        const to = positions.get(step.toStationId);
+        if (from !== undefined) points.push(from);
+        if (to !== undefined) points.push(to);
+      } else {
+        const at = positions.get(step.stationId);
+        if (at !== undefined) points.push(at);
+      }
+    }
+    points.push(destination);
+
+    focusOn(points);
+  }, [plan, origin, destination, snapshot, focusOn]);
 
   /**
    * A step of the trail was activated: show me that station.

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useStrings } from "@/components/LocaleProvider";
 import PanelHeader from "@/components/PanelHeader";
 
@@ -128,16 +128,172 @@ export default function PlannerPanel({
   const t = useStrings();
   const [expanded, setExpanded] = useState(false);
 
+  /**
+   * A height the reader set with their finger, in pixels, or null for neither.
+   *
+   * Null is the ordinary state and the two rest positions govern it. A number
+   * means the handle was dragged, and from then until the next tap or the next
+   * resize the sheet is wherever they put it. The two are not rival mechanisms:
+   * the rest positions are what a tap moves between and what the sheet opens
+   * at, and this is the reader overruling both for a trip whose trail happens to
+   * be four steps long or fourteen.
+   *
+   * Carried to CSS as a custom property rather than as an inline `height`,
+   * which is not a detail. An inline style beats every class, so a pixel height
+   * written that way would follow the panel to the desktop card, where the
+   * sheet does not exist and the height is the content's business. As a variable
+   * it is read by a utility that `md:h-auto` can override in the ordinary way.
+   */
+  const [sheet, setSheet] = useState<number | null>(null);
+  const panel = useRef<HTMLElement | null>(null);
+
+  /**
+   * The gesture in progress: where it started, how tall the sheet was then, and
+   * whether it has moved far enough to be a drag rather than a tap.
+   *
+   * A ref and not state, because none of it is rendered and all of it changes
+   * on every pointer event. Re-rendering the panel sixty times a second to
+   * record a cursor position is how a drag comes to feel like a drag on a
+   * different device.
+   */
+  const drag = useRef<{ y: number; height: number; moved: boolean } | null>(
+    null,
+  );
+
+  /**
+   * The same "a finger is on the handle" fact, as state, because the render
+   * needs it: it is what suspends the ceiling's transition. The ref above
+   * carries the gesture and the render may not read a ref, so the one bit of it
+   * that reaches the markup is lifted out and set once, when the gesture first
+   * crosses the slop, rather than on every move.
+   */
+  const [dragging, setDragging] = useState(false);
+
+  /** How far a finger may travel and still have been a tap. */
+  const TAP_SLOP = 4;
+
+  /**
+   * What the drag may not go outside.
+   *
+   * The floor is the entry block, the header and the footer — below it the sheet
+   * would be furniture with nothing in it. The ceiling is the same 80dvh the
+   * expanded position stops at, and for the same reason: the map credits are
+   * drawn against the top of the map and carry a higher stacking order, so a
+   * taller sheet is overdrawn by them rather than covering them.
+   */
+  const bounds = (): { min: number; max: number } => ({
+    min: 260,
+    max: Math.round(window.innerHeight * 0.8),
+  });
+
+  const clamp = (value: number): number => {
+    const { min, max } = bounds();
+    return Math.min(max, Math.max(min, value));
+  };
+
+  const onPointerDown = (
+    event: React.PointerEvent<HTMLButtonElement>,
+  ): void => {
+    const height = panel.current?.getBoundingClientRect().height;
+    if (height === undefined) return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    drag.current = { y: event.clientY, height, moved: false };
+  };
+
+  const onPointerMove = (
+    event: React.PointerEvent<HTMLButtonElement>,
+  ): void => {
+    const current = drag.current;
+    if (current === null) return;
+    // Upward is taller: the sheet grows from the bottom edge it is anchored to,
+    // so the delta is inverted against the pointer's own axis.
+    const delta = current.y - event.clientY;
+    if (!current.moved) {
+      if (Math.abs(delta) <= TAP_SLOP) return;
+      current.moved = true;
+      setDragging(true);
+    }
+    setSheet(clamp(current.height + delta));
+  };
+
+  /**
+   * A gesture that never moved is a tap, and a tap toggles.
+   *
+   * Handled here rather than in `onClick` so the two cannot both fire: a click
+   * event follows a pointer sequence whatever it did in between, and a drag that
+   * ended anywhere would otherwise also toggle the rest position it had just
+   * been dragged away from.
+   */
+  const onPointerUp = (): void => {
+    const current = drag.current;
+    drag.current = null;
+    setDragging(false);
+    if (current === null || current.moved) return;
+    setSheet(null);
+    setExpanded((open) => !open);
+  };
+
+  /**
+   * The same adjustment for a keyboard, because a drag is a pointer gesture and
+   * the quality floor does not accept a control that only exists for one.
+   *
+   * A step of 48px is about a row of the trail, which is the unit a reader is
+   * actually asking for when they want a little more of it.
+   */
+  const onKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>): void => {
+    if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
+    const height = panel.current?.getBoundingClientRect().height;
+    if (height === undefined) return;
+    event.preventDefault();
+    setSheet(clamp(height + (event.key === "ArrowUp" ? 48 : -48)));
+  };
+
+  /**
+   * A pixel height stops meaning what it meant when the viewport changes size,
+   * so a rotation or a desktop window drag hands the sheet back to its rest
+   * positions rather than leaving it at a figure chosen against a screen that no
+   * longer exists.
+   */
+  useEffect(() => {
+    const onResize = (): void => setSheet(null);
+    window.addEventListener("resize", onResize);
+    window.addEventListener("orientationchange", onResize);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("orientationchange", onResize);
+    };
+  }, []);
+
   return (
     <section
+      ref={panel}
       aria-label={t.panel.label}
+      style={
+        sheet === null
+          ? undefined
+          : ({ "--sheet": `${sheet}px` } as React.CSSProperties)
+      }
       className={[
         // Anchoring below 768px: a sheet on the bottom edge, square at the
         // bottom because there is nothing to round against the viewport edge.
         "absolute inset-x-0 bottom-0 z-10 flex flex-col",
         "rounded-t-panel border-t border-edge bg-panel",
         "md:inset-x-auto",
-        overlayOpen ? SETTINGS : expanded ? EXPANDED : COLLAPSED,
+        /*
+          A dragged height is a `height`, and `max-height` outranks it. So while
+          one is set the ceiling is raised to the expanded position — the same
+          figure the drag is clamped to in `bounds()` — and the clamp is what
+          actually governs. Without that, dragging up from the collapsed
+          position would stop dead at the collapsed ceiling with the finger
+          still moving.
+        */
+        sheet !== null
+          ? "h-[var(--sheet)] " + EXPANDED
+          : overlayOpen
+            ? SETTINGS
+            : expanded
+              ? EXPANDED
+              : COLLAPSED,
         // Anchoring at 768px and above: an inset card, 16px on all four
         // sides, rounded on all four corners, as tall as its content and no
         // taller.
@@ -156,8 +312,12 @@ export default function PlannerPanel({
         "md:top-4 md:right-auto md:bottom-auto md:left-4 md:w-[380px]",
         "md:h-auto md:max-h-[calc(100dvh-2rem)] md:rounded-panel md:border md:border-edge",
         // The ceiling is the only thing that animates, and only when the reader
-        // has not asked for stillness.
-        "motion-safe:transition-[max-height] motion-safe:duration-200",
+        // has not asked for stillness — and not at all while a finger is on the
+        // handle, where a 200ms ease would arrive at each height a fifth of a
+        // second after the finger left it.
+        dragging
+          ? "transition-none"
+          : "motion-safe:transition-[max-height] motion-safe:duration-200",
       ].join(" ")}
     >
       {/*
@@ -166,18 +326,35 @@ export default function PlannerPanel({
         there are no rest positions to move between.
 
         It also stands down while the settings are drawn. There is nothing to
-        move between then either — the sheet is held at its expanded ceiling by
-        `tall` — and a control whose `aria-expanded` says false above a sheet
-        that is visibly open states the opposite of what is on screen. The way
-        out of the settings is the footer row that opened them, which is exactly
-        why that row stays visible.
+        move between then either — the sheet is held at a firm height — and a
+        control whose `aria-expanded` says false above a sheet that is visibly
+        open states the opposite of what is on screen. The way out of the
+        settings is the footer row that opened them, which is exactly why that
+        row stays visible.
+
+        It does two things, and the second is new: a tap still moves between the
+        two rest positions, and a drag puts the sheet wherever the finger leaves
+        it. docs/ui-guidelines.md set two rest positions and no more, and that
+        rule was written for a sheet that could not be dragged at all — the
+        positions are still what a tap moves between and what the sheet opens
+        at. What the drag adds is the case neither position fits, which on a
+        trail whose length is the reader's trip rather than a fixed design is
+        most of them.
+
+        `touch-action: none` is what makes it a drag rather than a page scroll:
+        without it the browser claims the vertical axis for its own scrolling
+        before the first move event arrives.
       */}
       {!overlayOpen && (
         <button
           type="button"
-          className="flex min-h-11 w-full shrink-0 items-center justify-center md:hidden"
+          className="flex min-h-11 w-full shrink-0 touch-none items-center justify-center md:hidden"
           aria-expanded={expanded}
-          onClick={() => setExpanded((open) => !open)}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
+          onKeyDown={onKeyDown}
         >
           <span className="sr-only">
             {expanded ? t.panel.collapse : t.panel.expand}

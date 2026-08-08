@@ -248,6 +248,10 @@ function FreshnessRow({
 /**
  * Row 3. Who wrote this, and where the source is.
  *
+ * Exported, because below 768px it is not a row of this footer at all: it sits
+ * at the end of the settings overlay instead. Same markup, one definition, so
+ * the two placements cannot drift into two designs.
+ *
  * Two links, and the row is closed at two: a credit line is exactly the kind of
  * thing that grows an item at a time until it is a site footer, which is the
  * failure mode the two rows above were written to avoid.
@@ -260,7 +264,7 @@ function FreshnessRow({
  * The links fill the row's height, so the target is the whole 32px rather than
  * the cap height of 12px text.
  */
-function CreditsRow() {
+export function CreditsRow() {
   const t = useStrings();
 
   return (
@@ -328,7 +332,23 @@ export default function PanelFooter({
           refreshWait={refreshWait ?? null}
         />
       </div>
-      <div className="border-t border-edge">
+      {/*
+        From 768px only.
+
+        docs/ui-guidelines.md fixes this footer at three rows and this is the
+        third, so the departure is recorded there rather than only here. The
+        reason is the arithmetic that governs everything on a phone: 33px of
+        every screen, permanently, for two links that are read once if ever —
+        against a footer that is already 121px of a panel whose whole content
+        area is 241px. The document's own words for this row are that it is
+        "read once when the two above it are used on every trip".
+
+        It is not dropped, it is moved: below 768px it is the last thing in the
+        settings overlay, which is where a reader goes looking for what this
+        application is and who made it. Nothing here is unreachable from a
+        phone; it has stopped costing every screen.
+      */}
+      <div className="hidden border-t border-edge md:block">
         <CreditsRow />
       </div>
     </div>

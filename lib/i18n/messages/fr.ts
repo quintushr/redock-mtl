@@ -534,6 +534,19 @@ export const messages = {
   },
 
   /**
+   * Rendre le choix du thème à l'appareil.
+   *
+   * Deux lignes et pas une bascule à trois états : le bouton de l'en-tête reste
+   * à deux positions, et ceci est la façon d'en sortir. La première dit ce qui
+   * décide en ce moment, la seconde est l'action.
+   */
+  themeSource: {
+    followingLabel: "Thème : celui de l'appareil",
+    pinnedLabel: "Thème : ton choix",
+    follow: "Suivre l'appareil",
+  },
+
+  /**
    * Why a parameter set was rejected.
    *
    * The domain stays the authority on what is wrong; only the wording lives

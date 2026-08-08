@@ -311,7 +311,13 @@ function EntryRow({
     <li className="flex gap-2">
       <Rail entry={entry} last={last} />
 
-      <div className="min-w-0 flex-1 pb-3">
+      {/*
+        Tighter below 768px and unchanged from it. A row's gap is paid once per
+        step, so it is the one spacing in this panel whose cost grows with the
+        length of the trip — the surface where the reader most wants more of the
+        trail is the surface where it costs the most to separate its rows.
+      */}
+      <div className="min-w-0 flex-1 pb-2 md:pb-3">
         {/*
           `items-start` and no longer `items-center`: centring a two-line name
           against a one-line duration is what would move the duration.

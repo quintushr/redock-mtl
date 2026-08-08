@@ -156,6 +156,17 @@ function cameraDuration(): number {
  * framing for the position they are not resting at would keep the route
  * squeezed into the top eighth of the screen for the whole of the time they are
  * not making it.
+ *
+ * This is applied *once*, to the map's transform, and never passed to an
+ * individual camera call — see the effect that calls `setPadding`. Passing it
+ * per call is what the library's own option invites and it is a trap: a camera
+ * command that carries `padding` installs it on the transform permanently, and
+ * the next one then adds its own on top of it. Two of these on a 844px screen
+ * come to 962px of vertical padding, `cameraForBounds` returns undefined
+ * because the box it is asked to fit into is negative, and `fitBounds`
+ * silently does nothing at all. That is not hypothetical: it is why entering a
+ * destination left the camera on the origin, and it went unnoticed while this
+ * figure was 320px, where two of them still summed to less than the screen.
  */
 const SHEET_FLOOR_PX = 452;
 const SHEET_SHARE = 0.56;
@@ -686,7 +697,9 @@ export default function MapView({
         ...(focus.keepZoom === true
           ? {}
           : { zoom: Math.max(instance.getZoom(), 14) }),
-        padding: framePadding(),
+        // No `padding` here, nor on the fit below. The transform carries it; see
+        // the effect that sets it and the note on framePadding for what passing
+        // it per call actually does.
         duration: cameraDuration(),
       });
       return;
@@ -695,11 +708,43 @@ export default function MapView({
     const bounds = new LngLatBounds();
     for (const point of focus.points) bounds.extend([point.lon, point.lat]);
     instance.fitBounds(bounds, {
-      padding: framePadding(),
       maxZoom: 15,
       duration: cameraDuration(),
     });
   }, [focus, hasMap]);
+
+  /**
+   * The room the panel takes, told to the map once rather than to each camera
+   * command.
+   *
+   * This is what `padding` is for: it shifts the transform's centre so that
+   * "centred" means centred in the part of the frame the reader can see, and
+   * every camera operation — this component's and the library's own — then
+   * respects it without being asked. Passing it per call instead is what
+   * produced a `fitBounds` that did nothing, because each call left its padding
+   * behind for the next one to add to.
+   *
+   * Re-applied on resize, because the figure is derived from the viewport and a
+   * rotation changes it. `setPadding` is a jump, not an ease: it is a statement
+   * about the frame rather than a move the reader asked for, and animating it
+   * would drift the map under them every time the URL bar hid itself.
+   */
+  useEffect(() => {
+    const instance = map.current;
+    if (instance === null) return;
+
+    const apply = (): void => {
+      instance.setPadding(framePadding());
+    };
+    apply();
+
+    window.addEventListener("resize", apply);
+    window.addEventListener("orientationchange", apply);
+    return () => {
+      window.removeEventListener("resize", apply);
+      window.removeEventListener("orientationchange", apply);
+    };
+  }, [hasMap]);
 
   // Stations, shown before any input (FR-027).
   useEffect(() => {
@@ -750,10 +795,11 @@ export default function MapView({
         for (const station of stations) {
           bounds.extend([station.position.lon, station.position.lat]);
         }
-        instance.fitBounds(bounds, {
-          padding: framePadding(),
-          duration: 0,
-        });
+        // No `padding`, for the same reason as the focus effect above: the
+        // transform carries it. This one runs before the reader has done
+        // anything, so it is also the call that used to install the padding
+        // every later fit then doubled.
+        instance.fitBounds(bounds, { duration: 0 });
       }
     };
 

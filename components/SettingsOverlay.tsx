@@ -1,11 +1,20 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { useLanguage, useResolve, useStrings } from "@/components/LocaleProvider";
+import {
+  useLanguage,
+  useResolve,
+  useStrings,
+} from "@/components/LocaleProvider";
 import { Cross } from "@/components/icons";
+import { CreditsRow } from "@/components/PanelFooter";
+import { useTheme } from "@/components/ThemeProvider";
 import { formatDecimal } from "@/lib/format";
 import { DEFAULT_PARAMETERS, changedCount } from "@/lib/params";
-import { cachedPathCount, purgeCachedPaths } from "@/components/useTracedItinerary";
+import {
+  cachedPathCount,
+  purgeCachedPaths,
+} from "@/components/useTracedItinerary";
 import type { PlanningParameters } from "@/lib/types";
 
 /**
@@ -240,6 +249,45 @@ function PurgePaths() {
   );
 }
 
+/**
+ * What decides the theme, and the way back to the device deciding it.
+ *
+ * The header's toggle is two states and stays two states: one of them is always
+ * the one you are already in, and a third for "auto" would spend a 44px target
+ * on a word that has to be explained. But two states with a pin means the first
+ * press opts out of the device permanently, and there was no way back short of
+ * clearing site data. This is that way back.
+ *
+ * A button rather than a checkbox, and disabled while it is already following,
+ * because it is an action with one direction: pinning happens by pressing the
+ * toggle, not here. Same shape as the reset and the purge below it, which are
+ * the other two controls in this panel that undo something.
+ *
+ * Not a planning parameter, so it changes no figure the rider reads. It sits
+ * here for the reason the purge does: this is where a person goes looking for
+ * the knobs.
+ */
+function ThemeSource() {
+  const t = useStrings();
+  const { following, follow } = useTheme();
+
+  return (
+    <div className="mt-2 flex items-center justify-between gap-3 border-t border-edge pt-2">
+      <span className="min-w-0 truncate text-xs text-muted">
+        {following ? t.themeSource.followingLabel : t.themeSource.pinnedLabel}
+      </span>
+      <button
+        type="button"
+        className="state-layer -mx-2 min-h-11 shrink-0 rounded-control px-2 text-xs underline disabled:text-muted disabled:no-underline"
+        disabled={following}
+        onClick={follow}
+      >
+        {t.themeSource.follow}
+      </button>
+    </div>
+  );
+}
+
 export default function SettingsOverlay({
   id,
   open,
@@ -369,7 +417,18 @@ export default function SettingsOverlay({
         free. Anything kept without expiring should be erasable by the person
         whose browser is keeping it.
       */}
+      <ThemeSource />
+
       <PurgePaths />
+
+      {/*
+        The credits, below 768px only, where PanelFooter no longer carries them.
+        Same component, so the two placements are one design; see the note on
+        row 3 there.
+      */}
+      <div className="mt-2 border-t border-edge pt-1 md:hidden">
+        <CreditsRow />
+      </div>
     </div>
   );
 }

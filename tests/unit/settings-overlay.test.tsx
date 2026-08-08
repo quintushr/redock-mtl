@@ -74,8 +74,18 @@ describe("opened, every parameter is on screen at once (FR-120, principle IV)", 
     expect(
       screen.queryByRole("button", { name: /autres réglages/i }),
     ).toBeNull();
-    // Close, reset, purge. No fourth control that reveals anything.
-    expect(screen.getAllByRole("button")).toHaveLength(3);
+
+    /*
+     * A disclosure is a control that says it reveals something, and that is
+     * what `aria-expanded` is. Asserting on that rather than on a head count of
+     * the buttons, which is what this used to do: the count broke the day a
+     * fourth control that reveals nothing was added beside the other three, and
+     * a test that fails for the thing it is not about is a test that gets
+     * edited rather than read.
+     */
+    for (const button of screen.getAllByRole("button")) {
+      expect(button.getAttribute("aria-expanded")).toBeNull();
+    }
   });
 });
 
