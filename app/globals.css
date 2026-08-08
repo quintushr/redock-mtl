@@ -400,6 +400,27 @@ body {
   }
 
   /**
+   * A range input a finger can reach.
+   *
+   * The native thumb is about 16px tall and cannot be enlarged without
+   * `appearance: none`, which forfeits the track, the thumb and `accent-color`
+   * all at once and leaves the control to be redrawn by hand in three engines.
+   * It does not have to be: on a range input the *track* is the target — a tap
+   * anywhere on it takes that value and begins the drag — so height on the
+   * element is a full-width 44px target with the platform's own rendering
+   * centred inside it.
+   *
+   * Coarse pointers only. A mouse hits a 16px thumb without help, and a 44px
+   * row per slider would cost nine of them 250px on the desktop card where the
+   * panel is already as tall as its content.
+   */
+  @media (pointer: coarse) {
+    .range-touch {
+      height: 2.75rem;
+    }
+  }
+
+  /**
    * Tailwind v4 stopped setting `cursor: pointer` on buttons in its preflight.
    * The result was an interface where nothing looked clickable to a pointer.
    * Restored for enabled controls only: a disabled one must not claim to do

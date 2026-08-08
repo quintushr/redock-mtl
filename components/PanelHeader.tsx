@@ -42,7 +42,11 @@ export default function PanelHeader() {
   const t = useStrings();
 
   return (
-    <div className="shrink-0 border-b border-edge px-4 pt-2 pb-2.5">
+    // Tighter below 768px and unchanged from it. This block is fixed chrome on
+    // the surface with the least of it to give: the tagline below wraps to two
+    // lines at 360px, so the header is ~74px on a phone, and 6px of that is
+    // padding that only exists to keep a desktop card from feeling cramped.
+    <div className="shrink-0 border-b border-edge px-4 pt-1.5 pb-2 md:pt-2 md:pb-2.5">
       <div className="flex items-center justify-between gap-3">
         {/*
           The wordmark at 16px rather than 14px. It is the one thing in the
@@ -80,7 +84,7 @@ export default function PanelHeader() {
         default leading opened a gap wide enough to read as a paragraph break
         inside a single sentence.
       */}
-      <p className="mt-1.5 text-xs leading-snug text-balance text-muted">
+      <p className="mt-1 text-xs leading-snug text-balance text-muted md:mt-1.5">
         {t.app.tagline}
       </p>
     </div>

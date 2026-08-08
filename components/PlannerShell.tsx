@@ -585,6 +585,14 @@ export default function PlannerShell() {
       </div>
 
       <PlannerPanel
+        /*
+          The sheet takes its expanded ceiling while the settings are drawn.
+          The overlay covers the scroll area and only that, so below 768px it
+          inherited whatever the reader had left the sheet at — about 48px of
+          window at the collapsed one, for nine sliders that no fold is allowed
+          to hide.
+        */
+        overlayOpen={settingsOpen}
         overlay={
           <SettingsOverlay
             id={settingsPanelId}
@@ -616,8 +624,15 @@ export default function PlannerShell() {
           top of the screen explaining a result that is now visible immediately
           (FR-146).
         */}
+        {/*
+          The gaps between the three regions are one step smaller below 768px
+          and unchanged from it. Nothing here is a design decision being
+          reversed: the same rhythm costs the same pixels on both surfaces, and
+          on a phone those pixels come out of the trail rather than out of the
+          margin around a card.
+        */}
         <div className="divide-y divide-edge">
-          <div className="pb-3">
+          <div className="pb-2 md:pb-3">
             {/*
               One container, two rows, 78px in total (FR-146a, and the "Saisie
               du départ et de la destination" section of
@@ -736,7 +751,7 @@ export default function PlannerShell() {
 
           {/* The result region. Nothing that sets a planning parameter may appear
             above this point (FR-101). */}
-          <div className="pt-3 pb-4">
+          <div className="pt-2 pb-3 md:pt-3 md:pb-4">
             {feed.state === "unavailable" ? (
               // Without stations there is no plan, so the feed failure *is* the
               // result. It belongs where the reader is already looking.
@@ -765,7 +780,7 @@ export default function PlannerShell() {
                   */
                   params={settled}
                 />
-                <div className="mt-4">
+                <div className="mt-3 md:mt-4">
                   <ItineraryTrail
                     itinerary={displayed ?? plan.itinerary}
                     geometry={traced?.geometry ?? null}

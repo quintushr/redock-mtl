@@ -520,6 +520,17 @@ export const messages = {
      */
     routingPrivacy:
       "Obtenir un tracé envoie les deux extrémités du segment au service de calcul d'itinéraire.",
+    /**
+     * Le bouton qui déplie les crédits sous 768px, et celui qui les replie.
+     *
+     * « Crédits et licences » plutôt que « À propos » ou « Infos »: c'est ce
+     * que le bouton donne, et les lignes directrices d'attribution de la
+     * fondation OSM demandent que le lecteur qui cherche l'information sur la
+     * licence puisse la trouver. Un libellé qui la nomme est ce qui rend cette
+     * recherche possible.
+     */
+    credits: "Crédits et licences",
+    creditsHide: "Masquer les crédits",
   },
 
   /**

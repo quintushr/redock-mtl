@@ -210,12 +210,14 @@ export default function TripSummary({
 
       {/* Monospace, because durations are data: they align down the trail and
           the digits must not dance while a value recomputes. */}
-      <p className="mt-3 font-mono text-[30px] leading-none font-medium">
+      <p className="mt-2 font-mono text-[30px] leading-none font-medium md:mt-3">
         {approximateDuration(itinerary.totalDuration, t)}
       </p>
 
       {stops > 0 && (
-        <p className="mt-1.5 text-sm">{say(t.summary.stops, { count: stops })}</p>
+        <p className="mt-1 text-sm md:mt-1.5">
+          {say(t.summary.stops, { count: stops })}
+        </p>
       )}
 
       {/*

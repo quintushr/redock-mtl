@@ -138,7 +138,29 @@ function cameraDuration(): number {
  * frame. Below 768px the panel takes the bottom edge, above it the left.
  * Without this, fitting the network extent centres it neatly underneath the
  * panel.
+ *
+ * The bottom figure is derived rather than typed. It was 320px, which was the
+ * sheet's collapsed rest position resolved against one screen and wrong on
+ * every other: too much on a short viewport, where it ate a fit box that was
+ * already small, and too little on a tall one, where the route was fitted into
+ * ground the sheet covers.
+ *
+ * It now computes that position rather than approximating it, and the three
+ * constants below are the same three PlannerPanel's `COLLAPSED` is built from.
+ * They have to agree: this is the one place outside that component that needs
+ * to know how much screen the sheet takes, and a copy that drifts puts the
+ * route back under the panel with nothing failing to say so.
+ *
+ * The collapsed position and not the expanded one, deliberately. Expanding is a
+ * gesture the reader makes to read the trail and undoes to look at the map;
+ * framing for the position they are not resting at would keep the route
+ * squeezed into the top eighth of the screen for the whole of the time they are
+ * not making it.
  */
+const SHEET_FLOOR_PX = 452;
+const SHEET_SHARE = 0.56;
+const SHEET_CAP = 0.72;
+
 function framePadding(): {
   top: number;
   bottom: number;
@@ -149,9 +171,21 @@ function framePadding(): {
     typeof window !== "undefined" &&
     window.matchMedia !== undefined &&
     window.matchMedia("(min-width: 768px)").matches;
-  return wide
-    ? { top: 48, bottom: 48, left: 428, right: 48 }
-    : { top: 48, bottom: 320, left: 24, right: 24 };
+  if (wide) return { top: 48, bottom: 48, left: 428, right: 48 };
+
+  const height = typeof window === "undefined" ? 0 : window.innerHeight;
+  const sheet = Math.min(
+    height * SHEET_CAP,
+    Math.max(height * SHEET_SHARE, SHEET_FLOOR_PX),
+  );
+  return {
+    top: 48,
+    // 8px of clearance above the sheet's edge, so a station sitting exactly on
+    // the fitted bound is not drawn half under it.
+    bottom: Math.round(sheet) + 8,
+    left: 24,
+    right: 24,
+  };
 }
 
 export default function MapView({

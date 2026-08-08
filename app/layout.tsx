@@ -38,11 +38,28 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
-      // The served value. The script below corrects it before first paint from
-      // the reader's stored choice, or from the system when they have none;
-      // declaring it here keeps the prerendered markup and React's first render
-      // agreeing on light, which is what stops a hydration mismatch.
+      // The served value, and the one `serverTheme()` in ThemeProvider returns,
+      // so the prerendered markup and React's first render agree on light.
       data-theme="light"
+      /*
+        And this is what makes that agreement survive the script below.
+        Hydration does not compare React's first render against the *served*
+        HTML, it compares it against the live DOM — which THEME_SCRIPT has
+        already rewritten to `dark` for a reader who chose dark. The attribute
+        therefore diverges exactly when the script does its job, and the warning
+        fires on the one page load the script exists to fix.
+
+        Suppression rather than a fix, because there is nothing to fix: an
+        attribute deliberately mutated before hydration is the case this
+        attribute is for. It is shallow — this element's own attributes and text
+        and nothing else — so a genuine mismatch anywhere in the tree below still
+        reports.
+
+        `lang` falls under it as well, without needing to: DocumentLanguage
+        writes it from an effect, which runs after hydration and therefore has
+        nothing to disagree with.
+      */
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>

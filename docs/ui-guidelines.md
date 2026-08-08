@@ -31,11 +31,83 @@ station, décrite plus bas, qui n'existe que le temps d'un appui.
 
 | Contexte | Ancrage du panneau |
 |---|---|
-| Mobile (< 1024px) | Feuille glissante ancrée en bas, deux positions de repos : repliée sur le résumé, dépliée sur le fil complet. Hauteur maximale 65dvh. |
-| Desktop (≥ 1024px) | Panneau ancré à gauche, largeur fixe 380px, marges 16px, coins arrondis sur les quatre angles. |
+| Mobile (< 768px) | Feuille glissante ancrée en bas, deux positions de repos : repliée `min(72dvh, max(56dvh, 452px))`, dépliée 80dvh. |
+| Desktop (≥ 768px) | Panneau ancré à gauche, largeur fixe 380px, marges 16px, coins arrondis sur les quatre angles. |
 
 Le composant est strictement le même dans les deux cas. Seul son ancrage change.
 Il n'existe pas deux mises en page à maintenir.
+
+*Amendé le 2026-08-05.* Les deux positions étaient 45dvh et 65dvh, et la bascule
+était annoncée à 1024px alors qu'elle a toujours été posée à 768px dans le code —
+une feuille pleine largeur sur une tablette est ce qui produisait « le panneau
+touche les bords de l'écran ». Les deux sont corrigées en même temps.
+
+Tous les chiffres qui suivent sont mesurés dans un navigateur, pas calculés.
+
+Ce qui empêchait de lire le fil n'était pas le plafond : la zone défilante
+débordait de son propre emplacement. `height: 100%` s'y résolvait contre la
+hauteur *spécifiée* du parent, restée `auto` parce que flex dimensionne sans
+écrire la propriété, si bien qu'elle retombait sur la hauteur de son contenu.
+Mesure sur 390×844 : 405px de zone défilante dans un emplacement de 241px,
+terminée 43px sous le bas de l'écran, passant sous le pied collant, avec
+`scrollHeight === clientHeight` — aucune barre, aucun défilement possible. Le
+fil n'était pas à l'étroit, il était dessiné là où rien ne pouvait l'atteindre.
+Corrigé en faisant de la zone défilante un élément flex plutôt qu'un pourcentage
+de son parent.
+
+Les deux positions étaient trop basses par ailleurs. Le panneau dépense 231px de
+mobilier fixe sur un téléphone : poignée 44, en-tête 66 depuis que la phrase
+permanente s'y trouve, pied 121 depuis que la rangée de crédits l'a rejoint.
+Chacune de ces additions était défendable seule ; leur somme ne l'est pas
+restée, et c'est la position qui cède, pas elles.
+
+**La position repliée n'est pas une fraction.** Ce qu'elle doit dégager — le
+bloc de saisie et le résumé entier, 210px mesurés — se trouve derrière un
+mobilier dont le coût est fixe en pixels, pas proportionnel à l'écran. Un
+pourcentage unique ne peut donc pas être juste deux fois : 56dvh dégage le
+résumé sur un écran de 844px et en coupe 90px sur un écran de 640px. Le plancher
+s'écrit donc en pixels, le plafond en dvh, et l'écran décide lequel mord.
+
+| Écran | Position repliée | Ce qui mord |
+|---|---|---|
+| 844px | 473px | 56dvh |
+| 640px | 452px | le plancher, soit 71dvh |
+| 500px | 360px | le plafond de 72dvh |
+
+452 et non 440, qui est le chiffre de l'addition : 440 laissait le résumé neuf
+pixels trop court sur 640px. C'est ce que le navigateur a rapporté, pas ce que
+la somme prévoyait. Le plafond de 72dvh est ce qui empêche le plancher d'avaler
+la carte sur un écran très court, où dégager le résumé ne vaut pas de n'avoir
+plus de carte du tout.
+
+`framePadding()` dans MapView calcule la même expression à partir des mêmes
+trois constantes : le tracé est cadré dans la bande que la feuille laisse au
+repos, la position dépliée étant un geste que le lecteur fait puis défait. Ces
+deux copies doivent rester d'accord — une dérive remet le tracé sous le panneau
+sans que rien n'échoue pour le signaler.
+
+80dvh en position dépliée, et pas davantage. Le plafond haut est fixé par
+l'attribution cartographique, pas par le goût : elle est dessinée contre le haut
+de la carte sous 768px, sous l'encoche, elle passe à la ligne — 88px mesurés sur
+360px de large — et elle porte un z-20 contre le z-10 du panneau. Une feuille
+plus haute ne la couvrirait donc pas, elle serait surimprimée par elle : un
+cartouche de crédits flottant sur l'en-tête du panneau. À 80dvh le bord haut de
+la feuille est à 128px sur un écran de 640px, au clair de 32px.
+
+La contrainte vérifiable plus bas — un trajet à deux arrêts intégralement
+lisible sans défilement, panneau déplié, sur 700px de haut — est désormais tenue
+sur 390×844 : le trajet mesuré y tient entièrement, le fil compris. Elle ne
+l'est pas sur 360×640, où il reste 184px à dérouler. Le levier qui n'a pas été
+tiré est le pied de panneau, dont les 121px sont plus de la moitié du mobilier
+restant.
+
+Ouvrir les réglages porte la feuille à 80dvh, en hauteur ferme et non en
+plafond, et la poignée se retire pendant ce temps. La surcouche est absolue,
+donc elle ne compte pas dans la hauteur intrinsèque du panneau : sans hauteur
+ferme, neuf curseurs héritaient de la fenêtre que l'itinéraire *en dessous*
+laissait, c'est-à-dire de l'état vide sur un planificateur où aucun trajet n'a
+encore été saisi. La position choisie par le lecteur n'est pas écrasée, elle est
+revenue à la fermeture.
 
 Utiliser `dvh` et jamais `vh` : la barre d'URL mobile fausse `vh`.
 
@@ -158,6 +230,15 @@ Une seule action remet toutes les valeurs par défaut.
 
 Ouvrir les réglages ne fait perdre ni la position de lecture, ni le centrage, ni
 le zoom de la carte.
+
+Sous 768px, les ouvrir porte la feuille à son plafond déplié, et le titre et sa
+croix de fermeture sont collants en haut de la surcouche. La liste est plus
+haute que le panneau par mandat — aucun paramètre derrière un repli — donc le
+lecteur est toujours quelque part au milieu, et une fermeture qui défile avec le
+titre le renvoyait chercher la rangée du pied. Sur pointeur grossier, chaque
+curseur reçoit une boîte de 44px : sur un `input[type=range]` la cible est la
+piste, pas le pouce, et la hauteur suffit donc à donner une cible pleine largeur
+sans renoncer au rendu natif ni à `accent-color`.
 
 *Amendé le 2026-07-28.* Ce document demandait auparavant un seul réglage visible,
 les autres dans une zone repliée fermée par défaut, et l'ensemble tenant sur une
@@ -400,6 +481,34 @@ l'ancrage : en haut à gauche tant que le panneau est une feuille en bas, en bas
 droite dès qu'il devient une carte à gauche. Elle est intégralement lisible, sur
 un fond opaque, et passe à la ligne plutôt que de se tronquer. Une attribution
 avec des points de suspension n'est pas une attribution.
+
+*Amendé le 2026-08-05.* Sous 768px, elle est repliée derrière un bouton ⓘ de
+44px placé à ce même coin, et le premier appui l'affiche en entier avec une
+croix pour la refermer. À partir de 768px rien ne se replie : le coin bas-droite
+que la carte laisse libre ne coûte rien, la boîte y reste ouverte en permanence
+et le bouton n'est pas rendu du tout.
+
+C'est un écart par rapport à la règle ci-dessus, et il est légitime plutôt que
+commode. Les lignes directrices d'attribution de la fondation OSM prévoient
+exactement cette forme :
+
+> If the attribution has been collapsed, the user must still be able to find the
+> licence information if they look for it, for example from an '(i)' button in
+> the corner of the map or an 'About' option in a menu.
+>
+> — <https://osmfoundation.org/wiki/Licence/Attribution_Guidelines>
+
+Ce que la règle protège, c'est que le lecteur qui cherche puisse trouver ; elle
+n'a jamais exigé qu'on fasse lire celui qui ne cherche pas. Sur téléphone cette
+boîte fait quatre lignes de 12px — 88px mesurés sur 360px de large — posées sur
+la carte, et l'une de ces lignes est la note de confidentialité du calcul
+d'itinéraire, qui n'est pas un crédit. C'est un quart de la carte visible
+au-dessus de la feuille dépensé en texte que personne ne lit deux fois.
+
+Trois choses en font un repli et non un enfouissement : le libellé du bouton
+nomme ce qu'il contient — « Crédits et licences », jamais « Infos » —, le bouton
+est un meuble permanent de la carte et non quelque chose qui apparaît sur un
+geste, et chaque lien à l'intérieur est le même lien qu'avant.
 
 Le contrôle d'attribution natif de la bibliothèque cartographique reste
 désactivé : il dessine dans un coin fixe que la feuille recouvre, ce qui est

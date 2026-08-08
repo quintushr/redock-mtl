@@ -159,7 +159,7 @@ function Slider({
   const { label, hint } = t.settings.controls[control.key];
 
   return (
-    <div className="py-2">
+    <div className="py-1.5 md:py-2">
       <label htmlFor={id} className="flex items-baseline justify-between">
         <span className="text-sm font-medium">{label}</span>
         <span className="font-mono text-sm text-muted tabular-nums">
@@ -167,10 +167,17 @@ function Slider({
           {control.unit}
         </span>
       </label>
+      {/*
+        `range-touch` gives the box its height on a coarse pointer; see
+        app/globals.css. The track is the target on a range input — a tap
+        anywhere on it takes the value and begins the drag — so height on the
+        element is a full-width 44px target, and the native thumb and
+        `accent-color` are left exactly as the platform draws them.
+      */}
       <input
         id={id}
         type="range"
-        className="mt-1 w-full accent-brand"
+        className="range-touch mt-1 w-full accent-brand"
         min={control.min}
         max={control.max}
         step={control.step}
@@ -299,9 +306,19 @@ export default function SettingsOverlay({
         always taller than the panel — so it is the one surface that must never
         look like it ends where the panel does.
       */
-      className="panel-scroll absolute inset-0 z-10 overflow-y-auto overscroll-contain bg-panel px-4 pt-2 pb-4"
+      className="panel-scroll absolute inset-0 z-10 overflow-y-auto overscroll-contain bg-panel px-4 pb-4"
     >
-      <div className="flex items-center justify-between gap-2">
+      {/*
+        Sticky, and opaque because it is.
+
+        This list is taller than the panel by mandate — every parameter visible,
+        nothing behind a fold — so the reader is always somewhere in the middle
+        of it, and a close control that scrolled away with the title left them
+        reaching for the footer row instead. `-mx-4 px-4` is what lets the
+        surface span the padded gutters rather than leaving two 16px channels
+        for the sliders to slide up through.
+      */}
+      <div className="sticky top-0 z-10 -mx-4 flex items-center justify-between gap-2 border-b border-edge bg-panel px-4 pt-2 pb-1">
         <h2 className="text-base font-medium">{t.settings.label}</h2>
         <button
           type="button"

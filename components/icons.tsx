@@ -184,6 +184,25 @@ export function Alert({ className }: { className?: string }) {
 }
 
 /**
+ * The map credits, folded away below 768px.
+ *
+ * The one glyph in this set that stands for a body of text rather than an
+ * action, and it is drawn as the conventional circled "i" for that reason: the
+ * OSM Foundation's attribution guidelines name an "(i) button in the corner of
+ * the map" as the recognised way to reach a collapsed credit, so this is a
+ * shape readers arrive already knowing. See components/MapAttribution.tsx.
+ */
+export function Info({ className }: { className?: string }) {
+  return (
+    <svg {...COMMON} className={className}>
+      <circle cx="10" cy="10" r="7.5" />
+      <path d="M10 9.2v4.3" />
+      <path d="M10 6.5h.01" />
+    </svg>
+  );
+}
+
+/**
  * The theme control, in its two states.
  *
  * Each glyph shows the theme the press will *produce*, not the one in force: a

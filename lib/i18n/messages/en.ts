@@ -284,6 +284,8 @@ export const messages: Messages = {
     routing: "Routing",
     routingPrivacy:
       "Getting a route sends the two ends of the segment to the routing service.",
+    credits: "Credits and licences",
+    creditsHide: "Hide credits",
   },
 
   corrections: {

@@ -58,6 +58,40 @@ describe("only the itinerary scrolls", () => {
   });
 });
 
+describe("the scroll area is sized by flex, never by percentage", () => {
+  /*
+   * The one structural fact behind the bug this panel shipped with, and the
+   * reason it is worth a test that cannot see a pixel.
+   *
+   * The scroll area used to be `h-full` inside a flex item. That item is sized
+   * correctly by flex, but flex does not write the `height` property, so it
+   * stays `auto` — and a percentage height resolved against `auto` falls back
+   * to `auto` too. Measured on a 390x844 handset: 405px of scroll area inside
+   * a 241px slot, ending 43px below the bottom of the screen, running under the
+   * pinned footer, with `scrollHeight === clientHeight` so no scrollbar ever
+   * appeared and the itinerary could not be scrolled to at all.
+   *
+   * Nothing about that is visible in jsdom and nothing about it is visible in a
+   * screenshot of a short itinerary. What is checkable is the shape it followed
+   * from: the scroll area grows as a flex item, and its parent is the column
+   * that hands it the room.
+   */
+  it("grows as a flex item and takes no percentage height", () => {
+    renderPanel();
+    const scroll = scrollContainer();
+    expect(scroll.className).toMatch(/\bflex-1\b/);
+    expect(scroll.className).toMatch(/\bmin-h-0\b/);
+    expect(scroll.className).not.toMatch(/\bh-full\b/);
+  });
+
+  it("is a child of a column, which is what gives flex-1 an axis", () => {
+    renderPanel();
+    const parent = scrollContainer().parentElement;
+    expect(parent?.className).toMatch(/\bflex\b/);
+    expect(parent?.className).toMatch(/\bflex-col\b/);
+  });
+});
+
 describe("the settings cover the panel rather than push it", () => {
   it("puts the overlay outside the scroll area, not in its flow", () => {
     renderPanel();
@@ -81,5 +115,28 @@ describe("the settings cover the panel rather than push it", () => {
     const parent = screen.getByTestId("overlay").parentElement;
     expect(parent?.className).toMatch(/\brelative\b/);
     expect(parent?.contains(scrollContainer())).toBe(true);
+  });
+
+  /*
+   * The handle stands down while they are drawn. The sheet is held at a firm
+   * height for as long as the settings are open, so there are no rest positions
+   * to move between, and a control whose `aria-expanded` says false above a
+   * sheet that is visibly open states the opposite of what is on screen. The
+   * way back out is the footer row that opened them.
+   */
+  it("withdraws the drag handle while the overlay is open", () => {
+    const { rerender } = render(
+      <PlannerPanel overlay={<div data-testid="overlay" />}>
+        <div data-testid="trail">trail</div>
+      </PlannerPanel>,
+    );
+    expect(screen.queryByRole("button", { expanded: false })).not.toBeNull();
+
+    rerender(
+      <PlannerPanel overlayOpen overlay={<div data-testid="overlay" />}>
+        <div data-testid="trail">trail</div>
+      </PlannerPanel>,
+    );
+    expect(screen.queryByRole("button", { expanded: false })).toBeNull();
   });
 });
